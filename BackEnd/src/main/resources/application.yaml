@@ -1,0 +1,93 @@
+spring:
+  cache:
+    type: redis
+    redis:
+      key-prefix: "buysellphoneold:"
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: BackEnd
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: mail-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ngtung2004@gmail.com
+    password: ugkf hgba zlak wvlq   # App password của Gmail, không dùng password thật
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/buysellphoneold
+    username: postgres
+    password: 1234$
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 30000
+      max-lifetime: 1800000
+      schema: public
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    generate-ddl: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 1000
+        order_inserts: true
+        default_schema: public
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT Configuration
+app:
+  jwt:
+    secret: "gLtX3OhlDhL9nA4afC9lk8gyW9O2FHYJ1cUzujeU7cQhtJTufcli0pvyBzttBz7s"
+    expiration: 86400000 # 24 hours in milliseconds
+
+## OTP Configuration
+otp:
+  length: 6                   # Độ dài mã OTP (số chữ số). Ví dụ: 6 => mã gồm 6 chữ số.
+  expiryMinutes: 5            # Thời gian sống của OTP (đơn vị: phút). 5 phút = 300s.
+  resendCooldownSeconds: 60   # phải chờ 60s mới được gửi lại 1 lần
+  resendLimit: 3              # Số lần được phép "gửi lại" (resend) OTP cho cùng một số điện thoại trước khi tạm khóa/giới hạn.
+  dailyLimit: 5               # Số OTP tối đa được gửi cho cùng một số điện thoại trong 1 ngày (tính theo ngày calendar).
+  maxAttempts: 3              # Số lần nhập OTP sai tối đa trước khi khoá tài nguyên/hủy OTP hoặc tăng throttle.
+  lockoutDurationSeconds: 900 # khoá 15 phút nếu vượt maxAttempts
+#
+#logging:
+#  level:
+#    com.gtel: debug
+#
+#token:
+#  impl: 1

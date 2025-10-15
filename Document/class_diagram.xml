@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-09-22T09:50:00.000Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36" etag="q5-R2w3x8y7z" version="25.0.0" type="device">
+  <diagram name="BuySellPhone-ClassDiagram" id="L-123456789">
+    <mxGraphModel dx="2500" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- User Management Group -->
+        <mxCell id="group-user" value="User Management" style="group;dashed=0;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=25;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="40" y="40" width="820" height="380" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-user" value="User&#xa;&#xa;+ id: string&#xa;+ fullName: string&#xa;+ gender: string&#xa;+ birthDate: Date&#xa;+ email: string&#xa;+ phone: string&#xa;- password: string&#xa;+ role: string&#xa;+ status: string&#xa;+ createdAt: DateTime&#xa;+ modifiedAt: DateTime&#xa;&#xa;+ login(email, password): bool&#xa;+ register(): User&#xa;+ updateProfile(): bool&#xa;+ viewOrderHistory(): List&lt;Order&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="group-user">
+          <mxGeometry x="60" y="80" width="300" height="280" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-address" value="Address&#xa;&#xa;+ id: string&#xa;+ fullName: string&#xa;+ phone: string&#xa;+ addressLine: string&#xa;+ wardName: string&#xa;+ districtName: string&#xa;+ cityName: string&#xa;+ isDefault: bool&#xa;+ isWarehouse: bool&#xa;&#xa;+ formatAddress(): string" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="group-user">
+          <mxGeometry x="460" y="80" width="300" height="220" as="geometry" />
+        </mxCell>
+        
+        <!-- User-Address Relationship -->
+        <mxCell id="rel-user-address" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=diamondThin;endFill=1;startArrow=none;startFill=0;" edge="1" parent="group-user" source="class-user" target="class-address">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-user-address-1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel-user-address">
+          <mxGeometry x="-0.85" y="1" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-user-address-many" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel-user-address">
+          <mxGeometry x="0.85" y="-1" relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Product Catalog Group -->
+        <mxCell id="group-product" value="Product Catalog &amp; Inventory" style="group;dashed=0;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=25;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="40" y="460" width="1480" height="740" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-category" value="Category&#xa;&#xa;+ id: string&#xa;+ name: string&#xa;+ description: string&#xa;+ isActive: bool" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group-product">
+          <mxGeometry x="60" y="80" width="220" height="130" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-brand" value="Brand&#xa;&#xa;+ id: string&#xa;+ name: string&#xa;+ logoUrl: string" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group-product">
+          <mxGeometry x="60" y="240" width="220" height="110" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-product" value="Product&#xa;&#xa;+ id: string&#xa;+ name: string&#xa;+ description: string&#xa;+ warrantyMonths: int&#xa;+ status: string&#xa;&#xa;+ getAvailableItems(): List&lt;ProductItem&gt;&#xa;+ addReview(rating: ProductRating): void" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="group-product">
+          <mxGeometry x="380" y="160" width="300" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Sales & Ordering Group -->
+        <mxCell id="group-sales" value="Sales &amp; Ordering" style="group;dashed=0;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=25;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="900" y="40" width="1020" height="380" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-cart" value="Cart&#xa;&#xa;+ id: string&#xa;+ userId: string&#xa;&#xa;+ addItem(productItem, quantity): void&#xa;+ removeItem(cartItemId): void&#xa;+ updateQuantity(cartItemId, qty): void&#xa;+ calculateSubtotal(): decimal" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="group-sales">
+          <mxGeometry x="60" y="110" width="280" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="class-order" value="Order&#xa;&#xa;+ id: string&#xa;+ code: string&#xa;+ status: string&#xa;+ paymentMethod: string&#xa;+ paymentStatus: string&#xa;+ subtotal: decimal&#xa;+ shippingFee: decimal&#xa;+ total: decimal&#xa;&#xa;+ placeOrder(): bool&#xa;+ updateStatus(newStatus): void&#xa;+ calculateTotal(): decimal" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="group-sales">
+          <mxGeometry x="680" y="80" width="280" height="260" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
