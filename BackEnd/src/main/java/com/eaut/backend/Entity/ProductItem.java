@@ -26,30 +26,41 @@ public class ProductItem extends AuditBase {
     private Product product;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id", nullable = false)
-    private ProductModel model;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "product_item_models",
+        joinColumns = @JoinColumn(name = "product_item_id"),
+        inverseJoinColumns = @JoinColumn(name = "model_id")
+    )
+    @Builder.Default
+    private Set<ProductModel> models = new HashSet<>();
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "color_id", nullable = false)
-    private ProductColor color;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "product_item_colors",
+        joinColumns = @JoinColumn(name = "product_item_id"),
+        inverseJoinColumns = @JoinColumn(name = "color_id")
+    )
+    @Builder.Default
+    private Set<ProductColor> colors = new HashSet<>();
 
 
     @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal basePrice;
+    private BigDecimal basePrice; // Giá gốc
 
 
     @Column(name = "sell_price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal sellPrice;
+    private BigDecimal sellPrice; // Giá bán
 
 
     @Column(name = "compare_price", precision = 12, scale = 2)
-    private BigDecimal comparePrice;
+    private BigDecimal comparePrice; // Giá so sánh
 
 
     @Column(name = "qty_available", nullable = false)
-    private Integer qtyAvailable = 1;
+    @Builder.Default
+    private Integer qtyAvailable = 1; // Số lượng có sẵn
 
 
     @OneToMany(mappedBy = "productItem", cascade = CascadeType.ALL, orphanRemoval = true)

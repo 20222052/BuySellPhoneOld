@@ -4,10 +4,12 @@ import com.eaut.backend.Exception.ApplicationException;
 import com.eaut.backend.Model.Request.ConfirmOtpRegisterRequest;
 import com.eaut.backend.Model.Request.ForgotPasswordRequest;
 import com.eaut.backend.Model.Request.LoginRequest;
+import com.eaut.backend.Model.Request.LogoutRequest;
 import com.eaut.backend.Model.Response.ApiReponse;
 import com.eaut.backend.Model.Response.AuthenticationReponse;
 import com.eaut.backend.Model.Response.UserResponse;
 import com.eaut.backend.Service.AuthenticationService;
+import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.ParseException;
 import java.util.UUID;
 
 @Slf4j
@@ -78,12 +81,12 @@ public class AuthenticationController {
     }
 
     @GetMapping("/logout")
-    public ApiReponse<AuthenticationReponse<UserResponse>> logout(@RequestParam UUID userId) {
-        AuthenticationReponse<UserResponse> result = authenticationService.logout(userId);
+    public ApiReponse<AuthenticationReponse<UserResponse>> logout(@RequestBody LogoutRequest logoutRequest) throws ParseException, JOSEException {
+        AuthenticationReponse<UserResponse> result = authenticationService.logout(logoutRequest);
         ApiReponse<AuthenticationReponse<UserResponse>> apiReponse = new ApiReponse<>(
                 HttpStatus.OK.value(),
                 result);
-        log.info("AuthenticationController: User Logout successfully with Id: {}", userId);
+        log.info("AuthenticationController: User Logout successfully with Id: {}", logoutRequest.getToken());
         return apiReponse;
     }
 }

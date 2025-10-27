@@ -42,18 +42,18 @@ public class Tradein extends AuditBase {
 
 
     @Column(name = "quoted_price", precision = 12, scale = 2)
-    private BigDecimal quotedPrice;
+    private BigDecimal quotedPrice; // Giá được báo cho khách hàng
 
 
     @Column(name = "appointment_at")
-    private OffsetDateTime appointmentAt;
+    private OffsetDateTime appointmentAt; // Thời gian hẹn khách hàng
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id")
-    private User staff;
+    private User staff; // Nhân viên xử lý
 
 
     @Column(name = "inspection_notes")
-    private String inspectionNotes;
+    private String inspectionNotes; // Ghi chú kiểm tra
 }

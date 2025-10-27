@@ -3,7 +3,6 @@ package com.eaut.backend.Entity;
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
 import com.eaut.backend.untils.Gender;
-import com.eaut.backend.untils.UserRole;
 import com.eaut.backend.untils.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -11,7 +10,6 @@ import lombok.*;
 
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.UUID;
 
@@ -44,22 +42,12 @@ public class User extends AuditBase {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private UserRole role = UserRole.customer;
+    private Set<String> roles;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private UserStatus status = UserStatus.active;
 
-    @Column(name = "access_token")
-    private String accessToken;
-
-    @Column(name = "refresh_token")
-    private String refreshToken;
-
-    @Column(name = "expires_at")
-    private OffsetDateTime expiresAt;
 
     // Reverse relations (optional) - Add @JsonIgnore to prevent lazy loading issues
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -72,7 +60,7 @@ public class User extends AuditBase {
     @Builder.Default
     @JsonIgnore
     @ToString.Exclude
-    private List<Cart> carts = new ArrayList<>();
+    private List<CartItem> cartItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @Builder.Default

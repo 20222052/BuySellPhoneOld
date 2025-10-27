@@ -19,29 +19,29 @@ public class Product extends AuditBase {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
+    private Brand brand; // thương hiệu sản phẩm
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    private Category category; // danh mục sản phẩm
 
 
     @Column(length = 200, nullable = false)
-    private String name;
+    private String name; // tên sản phẩm
 
 
     @Column
-    private String description;
+    private String description; // mô tả sản phẩm
 
 
     @Column(name = "warranty_months", nullable = false)
-    private Integer warrantyMonths = 0;
+    private Integer warrantyMonths = 0; // thời gian bảo hành tính theo tháng
 
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private ProductStatus status = ProductStatus.active;
+    private ProductStatus status = ProductStatus.active; // trạng thái sản phẩm
 
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

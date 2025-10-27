@@ -4,7 +4,7 @@ package com.eaut.backend.Model.Response;
 
 import com.eaut.backend.Entity.Address;
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
-import com.eaut.backend.Entity.Cart;
+
 import com.eaut.backend.Entity.Order;
 import com.eaut.backend.Entity.User;
 import com.eaut.backend.untils.Gender;
@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Data @NoArgsConstructor @AllArgsConstructor
@@ -30,11 +31,8 @@ public class UserResponse extends AuditBase {
     private LocalDate birthDate;
     private String email;
     private String phone;
-    private UserRole role;
+    private Set<String> roles;
     private UserStatus status;
-    private String accessToken;
-    private String refreshToken;
-    private OffsetDateTime expiresAt;
 
     public UserResponse(User user) {
         this.id = user.getId();
@@ -43,10 +41,7 @@ public class UserResponse extends AuditBase {
         this.birthDate = user.getBirthDate();
         this.email = user.getEmail();
         this.phone = user.getPhone();
-        this.role = user.getRole();
+        this.roles = user.getRoles();
         this.status = user.getStatus();
-        this.accessToken = user.getAccessToken();
-        this.refreshToken = user.getRefreshToken();
-        this.expiresAt = user.getExpiresAt();
     }
 }

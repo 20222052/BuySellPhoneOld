@@ -28,22 +28,4 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.phone = :phone AND u.id != :userId")
     boolean existsByPhoneAndIdNot(@Param("phone") String phone, @Param("userId") UUID userId);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE User u SET u.accessToken = :token, u.expiresAt = :expiresAt WHERE u.id = :id")
-    int updateTokenAndExpiry(@Param("id") UUID id,
-                             @Param("token") String token,
-                             @Param("expiresAt") OffsetDateTime expiresAt);@Modifying
-    @Transactional
-    @Query("UPDATE User u SET u.accessToken = :token WHERE u.id = :id")
-    int updateToken(@Param("id") UUID id,
-                    @Param("token") String token);
-    @Modifying
-    @Transactional
-    @Query("UPDATE User u SET u.accessToken = :token, u.expiresAt = :expiresAt, u.accessToken = :refreshToken WHERE u.id = :id")
-    int updateTokenAndExpiryAndRefreshToken(@Param("id") UUID id,
-                             @Param("token") String token,
-                             @Param("expiresAt") OffsetDateTime expiresAt,
-                             @Param("refreshToken") String refreshToken);
-
 }

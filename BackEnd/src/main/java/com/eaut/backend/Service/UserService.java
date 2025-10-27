@@ -229,6 +229,8 @@ public class UserService {
         }
     }
     public User ToUser(RegisterRequest registerRequest){
+        HashSet role = new HashSet<>();
+        role.add(UserRole.customer);
         User user = new User();
         user.setFullName(registerRequest.getFullName());
         user.setGender(registerRequest.getGender());
@@ -236,9 +238,8 @@ public class UserService {
         user.setEmail(registerRequest.getEmail());
         user.setPhone(registerRequest.getPhone());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword())); // Encode password
-        user.setRole(UserRole.customer);
+        user.setRoles(role);
         user.setStatus(UserStatus.active);
-        user.setExpiresAt(OffsetDateTime.now().plusDays(1)); // Set expires_at (1 ngày)
         return user;
     }
     UserResponse toUserReponse(User user) {
@@ -254,7 +255,7 @@ public class UserService {
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()
                 ))
-                .claim("scope", user.getRole().toString())
+                .claim("scope", user.getRoles().toString())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

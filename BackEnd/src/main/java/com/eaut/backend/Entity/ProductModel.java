@@ -31,7 +31,7 @@ public class ProductModel extends AuditBase {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 1)
-    private GradeEnum grade;
+    private GradeEnum grade; // A, B, C, D
 
 
     @Column

@@ -51,7 +51,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     generate-ddl: true
     open-in-view: false

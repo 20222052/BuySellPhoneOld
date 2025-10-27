@@ -17,48 +17,48 @@ import java.util.UUID;
 public class Order extends AuditBase {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
-    @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }
+    @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); } // tạo UUID tự động nếu chưa có
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user; // Người đặt hàng
 
 
     @Column(length = 50, nullable = false, unique = true)
-    private String code;
+    private String code; // Mã đơn hàng
 
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private OrderStatus status = OrderStatus.pending;
+    private OrderStatus status = OrderStatus.pending; // Trạng thái đơn hàng
 
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 20, nullable = false)
-    private PaymentMethod paymentMethod = PaymentMethod.cod;
+    private PaymentMethod paymentMethod = PaymentMethod.cod; // Phương thức thanh toán
 
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 20, nullable = false)
-    private PaymentStatus paymentStatus = PaymentStatus.unpaid;
+    private PaymentStatus paymentStatus = PaymentStatus.unpaid; // Trạng thái thanh toán mặc định là chưa thanh toán
 
 
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal;
+    private BigDecimal subtotal; // Tổng tiền hàng
 
 
     @Column(name = "shipping_fee", nullable = false, precision = 12, scale = 2)
-    private BigDecimal shippingFee = BigDecimal.ZERO;
+    private BigDecimal shippingFee = BigDecimal.ZERO; // Phí vận chuyển
 
 
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal total;
+    private BigDecimal total; // Tổng thanh toán
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipping_address_id")
-    private Address shippingAddress;
+    private Address shippingAddress; // Địa chỉ giao hàng
 
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

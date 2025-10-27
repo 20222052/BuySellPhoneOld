@@ -32,7 +32,7 @@ public class ProductMedia extends AuditBase {
 
 
     @Column(name = "is_primary", nullable = false)
-    private boolean isPrimary;
+    private boolean isPrimary; // Ảnh đại diện
 
 
     @Column(name = "sort_order", nullable = false)

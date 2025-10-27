@@ -32,11 +32,11 @@ public class OrderItem extends AuditBase {
 
 
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal unitPrice;
+    private BigDecimal unitPrice; // Giá mỗi đơn vị
 
 
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalPrice;
+    private BigDecimal totalPrice; // Giá tổng cộng
 
 
     @Column(name = "warranty_until")

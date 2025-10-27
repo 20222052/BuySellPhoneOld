@@ -17,8 +17,8 @@ public class CartItem extends AuditBase {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id", nullable = false)
-    private Cart cart;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,7 +27,8 @@ public class CartItem extends AuditBase {
 
 
     @Column(nullable = false)
-    private Integer qty;
+    @Builder.Default
+    private Integer qty = 1;
 
 
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
