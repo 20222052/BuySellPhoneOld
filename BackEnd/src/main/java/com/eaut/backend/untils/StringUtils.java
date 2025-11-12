@@ -1,6 +1,7 @@
 package com.eaut.backend.untils;
 
 import com.eaut.backend.Exception.ApplicationException;
+import com.eaut.backend.constant.ErrorCode;
 
 public class StringUtils {
     public static void validatePassword(String password) throws ApplicationException {

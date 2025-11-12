@@ -1,24 +1,38 @@
 package com.eaut.backend.Domain;
 
 import com.eaut.backend.Config.OtpProperties;
+import com.eaut.backend.Entity.User;
 import com.eaut.backend.Exception.ApplicationException;
 import com.eaut.backend.Model.Request.RegisterRequest;
+import com.eaut.backend.Model.Sercurity.TokenInfo;
 import com.eaut.backend.Redis.Entities.OtpLimitEntity;
 import com.eaut.backend.Redis.Entities.RedisRegisterEntity;
 import com.eaut.backend.Redis.Repository.OtpLimitRedisRepository;
 import com.eaut.backend.Redis.Repository.RegisterRedisRepository;
 
 import com.eaut.backend.untils.BcryptUtils;
-import com.eaut.backend.untils.ErrorCode;
+import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.untils.TimeUtils;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Slf4j
@@ -31,6 +45,9 @@ public class OtpDomain {
     final RegisterRedisRepository registerRedisRepository;
     final OtpProperties otpProperties;
 
+    @Value("${app.jwt.secret}")
+    @NonFinal
+    private String jwtSecret;
     // Constructor để khởi tạo formatter với độ dài OTP từ properties
     public OtpDomain(OtpLimitRedisRepository otpLimitRedisRepository, 
                      RegisterRedisRepository registerRedisRepository,
@@ -45,6 +62,56 @@ public class OtpDomain {
             pattern.append("0");
         }
         this.formatter = new DecimalFormat(pattern.toString());
+    }
+
+    public String generateToken(User user) throws ApplicationException {
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+                .subject(user.getEmail())
+                .issueTime(new Date())
+                .expirationTime(new Date(
+                        Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()
+                ))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("scope", user.getRoles().toString())
+                .build();
+
+        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+
+        JWSObject jwsObject = new JWSObject(header, payload);
+        try {
+            jwsObject.sign(new MACSigner(jwtSecret.getBytes()));
+            return jwsObject.serialize();
+        } catch (JOSEException e) {
+            throw new ApplicationException(ErrorCode.UNABLE_TOKEN_CREATED, e.getMessage());
+        }
+    }
+
+    public TokenInfo getTokenInfo(String token) throws ApplicationException, ParseException, JOSEException {
+        SignedJWT signedJWT = verifyToken(token);
+        JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+
+        return new TokenInfo(
+                UUID.fromString(claims.getJWTID()),
+                claims.getSubject(),
+                claims.getIssueTime().getTime(),
+                claims.getExpirationTime().getTime(),
+                claims.getStringClaim("scope")
+        );
+    }
+
+    public SignedJWT verifyToken(String token) throws ApplicationException, ParseException, JOSEException {
+        JWSVerifier verifier = new MACVerifier(jwtSecret.getBytes());
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        Date exprirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        var verify = signedJWT.verify(verifier);
+        if (exprirationTime.before(new Date())) {
+            throw new ApplicationException(ErrorCode.TOKEN_EXPIRED, "Token is invalid");
+        }else if (!verify){
+            throw new ApplicationException(ErrorCode.TOKEN_INVALID, "Token is invalid");
+        }
+        return signedJWT;
     }
 
     //Validate OTP limit và các điều kiện theo OtpProperties
@@ -75,32 +142,36 @@ public class OtpDomain {
         // 1. Kiểm tra lockout (tài khoản bị khóa do quá nhiều lần thử sai)
         if (entity.getLockedUntil() > currentTimeSeconds) {
             long remainingLockTime = entity.getLockedUntil() - currentTimeSeconds;
+            entity.setOtpLimitStatus(false);
             log.warn("[validateLimitOtpByEmail] Account locked for email: {} - Remaining: {}s", 
                     email, remainingLockTime);
             throw new ApplicationException(ErrorCode.OTP_TOO_MANY_ATTEMPTS, 
                     "Account locked. Try again in " + remainingLockTime + " seconds");
         }
-//
+
 //        // 2. Kiểm tra daily limit
-//        if (entity.getDailyOtpCounter() >= otpProperties.getDailyLimit()) {
-//            log.warn("[validateLimitOtpByEmail] Daily limit reached for email: {} - Count: {}/{}",
-//                    email, entity.getDailyOtpCounter(), otpProperties.getDailyLimit());
-//            throw new ApplicationException(ErrorCode.OTP_RESEND_LIMIT_REACHED,
-//                    "Daily OTP limit reached: " + otpProperties.getDailyLimit());
-//        }
-//
+        if (entity.getDailyOtpCounter() >= otpProperties.getDailyLimit()) {
+            entity.setOtpLimitStatus(false);
+            log.warn("[validateLimitOtpByEmail] Daily limit reached for email: {} - Count: {}/{}",
+                    email, entity.getDailyOtpCounter(), otpProperties.getDailyLimit());
+            throw new ApplicationException(ErrorCode.OTP_RESEND_LIMIT_REACHED,
+                    "Daily OTP limit reached: " + otpProperties.getDailyLimit());
+        }
+
 //        // 3. Kiểm tra resend limit
-//        if (entity.getResendCount() >= otpProperties.getResendLimit()) {
-//            log.warn("[validateLimitOtpByEmail] Resend limit reached for email: {} - Count: {}/{}",
-//                    email, entity.getResendCount(), otpProperties.getResendLimit());
-//            throw new ApplicationException(ErrorCode.OTP_RESEND_LIMIT_REACHED,
-//                    "OTP resend limit reached: " + otpProperties.getResendLimit());
-//        }
+        if (entity.getResendCount() >= otpProperties.getResendLimit()) {
+            entity.setOtpLimitStatus(false);
+            log.warn("[validateLimitOtpByEmail] Resend limit reached for email: {} - Count: {}/{}",
+                    email, entity.getResendCount(), otpProperties.getResendLimit());
+            throw new ApplicationException(ErrorCode.OTP_RESEND_LIMIT_REACHED,
+                    "OTP resend limit reached: " + otpProperties.getResendLimit());
+        }
 
         // 4. Kiểm tra cooldown time (thời gian chờ giữa 2 lần gửi)
         if (entity.getLastResendTime() > 0) {
             long timeSinceLastResend = currentTimeSeconds - entity.getLastResendTime();
             if (timeSinceLastResend < otpProperties.getResendCooldownSeconds()) {
+                entity.setOtpLimitStatus(false);
                 long remainingCooldown = otpProperties.getResendCooldownSeconds() - timeSinceLastResend;
                 log.warn("[validateLimitOtpByEmail] Cooldown active for email: {} - Remaining: {}s", 
                         email, remainingCooldown);
@@ -119,10 +190,12 @@ public class OtpDomain {
 
         // Validate limit trước khi sinh OTP
         OtpLimitEntity otpLimitEntity = validateLimitOtpByEmail(registerRequest.getEmail());
+
+        log.info("✅ [OTP-GENERATION] OTP limit validation passed for email: {}", otpLimitEntity);
         
         // Sinh mã OTP với độ dài được cấu hình
         String otp = genOtp();
-        log.info("🔢 [OTP-GENERATION] Generated {}-digit OTP for email: {}", 
+        log.info("🔢 [OTP-GENERATION] Generated {}-digit OTP for email: {}",
                 otpProperties.getLength(), registerRequest.getEmail());
         
         long currentTimeSeconds = System.currentTimeMillis() / 1000;
@@ -132,7 +205,7 @@ public class OtpDomain {
                 new RedisRegisterEntity<>(
                     registerRequest.getEmail(),
                     otp,
-                    currentTimeSeconds + (otpProperties.getExpiryMinutes() * 60), // otpExpiredTime từ properties
+                    currentTimeSeconds + (otpProperties.getExpiryMinutes() * 60L), // otpExpiredTime từ properties
                     currentTimeSeconds + otpProperties.getResendCooldownSeconds(),  // otpResendTime từ properties
                     otpLimitEntity.getResendCount(),
                     registerRequest.getEmail(),
@@ -146,7 +219,7 @@ public class OtpDomain {
                 registerRequest.getEmail(), otpProperties.getExpiryMinutes());
         
         RedisRegisterEntity<RegisterRequest> savedEntity = registerRedisRepository.save(redisRegister);
-        log.info("✅ [REDIS-SAVE] Successfully saved RedisRegisterEntity: {}", 
+        log.info("✅ [REDIS-SAVE] Successfully saved RedisRegisterEntity: {}",
                 savedEntity != null ? "SUCCESS" : "FAILED");
         
         // Cập nhật OTP limit counter

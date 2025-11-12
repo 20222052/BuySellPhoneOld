@@ -1,26 +1,17 @@
 package com.eaut.backend.API;
 
 import com.eaut.backend.Entity.User;
-import com.eaut.backend.Exception.ApplicationException;
-import com.eaut.backend.Model.Request.ConfirmOtpRegisterRequest;
 import com.eaut.backend.Model.Request.RegisterRequest;
 import com.eaut.backend.Model.Response.ApiReponse;
-import com.eaut.backend.Model.Response.AuthenticationReponse;
 import com.eaut.backend.Model.Response.RegisterReponse;
 import com.eaut.backend.Model.Response.UserResponse;
-import com.eaut.backend.Repository.UserRepository;
-import com.eaut.backend.Service.UserService;
+import com.eaut.backend.Service.impl.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.http.HttpRequest;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

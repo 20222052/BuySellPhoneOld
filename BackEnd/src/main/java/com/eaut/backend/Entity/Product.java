@@ -2,7 +2,7 @@ package com.eaut.backend.Entity;
 
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
-import com.eaut.backend.untils.ProductStatus;
+import com.eaut.backend.constant.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.*;

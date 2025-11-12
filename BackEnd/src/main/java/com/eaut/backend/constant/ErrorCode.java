@@ -1,4 +1,4 @@
-package com.eaut.backend.untils;
+package com.eaut.backend.constant;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

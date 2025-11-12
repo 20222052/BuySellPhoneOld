@@ -1,6 +1,6 @@
 package com.eaut.backend.Exception;
 
-import com.eaut.backend.untils.ErrorCode;
+import com.eaut.backend.constant.ErrorCode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

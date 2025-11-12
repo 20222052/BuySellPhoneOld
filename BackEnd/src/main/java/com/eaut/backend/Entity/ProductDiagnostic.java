@@ -2,14 +2,13 @@ package com.eaut.backend.Entity;
 
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
-import com.eaut.backend.untils.DiagnosticStatus;
+import com.eaut.backend.constant.DiagnosticStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
 import java.util.UUID;
 
 @Entity

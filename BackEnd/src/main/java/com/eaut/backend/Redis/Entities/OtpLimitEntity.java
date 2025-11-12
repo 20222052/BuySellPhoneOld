@@ -1,6 +1,7 @@
 package com.eaut.backend.Redis.Entities;
 
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
@@ -15,6 +16,7 @@ public class OtpLimitEntity {
     private int resendCount;          // Số lần gửi lại trong phiên
     private int failedAttempts;       // Số lần nhập sai OTP
     private long lockedUntil;         // Thời gian khóa tài khoản (timestamp)
+    private boolean otpLimitStatus; // Trạng thái giới hạn OTP
     @TimeToLive
     private long ttl;
 }

@@ -2,7 +2,7 @@ package com.eaut.backend.Apo;
 
 import com.eaut.backend.Exception.ApplicationException;
 import com.eaut.backend.Model.Response.BadRequestResponse;
-import com.eaut.backend.untils.ErrorCode;
+import com.eaut.backend.constant.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @RestControllerAdvice

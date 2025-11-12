@@ -222,7 +222,7 @@ public class MailConsumer {
                         <!-- OTP Box -->
                         <div style="text-align: center; margin: 30px 0;">
                             <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102,126,234,0.3);">
-                                <div style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 0;">
+                                <div style="color: gray; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 0;">
                                     {{OTP}}
                                 </div>
                             </div>
