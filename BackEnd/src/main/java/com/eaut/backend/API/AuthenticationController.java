@@ -8,7 +8,7 @@ import com.eaut.backend.Model.Request.LogoutRequest;
 import com.eaut.backend.Model.Response.ApiReponse;
 import com.eaut.backend.Model.Response.AuthenticationReponse;
 import com.eaut.backend.Model.Response.UserResponse;
-import com.eaut.backend.Service.AuthenticationService;
+import com.eaut.backend.Service.impl.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
-import java.util.UUID;
 
 @Slf4j
 @RestController

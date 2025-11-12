@@ -1,8 +1,7 @@
 package com.eaut.backend.Config;
 
 import com.eaut.backend.Model.Response.BadRequestResponse;
-import com.eaut.backend.untils.ErrorCode;
-import com.eaut.backend.untils.UserRole;
+import com.eaut.backend.constant.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;

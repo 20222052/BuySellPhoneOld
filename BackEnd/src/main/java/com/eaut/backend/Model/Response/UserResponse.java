@@ -2,24 +2,16 @@ package com.eaut.backend.Model.Response;
 
 // === Lombok & JPA imports ===
 
-import com.eaut.backend.Entity.Address;
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
 
-import com.eaut.backend.Entity.Order;
 import com.eaut.backend.Entity.User;
-import com.eaut.backend.untils.Gender;
-import com.eaut.backend.untils.UserRole;
-import com.eaut.backend.untils.UserStatus;
-import jakarta.persistence.*;
+import com.eaut.backend.constant.Gender;
+import com.eaut.backend.constant.UserStatus;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 

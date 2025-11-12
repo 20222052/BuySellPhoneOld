@@ -2,9 +2,9 @@ package com.eaut.backend.Entity;
 
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
-import com.eaut.backend.untils.OrderStatus;
-import com.eaut.backend.untils.PaymentMethod;
-import com.eaut.backend.untils.PaymentStatus;
+import com.eaut.backend.constant.OrderStatus;
+import com.eaut.backend.constant.PaymentMethod;
+import com.eaut.backend.constant.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

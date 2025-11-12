@@ -1,8 +1,6 @@
 package com.eaut.backend.Model.Request;
 
-import com.eaut.backend.untils.Gender;
-import com.eaut.backend.untils.UserRole;
-import com.eaut.backend.untils.UserStatus;
+import com.eaut.backend.constant.Gender;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;

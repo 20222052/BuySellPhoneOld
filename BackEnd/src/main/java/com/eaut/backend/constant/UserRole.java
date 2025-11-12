@@ -1,10 +1,10 @@
-package com.eaut.backend.untils;
+package com.eaut.backend.constant;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum Gender { male("male"), female("female"), other("other");
+public enum UserRole { admin("admin"), customer("customer"), staff("staff");
     private final String value;
 }

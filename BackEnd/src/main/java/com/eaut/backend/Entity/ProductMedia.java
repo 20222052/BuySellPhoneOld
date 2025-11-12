@@ -2,10 +2,10 @@ package com.eaut.backend.Entity;
 
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
-import com.eaut.backend.untils.MediaType;
+import com.eaut.backend.constant.MediaType;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.*;
+
 import java.util.UUID;
 
 @Entity

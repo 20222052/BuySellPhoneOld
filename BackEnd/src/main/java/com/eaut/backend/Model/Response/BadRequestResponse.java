@@ -1,7 +1,7 @@
 package com.eaut.backend.Model.Response;
 
 import com.eaut.backend.Exception.ApplicationException;
-import com.eaut.backend.untils.ErrorCode;
+import com.eaut.backend.constant.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 

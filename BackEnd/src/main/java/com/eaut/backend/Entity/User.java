@@ -2,8 +2,8 @@ package com.eaut.backend.Entity;
 
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
-import com.eaut.backend.untils.Gender;
-import com.eaut.backend.untils.UserStatus;
+import com.eaut.backend.constant.Gender;
+import com.eaut.backend.constant.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
