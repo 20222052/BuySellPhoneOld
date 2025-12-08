@@ -1,0 +1,123 @@
+@import './Login.css';
+
+/* OTP Specific Styles */
+.otp-card {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.otp-icon {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.otp-icon i {
+    font-size: 5rem;
+    color: var(--primary-color);
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rotateIcon 3s ease-in-out infinite;
+}
+
+@keyframes rotateIcon {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(10deg);
+    }
+}
+
+.otp-form {
+    width: 100%;
+}
+
+.otp-inputs {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.otp-input {
+    width: 60px;
+    height: 60px;
+    text-align: center;
+    font-size: var(--font-2xl);
+    font-weight: var(--font-bold);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+
+.otp-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1);
+    transform: scale(1.05);
+}
+
+.otp-timer {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.otp-timer p {
+    color: var(--gray-600);
+    font-size: var(--font-base);
+}
+
+.timer-count {
+    color: var(--primary-color);
+    font-weight: var(--font-bold);
+    font-size: var(--font-lg);
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition-base);
+}
+
+.resend-btn:hover {
+    color: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.resend-btn i {
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .otp-inputs {
+        gap: var(--spacing-sm);
+    }
+
+    .otp-input {
+        width: 45px;
+        height: 45px;
+        font-size: var(--font-xl);
+    }
+}
