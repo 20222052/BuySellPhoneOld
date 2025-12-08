@@ -10,6 +10,7 @@ import com.eaut.backend.Redis.Entities.RedisRegisterEntity;
 import com.eaut.backend.Redis.Repository.OtpLimitRedisRepository;
 import com.eaut.backend.Redis.Repository.RegisterRedisRepository;
 
+import com.eaut.backend.Repository.InvalidateTokenRepository;
 import com.eaut.backend.untils.BcryptUtils;
 import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.untils.TimeUtils;
@@ -44,14 +45,15 @@ public class OtpDomain {
     final OtpLimitRedisRepository otpLimitRedisRepository;
     final RegisterRedisRepository registerRedisRepository;
     final OtpProperties otpProperties;
+    private final InvalidateTokenRepository invalidateTokenRepository;
 
     @Value("${app.jwt.secret}")
     @NonFinal
     private String jwtSecret;
     // Constructor để khởi tạo formatter với độ dài OTP từ properties
-    public OtpDomain(OtpLimitRedisRepository otpLimitRedisRepository, 
+    public OtpDomain(OtpLimitRedisRepository otpLimitRedisRepository,
                      RegisterRedisRepository registerRedisRepository,
-                     OtpProperties otpProperties) {
+                     OtpProperties otpProperties, InvalidateTokenRepository invalidateTokenRepository) {
         this.otpLimitRedisRepository = otpLimitRedisRepository;
         this.registerRedisRepository = registerRedisRepository;
         this.otpProperties = otpProperties;
@@ -62,6 +64,7 @@ public class OtpDomain {
             pattern.append("0");
         }
         this.formatter = new DecimalFormat(pattern.toString());
+        this.invalidateTokenRepository = invalidateTokenRepository;
     }
 
     public String generateToken(User user) throws ApplicationException {
@@ -111,8 +114,13 @@ public class OtpDomain {
         }else if (!verify){
             throw new ApplicationException(ErrorCode.TOKEN_INVALID, "Token is invalid");
         }
+        if (invalidateTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+            throw new ApplicationException(ErrorCode.UNAUTHORIZED, "Token is invalid");
+        }
         return signedJWT;
     }
+
+    // Validate Token in InvalidToken table
 
     //Validate OTP limit và các điều kiện theo OtpProperties
     public OtpLimitEntity validateLimitOtpByEmail(String email) {

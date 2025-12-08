@@ -5,6 +5,7 @@ import com.eaut.backend.constant.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +39,10 @@ public class SecurityConfig {
     @NonFinal
     private String jwtSecret;
 
+    @Autowired
+    private CustomJwtDecoder customJwtDecoder;
+
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
    @Bean
@@ -46,7 +51,7 @@ public class SecurityConfig {
            .csrf(AbstractHttpConfigurer::disable)
            .oauth2ResourceServer(oauth2 ->
                    oauth2.jwt(jwtConfigurer ->
-                           jwtConfigurer.decoder(jwtDecoder())
+                           jwtConfigurer.decoder(customJwtDecoder)
                            .jwtAuthenticationConverter(jwtAuthenticationConverter())
                    )
                    .authenticationEntryPoint((request, response, authException) -> {
@@ -105,14 +110,6 @@ public class SecurityConfig {
        return jwtAuthenticationConverter;
    }
 
-   @Bean
-    JwtDecoder jwtDecoder() {
-       SecretKeySpec secretKeySpec = new SecretKeySpec(jwtSecret.getBytes(), "HS512");
-       return NimbusJwtDecoder
-               .withSecretKey(secretKeySpec)
-               .macAlgorithm(MacAlgorithm.HS512)
-               .build();
-   }
 
    @Bean
    public PasswordEncoder passwordEncoder() {

@@ -2,10 +2,10 @@ package com.eaut.backend.API;
 
 import com.eaut.backend.Entity.User;
 import com.eaut.backend.Model.Request.RegisterRequest;
-import com.eaut.backend.Model.Response.ApiReponse;
+import com.eaut.backend.Model.Response.ApiResponse;
 import com.eaut.backend.Model.Response.RegisterReponse;
 import com.eaut.backend.Model.Response.UserResponse;
-import com.eaut.backend.Service.impl.UserService;
+import com.eaut.backend.Service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,19 +27,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/user")
 public class UserController {
-    private final UserService userService;
+    private final UserServiceImpl userServiceImpl;
 
     /**
      * Đăng ký user mới
      */
     @PostMapping("/register")
-    public ApiReponse<User> register(@RequestBody RegisterRequest registerRequest) {
+    public ApiResponse<User> register(@RequestBody RegisterRequest registerRequest) {
         log.info("UserController: Received register request for email: {}", registerRequest.getEmail());
-        RegisterReponse registerReponse = userService.registerUser(registerRequest);
-        ApiReponse<User> apiReponse = new ApiReponse(
+        RegisterReponse registerReponse = userServiceImpl.registerUser(registerRequest);
+        ApiResponse<User> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 registerReponse);
-        return apiReponse;
+        return apiResponse;
     }
 
 
@@ -48,26 +48,26 @@ public class UserController {
      */
     @PostAuthorize("returnObject.data.email == authentication.name or hasRole('admin')")
     @GetMapping("/{userId}")
-    public ApiReponse<UserResponse> getUserById(@PathVariable UUID userId) {
+    public ApiResponse<UserResponse> getUserById(@PathVariable UUID userId) {
             log.info("UserController: Get user by ID: {}", userId);
-            UserResponse user = userService.getUserById(userId);
+            UserResponse user = userServiceImpl.getUserById(userId);
 
-            ApiReponse<UserResponse> apiReponse = new ApiReponse(
+            ApiResponse<UserResponse> apiResponse = new ApiResponse(
                     HttpStatus.OK.value(),
                     user);
 
-        return apiReponse;
+        return apiResponse;
 
     }
 
     @GetMapping("/myinfo")
-    public ApiReponse<UserResponse> getMyInfo() {
-            UserResponse user = userService.getMyInfo();
+    public ApiResponse<UserResponse> getMyInfo() {
+            UserResponse user = userServiceImpl.getMyInfo();
 
-            ApiReponse<UserResponse> apiReponse = new ApiReponse(
+            ApiResponse<UserResponse> apiResponse = new ApiResponse(
                     HttpStatus.OK.value(),
                     user);
-        return apiReponse;
+        return apiResponse;
     }
 
     /**
@@ -75,17 +75,17 @@ public class UserController {
      */
     @PreAuthorize("hasRole('admin')")
     @PutMapping("/update/{userId}")
-    public ApiReponse<UserResponse> updateUser(
+    public ApiResponse<UserResponse> updateUser(
             @PathVariable UUID userId, 
             @RequestBody RegisterRequest registerRequest) {
             log.info("UserController: Update user with ID: {}", userId);
-            UserResponse updatedUser = userService.updateUser(userId, registerRequest);
+            UserResponse updatedUser = userServiceImpl.updateUser(userId, registerRequest);
 
-        ApiReponse<UserResponse> apiReponse = new ApiReponse(
+        ApiResponse<UserResponse> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 updatedUser);
 
-        return apiReponse;
+        return apiResponse;
 
     }
 }

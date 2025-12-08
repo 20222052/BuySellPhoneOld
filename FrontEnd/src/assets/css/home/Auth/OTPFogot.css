@@ -1,0 +1,18 @@
+@import './OTPRegister.css';
+
+/* OTP Forgot specific icon */
+.otp-icon i.bi-key-fill {
+    animation: wiggle 1.5s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+
+    0%,
+    100% {
+        transform: rotate(-3deg);
+    }
+
+    50% {
+        transform: rotate(3deg);
+    }
+}

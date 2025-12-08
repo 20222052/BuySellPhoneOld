@@ -1,14 +1,12 @@
 package com.eaut.backend.API;
 
 import com.eaut.backend.Exception.ApplicationException;
-import com.eaut.backend.Model.Request.ConfirmOtpRegisterRequest;
-import com.eaut.backend.Model.Request.ForgotPasswordRequest;
-import com.eaut.backend.Model.Request.LoginRequest;
-import com.eaut.backend.Model.Request.LogoutRequest;
-import com.eaut.backend.Model.Response.ApiReponse;
+import com.eaut.backend.Model.Request.*;
+import com.eaut.backend.Model.Response.ApiResponse;
 import com.eaut.backend.Model.Response.AuthenticationReponse;
+import com.eaut.backend.Model.Response.IntrospectResponse;
 import com.eaut.backend.Model.Response.UserResponse;
-import com.eaut.backend.Service.impl.AuthenticationService;
+import com.eaut.backend.Service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,67 +23,75 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
-    final AuthenticationService authenticationService;
+    final AuthenticationService authenticationServiceImpl;
+
+    @PostMapping("/introspect")
+    ApiResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
+            throws ParseException, JOSEException {
+        var result = authenticationServiceImpl.introspect(request);
+        return ApiResponse.<IntrospectResponse>builder()
+                .data(result).build();
+    }
 
     /**
      * Forgot password - Send OTP to email
      */
     @PostMapping("forgot-password")
-    public ApiReponse<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) throws ApplicationException {
+    public ApiResponse<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) throws ApplicationException {
         log.info("🌐 [API] Forgot Password request received for Email: {}", forgotPasswordRequest.getEmail());
-        authenticationService.forgotPassword(forgotPasswordRequest);
-        ApiReponse<String> apiReponse = new ApiReponse(
+        authenticationServiceImpl.forgotPassword(forgotPasswordRequest);
+        ApiResponse<String> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 "OTP sent to email successfully");
         log.info("AuthenticationController: OTP sent to email successfully: {}", forgotPasswordRequest.getEmail());
-        return apiReponse;
+        return apiResponse;
     }
     /**
      * Forgot Password Confirm OTP and Update new password
      */
     @PostMapping("forgot-password-confirm-otp")
-    public ApiReponse<String> forgotPasswordConfirmOtp(@RequestBody ConfirmOtpRegisterRequest request) throws ApplicationException {
+    public ApiResponse<String> forgotPasswordConfirmOtp(@RequestBody ConfirmOtpRegisterRequest request) throws ApplicationException {
         log.info("🌐 [API] Confirm OTP request received for Email: {}", request.getEmail());
-        authenticationService.confirmForgotPassword(request);
-        ApiReponse<String> apiReponse = new ApiReponse(
+        authenticationServiceImpl.confirmForgotPassword(request);
+        ApiResponse<String> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 "Password updated successfully");
         log.info("AuthenticationController: Password updated successfully for Email: {}", request.getEmail());
-        return apiReponse;
+        return apiResponse;
     }
 
     /**
      * Confirm OTP and complete registration
      */
     @PostMapping("confirm-otp")
-    public ApiReponse<AuthenticationReponse<UserResponse>> confirmOtp(@RequestBody ConfirmOtpRegisterRequest request) throws ApplicationException {
+    public ApiResponse<AuthenticationReponse<UserResponse>> confirmOtp(@RequestBody ConfirmOtpRegisterRequest request) throws ApplicationException {
         log.info("🌐 [API] Confirm OTP request received for Email: {}", request.getEmail());
 
-        AuthenticationReponse<UserResponse> result = authenticationService.confirmOtpAndRegister(request);
-        ApiReponse<AuthenticationReponse<UserResponse>> apiReponse = new ApiReponse(
+        AuthenticationReponse<UserResponse> result = authenticationServiceImpl.confirmOtpAndRegister(request);
+        ApiResponse<AuthenticationReponse<UserResponse>> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 result);
         log.info("AuthenticationController: User Login successfully with Email: {}", request.getEmail());
-        return apiReponse;
+        return apiResponse;
     }
 
     @PostMapping("/login")
-    public ApiReponse<AuthenticationReponse<UserResponse>> login(@RequestBody LoginRequest loginRequest) {
-        AuthenticationReponse<UserResponse> result = authenticationService.authenticated(loginRequest);
-        ApiReponse<AuthenticationReponse<UserResponse>> apiReponse = new ApiReponse(
+    public ApiResponse<AuthenticationReponse<UserResponse>> login(@RequestBody LoginRequest loginRequest) {
+        AuthenticationReponse<UserResponse> result = authenticationServiceImpl.authenticated(loginRequest);
+        ApiResponse<AuthenticationReponse<UserResponse>> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 result);
         log.info("AuthenticationController: User Login successfully with Email: {}", loginRequest.getEmail());
-        return apiReponse;
+        return apiResponse;
     }
 
     @GetMapping("/logout")
-    public ApiReponse<AuthenticationReponse<UserResponse>> logout(@RequestBody LogoutRequest logoutRequest) throws ParseException, JOSEException {
-        AuthenticationReponse<UserResponse> result = authenticationService.logout(logoutRequest);
-        ApiReponse<AuthenticationReponse<UserResponse>> apiReponse = new ApiReponse<>(
+    public ApiResponse<AuthenticationReponse<UserResponse>> logout() throws ParseException, JOSEException {
+        AuthenticationReponse<UserResponse> result = authenticationServiceImpl.logout();
+        ApiResponse<AuthenticationReponse<UserResponse>> apiResponse = new ApiResponse<>(
                 HttpStatus.OK.value(),
                 result);
-        log.info("AuthenticationController: User Logout successfully with Id: {}", logoutRequest.getToken());
-        return apiReponse;
+//        log.info("AuthenticationController: User Logout successfully with Id: {}", logoutRequest.getToken());
+        return apiResponse;
     }
 }
