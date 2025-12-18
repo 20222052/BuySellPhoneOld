@@ -26,6 +26,7 @@ public class Category extends AuditBase {
     @Column
     private String description;
 
+    private String image;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;

@@ -13,10 +13,12 @@ import com.eaut.backend.Model.Sercurity.TokenInfo;
 import com.eaut.backend.Redis.Entities.RedisRegisterEntity;
 import com.eaut.backend.Redis.Repository.RegisterRedisRepository;
 import com.eaut.backend.Repository.InvalidateTokenRepository;
+import com.eaut.backend.Repository.RoleRepository;
 import com.eaut.backend.Repository.UserRepository;
 import com.eaut.backend.Service.AuthenticationService;
 import com.eaut.backend.Service.MailService.MailProducer;
 import com.eaut.backend.constant.ErrorCode;
+import com.eaut.backend.constant.UserRole;
 import com.eaut.backend.untils.Mapper;
 import com.eaut.backend.untils.Validate;
 import com.nimbusds.jose.*;
@@ -33,13 +35,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.eaut.backend.untils.DateUtils.currentDate;
 
@@ -51,6 +52,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     final UserRepository userRepository;
     final OtpDomain otpDomain;
     final RegisterRedisRepository registerRedisRepository;
+    final RoleRepository roleRepository;
     final InvalidateTokenRepository invalidateTokenRepository;
     final PasswordEncoder passwordEncoder;
     final MailProducer mailProducer;
@@ -76,41 +78,44 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     // Authentication OTP Confirm
     @Override
     public AuthenticationReponse<UserResponse> confirmOtpAndRegister(ConfirmOtpRegisterRequest request) throws ApplicationException {
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] Starting OTP confirmation and user registration for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Starting OTP confirmation and user registration for Email: {}", request.getEmail());
 
         // Validate OTP
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] Verifying OTP for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Verifying OTP for Email: {}", request.getEmail());
         if (!otpDomain.verifyOtpByEmail(request.getEmail(), request.getOtp())) {
-            AuthenticationServiceImpl.log.warn("👤 [CONFIRM-OTP] OTP VERIFICATION FAILED for Email: {}", request.getEmail());
+            AuthenticationServiceImpl.log.warn("[CONFIRM-OTP] OTP VERIFICATION FAILED for Email: {}", request.getEmail());
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Invalid or expired OTP");
         }
 
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] OTP verified successfully, proceeding with user creation for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] OTP verified successfully, proceeding with user creation for Email: {}", request.getEmail());
 
         // Nhận dữ liệu đăng ký từ Redis bằng cách sử dụng email được định dạng làm khóa
         Optional<RedisRegisterEntity<RegisterRequest>> registerEntityOpt = registerRedisRepository.findById(request.getEmail());
         if (registerEntityOpt.isEmpty()) {
-            AuthenticationServiceImpl.log.error("👤 [CONFIRM-OTP] REGISTRATION FAILED - Registration session not found for Email: {}", request.getEmail());
+            AuthenticationServiceImpl.log.error("[CONFIRM-OTP] REGISTRATION FAILED - Registration session not found for Email: {}", request.getEmail());
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Registration session not found");
         }
 
         RedisRegisterEntity<RegisterRequest> registerEntity = registerEntityOpt.get();
-        AuthenticationServiceImpl.log.debug("👤 [CONFIRM-OTP] Retrieved registration data for Email: {}", registerEntity.getEmail());
+        AuthenticationServiceImpl.log.debug("[CONFIRM-OTP] Retrieved registration data for Email: {}", registerEntity.getEmail());
 
 
         // Create user in database
         User user = Mapper.ToUser(registerEntity.getData());
+        var role = roleRepository.findById(UserRole.customer.getValue())
+                .orElseThrow();
+        user.setRoles(Set.of(role));
         // Generate JWT token
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] Generating JWT token for user - ID: {}, Email: {}", user.getId(), user.getEmail());
-        String token = otpDomain.generateToken(user);
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Generating JWT token for user - ID: {}, Email: {}", user.getId(), user.getEmail());
         User result = userRepository.save(user);
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] User created successfully - ID: {}, Email: {}", result.getId(), result.getEmail());
+        String token = otpDomain.generateToken(result);
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] User created successfully - ID: {}, Email: {}", result.getId(), result.getEmail());
 
         // Clean up Redis data using formatted phone number as key
         registerRedisRepository.deleteById(request.getEmail());
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] Cleaned up Redis registration data for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Cleaned up Redis registration data for Email: {}", request.getEmail());
 
-        AuthenticationServiceImpl.log.info("👤 [CONFIRM-OTP] REGISTRATION COMPLETED successfully for Email: {} - User ID: {}", result.getEmail(), result.getId());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] REGISTRATION COMPLETED successfully for Email: {} - User ID: {}", result.getEmail(), result.getId());
 
         return new AuthenticationReponse<UserResponse>(true, token, Mapper.toUserReponse(user));
     }
@@ -172,6 +177,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new AuthenticationReponse<UserResponse>(true, Mapper.toUserReponse(user));
     }
     // Login
+    @Transactional(readOnly = true)
     @Override
     public AuthenticationReponse<UserResponse> authenticated(LoginRequest loginRequest) {
         AuthenticationServiceImpl.log.info("AuthenticationService: Attempting to authenticate user with email: {}", loginRequest.getEmail());
@@ -182,8 +188,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String token = otpDomain.generateToken(user);
             AuthenticationServiceImpl.log.info("AuthenticationService: Successfully authenticated user with email: {}", loginRequest.getEmail());
             return new AuthenticationReponse<UserResponse>(true, token, Mapper.toUserReponse(user));
-        }
-        return new  AuthenticationReponse<UserResponse>(false);
+        }else
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "Password is incorrect for email: " + loginRequest.getEmail());
     }
     // Logout
     @Override

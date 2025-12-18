@@ -1,0 +1,50 @@
+package com.eaut.backend.Config;
+
+import com.eaut.backend.Entity.Role;
+import com.eaut.backend.Entity.User;
+import com.eaut.backend.Model.Response.UserResponse;
+import com.eaut.backend.Repository.RoleRepository;
+import com.eaut.backend.Repository.UserRepository;
+import com.eaut.backend.constant.UserRole;
+import com.eaut.backend.constant.UserStatus;
+import com.eaut.backend.untils.BcryptUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.*;
+
+@Slf4j
+@Configuration
+public class AplplicationInitConfig {
+    @Autowired
+    private RoleRepository roleRepository;
+    @Bean
+    ApplicationRunner applicationRunner(UserRepository userRepository) {
+        return args -> {
+            if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
+                System.out.println("Admin user not found. create account admin user username:'admin@gmail.com', password:'Admin1234!@#$' ");
+                var role = roleRepository.findById(UserRole.admin.getValue())
+                        .orElseThrow();
+                User user = User.builder()
+                        .fullName("admin")
+                        .email("admin@gmail.com")
+                        .phone("123456789")
+                        .password(BcryptUtils.encode("Admin1234!@#$"))
+                        .roles(Set.of(role))
+                        .status(UserStatus.active)
+                        .build();
+
+                try {
+                    userRepository.save(user);
+                    log.info("UserService: User admin save success.");
+                } catch (Exception e) {
+                    log.info("UserService: User admin save failed.");
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+    };
+}

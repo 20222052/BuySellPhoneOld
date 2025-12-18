@@ -2,32 +2,35 @@ package com.eaut.backend.API;
 
 import com.eaut.backend.Entity.User;
 import com.eaut.backend.Model.Request.RegisterRequest;
+import com.eaut.backend.Model.Request.UserUpdateRequest;
 import com.eaut.backend.Model.Response.ApiResponse;
+import com.eaut.backend.Model.Response.PagingResponse;
 import com.eaut.backend.Model.Response.RegisterReponse;
 import com.eaut.backend.Model.Response.UserResponse;
+import com.eaut.backend.Service.UserService;
 import com.eaut.backend.Service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.Parameter;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/user")
 public class UserController {
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userService;
 
     /**
      * Đăng ký user mới
@@ -35,7 +38,7 @@ public class UserController {
     @PostMapping("/register")
     public ApiResponse<User> register(@RequestBody RegisterRequest registerRequest) {
         log.info("UserController: Received register request for email: {}", registerRequest.getEmail());
-        RegisterReponse registerReponse = userServiceImpl.registerUser(registerRequest);
+        RegisterReponse registerReponse = userService.registerUser(registerRequest);
         ApiResponse<User> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
                 registerReponse);
@@ -50,7 +53,7 @@ public class UserController {
     @GetMapping("/{userId}")
     public ApiResponse<UserResponse> getUserById(@PathVariable UUID userId) {
             log.info("UserController: Get user by ID: {}", userId);
-            UserResponse user = userServiceImpl.getUserById(userId);
+            UserResponse user = userService.getUserById(userId);
 
             ApiResponse<UserResponse> apiResponse = new ApiResponse(
                     HttpStatus.OK.value(),
@@ -62,7 +65,7 @@ public class UserController {
 
     @GetMapping("/myinfo")
     public ApiResponse<UserResponse> getMyInfo() {
-            UserResponse user = userServiceImpl.getMyInfo();
+            UserResponse user = userService.getMyInfo();
 
             ApiResponse<UserResponse> apiResponse = new ApiResponse(
                     HttpStatus.OK.value(),
@@ -70,16 +73,40 @@ public class UserController {
         return apiResponse;
     }
 
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/get-all-user")
+    public ResponseEntity<ApiResponse<PagingResponse<UserResponse>>> getAllUsers(
+            @RequestParam(name = "search", required = false, defaultValue = "") String searchText,
+            @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
+            @RequestParam(name = "role", required = false, defaultValue = "") String role,
+            @RequestParam(name = "permission", required = false, defaultValue = "") String permission,
+            @RequestParam(name = "status", required = false, defaultValue = "") String status,
+            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+            @RequestParam(name = "page_size", defaultValue = "10") int pageSize
+            ) {
+        ApiResponse<PagingResponse<UserResponse>> response = userService.getAllUsers(
+                searchText,
+                sort,
+                status,
+                role,
+                permission,
+                pageNumber,
+                pageSize
+        );
+        return ResponseEntity.ok(response);
+    }
+
+
     /**
      * Cập nhật thông tin user
      */
-    @PreAuthorize("hasRole('admin')")
+//    @PreAuthorize("hasRole('admin')")
     @PutMapping("/update/{userId}")
     public ApiResponse<UserResponse> updateUser(
             @PathVariable UUID userId, 
-            @RequestBody RegisterRequest registerRequest) {
+            @RequestBody UserUpdateRequest registerRequest) {
             log.info("UserController: Update user with ID: {}", userId);
-            UserResponse updatedUser = userServiceImpl.updateUser(userId, registerRequest);
+            UserResponse updatedUser = userService.updateUser(userId, registerRequest);
 
         ApiResponse<UserResponse> apiResponse = new ApiResponse(
                 HttpStatus.OK.value(),
