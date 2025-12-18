@@ -3,6 +3,7 @@ package com.eaut.backend.Model.Response;
 import com.eaut.backend.Exception.ApplicationException;
 import com.eaut.backend.constant.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Data
+@Builder
 public class BadRequestResponse {
     private String title;
     private String errorCode;
@@ -73,5 +75,8 @@ public class BadRequestResponse {
         this.uri = uri;
         this.time = time;
         this.requestId = requestId;
+    }
+
+    public BadRequestResponse(UUID uuid, int value, String message, String format) {
     }
 }

@@ -1,18 +1,23 @@
 package com.eaut.backend.untils;
 
+import com.eaut.backend.Entity.Role;
 import com.eaut.backend.Entity.User;
 import com.eaut.backend.Model.Request.RegisterRequest;
 import com.eaut.backend.Model.Response.UserResponse;
+
+import com.eaut.backend.Repository.RoleRepository;
 import com.eaut.backend.constant.UserRole;
 import com.eaut.backend.constant.UserStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.eaut.backend.untils.BcryptUtils.passwordEncoder;
 
 public class Mapper {
     public static User ToUser(RegisterRequest registerRequest){
-        Set<String> roles = Set.of(String.valueOf(UserRole.customer));
         User user = new User();
         user.setFullName(registerRequest.getFullName());
         user.setGender(registerRequest.getGender());
@@ -20,7 +25,6 @@ public class Mapper {
         user.setEmail(registerRequest.getEmail());
         user.setPhone(registerRequest.getPhone());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword())); // Encode password
-        user.setRoles(roles);
         user.setStatus(UserStatus.active);
         return user;
     }

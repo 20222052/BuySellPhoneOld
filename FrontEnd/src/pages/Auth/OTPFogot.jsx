@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import Header from "../../components/layout/Header";
+import Footer from "../../components/layout/Footer";
 import '../../assets/css/home/Auth/OTPFogot.css';
 
 export default function OTPForgot() {
@@ -55,71 +57,75 @@ export default function OTPForgot() {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-wrapper">
-                <div className="auth-card otp-card">
-                    <div className="auth-form-container full-width">
-                        <div className="auth-form-wrapper">
-                            <div className="otp-icon">
-                                <i className="bi bi-key-fill"></i>
-                            </div>
-
-                            <div className="auth-header">
-                                <h3>Xác Thực OTP</h3>
-                                <p>Nhập mã OTP để đặt lại mật khẩu</p>
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="otp-form">
-                                <div className="otp-inputs">
-                                    {otp.map((digit, index) => (
-                                        <input
-                                            key={index}
-                                            ref={(el) => (inputRefs.current[index] = el)}
-                                            type="text"
-                                            maxLength="1"
-                                            className="otp-input"
-                                            value={digit}
-                                            onChange={(e) => handleChange(index, e.target.value)}
-                                            onKeyDown={(e) => handleKeyDown(index, e)}
-                                            autoFocus={index === 0}
-                                        />
-                                    ))}
+        <>
+            <Header />
+            <div className="auth-container">
+                <div className="auth-wrapper">
+                    <div className="auth-card otp-card">
+                        <div className="auth-form-container full-width">
+                            <div className="auth-form-wrapper">
+                                <div className="otp-icon">
+                                    <i className="bi bi-key-fill"></i>
                                 </div>
 
-                                <div className="otp-timer">
-                                    {!canResend ? (
-                                        <p>
-                                            Mã sẽ hết hạn sau{" "}
-                                            <span className="timer-count">{timer}s</span>
-                                        </p>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            className="resend-btn"
-                                            onClick={handleResend}
-                                        >
-                                            <i className="bi bi-arrow-clockwise me-2"></i>
-                                            Gửi lại mã
-                                        </button>
-                                    )}
+                                <div className="auth-header">
+                                    <h3>Xác Thực OTP</h3>
+                                    <p>Nhập mã OTP để đặt lại mật khẩu</p>
                                 </div>
 
-                                <button type="submit" className="btn-submit">
-                                    <span>Xác Nhận</span>
-                                    <i className="bi bi-check-lg"></i>
-                                </button>
-                            </form>
+                                <form onSubmit={handleSubmit} className="otp-form">
+                                    <div className="otp-inputs">
+                                        {otp.map((digit, index) => (
+                                            <input
+                                                key={index}
+                                                ref={(el) => (inputRefs.current[index] = el)}
+                                                type="text"
+                                                maxLength="1"
+                                                className="otp-input"
+                                                value={digit}
+                                                onChange={(e) => handleChange(index, e.target.value)}
+                                                onKeyDown={(e) => handleKeyDown(index, e)}
+                                                autoFocus={index === 0}
+                                            />
+                                        ))}
+                                    </div>
 
-                            <div className="auth-footer">
-                                <Link to="/forgot-password" className="back-link">
-                                    <i className="bi bi-arrow-left me-2"></i>
-                                    Quay lại
-                                </Link>
+                                    <div className="otp-timer">
+                                        {!canResend ? (
+                                            <p>
+                                                Mã sẽ hết hạn sau{" "}
+                                                <span className="timer-count">{timer}s</span>
+                                            </p>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="resend-btn"
+                                                onClick={handleResend}
+                                            >
+                                                <i className="bi bi-arrow-clockwise me-2"></i>
+                                                Gửi lại mã
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <button type="submit" className="btn-submit">
+                                        <span>Xác Nhận</span>
+                                        <i className="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+
+                                <div className="auth-footer">
+                                    <Link to="/forgot-password" className="back-link">
+                                        <i className="bi bi-arrow-left me-2"></i>
+                                        Quay lại
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <Footer />
+        </>
     );
 }

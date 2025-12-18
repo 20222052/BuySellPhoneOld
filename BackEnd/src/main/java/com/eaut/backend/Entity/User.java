@@ -8,20 +8,25 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 import java.time.LocalDate;
 import java.util.*;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User extends AuditBase {
     @Id
     @Column(columnDefinition = "uuid")
     private UUID id;
+
     @PrePersist
-    public void prePersist() { if (id == null) id = UUID.randomUUID(); }
+    public void prePersist() {
+        if (id == null)
+            id = UUID.randomUUID();
+    }
 
     @Column(name = "full_name", length = 100, nullable = false)
     private String fullName;
@@ -42,14 +47,14 @@ public class User extends AuditBase {
     @Column(nullable = false)
     private String password;
 
-    private Set<String> roles;
+    @ManyToMany(fetch = FetchType.EAGER)
+    Set<Role> roles;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private UserStatus status = UserStatus.active;
 
-
-    // Reverse relations (optional) - Add @JsonIgnore to prevent lazy loading issues
+    // Reverse relations
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonIgnore

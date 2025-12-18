@@ -2,6 +2,7 @@ package com.eaut.backend.Config;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -35,23 +36,33 @@ public class CustomJwtDecoder implements JwtDecoder {
 
     @Override
     public Jwt decode(String token) throws JwtException {
+        log.info("[JWT-DECODE] Attempting to decode token: {}",
+                token.substring(0, Math.min(20, token.length())) + "...");
+
         try {
             // Verify token using OtpDomain
             otpDomain.verifyToken(token);
+            log.info("[JWT-DECODE] Token verified successfully");
 
             // Get token info
             TokenInfo tokenInfo = otpDomain.getTokenInfo(token);
+            log.info("[JWT-DECODE] Token info - Subject: {}, JwtId: {}, Scope: {}",
+                    tokenInfo.getSubject(), tokenInfo.getJwtId(), tokenInfo.getScope());
 
             // Check if token is in blacklist
             if (invalidateTokenRepository.existsById(tokenInfo.getJwtId().toString())) {
+                log.warn("⚠️ [JWT-DECODE] Token has been invalidated (blacklisted)");
                 throw new JwtException("Token has been invalidated (logged out)");
             }
 
             // Convert to Spring Security Jwt object
-            return convertToJwt(tokenInfo);
+            Jwt jwt = convertToJwt(tokenInfo);
+            log.info("[JWT-DECODE] JWT object created with authorities from scope");
+
+            return jwt;
 
         } catch (ApplicationException | ParseException | JOSEException e) {
-            log.error("JWT validation failed: {}", e.getMessage());
+            log.error("[JWT-DECODE] JWT validation failed: {}", e.getMessage());
             throw new JwtException("Invalid token", e);
         }
     }
@@ -64,7 +75,9 @@ public class CustomJwtDecoder implements JwtDecoder {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", tokenInfo.getSubject());
         claims.put("jti", tokenInfo.getJwtId().toString());
-        claims.put("exp", tokenInfo.getExpiration() / 1000); // Convert to seconds
+        // FIX: Chuyển scope từ string thành list để Spring Security có thể parse
+        claims.put("scope", Arrays.asList(tokenInfo.getScope().split(" ")));
+        claims.put("exp", tokenInfo.getExpiration() / 1000);
         claims.put("iat", tokenInfo.getIssuedAt() / 1000);
 
         Instant issuedAt = Instant.ofEpochMilli(tokenInfo.getIssuedAt());
@@ -75,7 +88,6 @@ public class CustomJwtDecoder implements JwtDecoder {
                 issuedAt,
                 expiresAt,
                 headers,
-                claims
-        );
+                claims);
     }
 }
