@@ -15,7 +15,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "brands")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class Brand extends AuditBase {
+public class Brand{
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
     @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }

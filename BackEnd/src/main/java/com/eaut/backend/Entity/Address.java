@@ -10,7 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "addresses")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class Address extends AuditBase {
+public class Address {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
     @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }

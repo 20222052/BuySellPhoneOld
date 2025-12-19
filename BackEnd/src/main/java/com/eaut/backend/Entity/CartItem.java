@@ -10,7 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "cart_items")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class CartItem extends AuditBase {
+public class CartItem{
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
     @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }

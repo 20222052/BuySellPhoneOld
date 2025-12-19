@@ -9,7 +9,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "product_colors")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class ProductColor extends AuditBase {
+public class ProductColor{
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
     @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }

@@ -14,12 +14,10 @@ import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.untils.Mapper;
 import com.eaut.backend.untils.PagingUtils;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.type.descriptor.jdbc.NVarcharJdbcType;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +34,7 @@ public class CategoryServiceImpl implements CategoryService {
     final UserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public ApiResponse<PagingResponse<CategoryResponse>> findAll(
             String searchText,
             String sort,
@@ -74,11 +73,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CategoryResponse findById(UUID id) {
-        Category category = categoryRepository.findById(id)
+        // Sử dụng query mới với fetch join
+        Category category = categoryRepository.findByIdWithAuditors(id)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND, "Category not found"));
 
-        new CategoryResponse();
         return CategoryResponse.builder()
                 .id(category.getId())
                 .name(category.getName())
@@ -95,7 +95,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
-        if (request.getName().isEmpty()) {
+        if (request.getName() == null || request.getName().isEmpty()) {
             throw new ApplicationException(ErrorCode.BAD_REQUEST, "Name is required");
         }
         if (categoryRepository.existsByName(request.getName())) {
@@ -105,14 +105,16 @@ public class CategoryServiceImpl implements CategoryService {
         User user = getAuthenticatedUser();
         Category newCategory = Mapper.toCategory(request);
         newCategory.setCreatedBy(user);
+
         Category result = categoryRepository.save(newCategory);
-        new CategoryResponse();
+
         return CategoryResponse.builder()
                 .id(result.getId())
                 .name(result.getName())
                 .description(result.getDescription())
                 .image(result.getImage())
                 .isActive(result.isActive())
+                .createdBy(user.getFullName())
                 .createdAt(result.getCreatedAt())
                 .updatedAt(result.getModifiedAt())
                 .build();
@@ -123,15 +125,13 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse update(UUID id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND, "Category not found"));
-        if (category == null) {
-            throw new ApplicationException(ErrorCode.NOT_FOUND, "Category not found");
-        }
+
         if (request.getName() != null) {
-            if (categoryRepository.existsByName(request.getName())) {
+            // Kiểm tra trùng tên nhưng loại trừ chính nó
+            if (categoryRepository.existsByNameAndIdNot(request.getName(), id)) {
                 throw new ApplicationException(ErrorCode.CONFLICT, "Category name already exists");
-            } else {
-                category.setName(request.getName());
             }
+            category.setName(request.getName());
         }
         if (request.getDescription() != null) {
             category.setDescription(request.getDescription());
@@ -146,8 +146,9 @@ public class CategoryServiceImpl implements CategoryService {
         User user = getAuthenticatedUser();
         category.setModifiedBy(user);
         category.setModifiedAt(OffsetDateTime.now());
+
         Category result = categoryRepository.save(category);
-        new CategoryResponse();
+
         return CategoryResponse.builder()
                 .id(result.getId())
                 .name(result.getName())
@@ -155,6 +156,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .image(result.getImage())
                 .isActive(result.isActive())
                 .createdAt(result.getCreatedAt())
+                .modifiedBy(user.getFullName())
                 .updatedAt(result.getModifiedAt())
                 .build();
     }
@@ -162,7 +164,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void delete(UUID id) throws ApplicationException {
-        if (id == null || id.toString().isEmpty()) {
+        if (id == null) {
             throw new ApplicationException(ErrorCode.BAD_REQUEST, "ID is required");
         }
         Category category = categoryRepository.findById(id)
@@ -170,12 +172,9 @@ public class CategoryServiceImpl implements CategoryService {
 
         try {
             categoryRepository.delete(category);
-
         } catch (DataIntegrityViolationException ex) {
-            // Lỗi FK → không cho xóa
             throw new ApplicationException(ErrorCode.BAD_REQUEST,
                     "Cannot delete category as it is referenced by other entities.");
         }
     }
-
 }
