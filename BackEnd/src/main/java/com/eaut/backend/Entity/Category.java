@@ -9,7 +9,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -30,4 +31,5 @@ public class Category extends AuditBase {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+
 }

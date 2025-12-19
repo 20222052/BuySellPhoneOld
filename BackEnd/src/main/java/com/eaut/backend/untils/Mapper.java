@@ -1,18 +1,13 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Entity.Role;
+import com.eaut.backend.Entity.Category;
 import com.eaut.backend.Entity.User;
+import com.eaut.backend.Model.Request.CategoryRequest;
 import com.eaut.backend.Model.Request.RegisterRequest;
+import com.eaut.backend.Model.Response.CategoryResponse;
 import com.eaut.backend.Model.Response.UserResponse;
 
-import com.eaut.backend.Repository.RoleRepository;
-import com.eaut.backend.constant.UserRole;
 import com.eaut.backend.constant.UserStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.eaut.backend.untils.BcryptUtils.passwordEncoder;
 
@@ -40,5 +35,26 @@ public class Mapper {
         registerRequest.setPhone(user.getPhone());
         registerRequest.setPassword(user.getPassword());
         return registerRequest;
+    }
+    public static CategoryResponse toCategoryResponse(Category category) {
+        new CategoryResponse();
+        return CategoryResponse.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .image(category.getImage())
+                .isActive(category.isActive())
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getModifiedAt())
+                .build();
+    }
+    public static Category toCategory(CategoryRequest request) {
+        new Category();
+        return Category.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .image(request.getImage())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .build();
     }
 }

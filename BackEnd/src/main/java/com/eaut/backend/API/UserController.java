@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/user")
+@RequestMapping("/users")
 public class UserController {
     private final UserService userService;
 
@@ -74,7 +74,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('admin')")
-    @GetMapping("/get-all-user")
+    @GetMapping
     public ResponseEntity<ApiResponse<PagingResponse<UserResponse>>> getAllUsers(
             @RequestParam(name = "search", required = false, defaultValue = "") String searchText,
             @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
@@ -101,7 +101,7 @@ public class UserController {
      * Cập nhật thông tin user
      */
 //    @PreAuthorize("hasRole('admin')")
-    @PutMapping("/update/{userId}")
+    @PutMapping("/{userId}")
     public ApiResponse<UserResponse> updateUser(
             @PathVariable UUID userId, 
             @RequestBody UserUpdateRequest registerRequest) {
