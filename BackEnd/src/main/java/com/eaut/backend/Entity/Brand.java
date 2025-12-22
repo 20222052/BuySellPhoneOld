@@ -14,7 +14,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "brands")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Brand{
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
@@ -28,8 +30,10 @@ public class Brand{
     @Column(name = "logo_url")
     private String logoUrl;
 
+    @Column(name = "created_at", nullable = true)
+    private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
+
 
     @OneToMany(mappedBy = "brand")
-    @Builder.Default
     private List<Product> products = new ArrayList<>();
 }

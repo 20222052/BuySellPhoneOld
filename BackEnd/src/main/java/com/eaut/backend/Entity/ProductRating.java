@@ -10,7 +10,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "product_ratings")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ProductRating {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
@@ -28,8 +29,8 @@ public class ProductRating {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_item_id")
-    private OrderItem orderItem;
+    @JoinColumn(name = "order_id")
+    private Order order;
 
 
     @Column(nullable = false)
@@ -41,4 +42,5 @@ public class ProductRating {
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
 }

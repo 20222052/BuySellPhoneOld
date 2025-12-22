@@ -5,11 +5,14 @@ import com.eaut.backend.Entity.BaseEntity.AuditBase;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "cart_items")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class CartItem{
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
@@ -37,4 +40,7 @@ public class CartItem{
 
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice;
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
 }

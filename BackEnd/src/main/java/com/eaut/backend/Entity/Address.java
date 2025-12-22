@@ -9,7 +9,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "addresses")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Address {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;

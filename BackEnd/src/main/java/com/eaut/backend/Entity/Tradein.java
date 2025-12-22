@@ -13,7 +13,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tradeins")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Tradein extends AuditBase {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;

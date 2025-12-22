@@ -4,21 +4,41 @@ package com.eaut.backend.Entity;
 import com.eaut.backend.Entity.BaseEntity.AuditBase;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "product_colors")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class ProductColor{
-    @Id @Column(columnDefinition = "uuid")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductColor {
+    @Id
+    @Column(columnDefinition = "uuid")
     private UUID id;
-    @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null)
+            id = UUID.randomUUID();
+    }
 
-    @Column(length = 50, nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_model_id", nullable = false)
+    private ProductModel productModel;
+
+    @Column(length = 50, nullable = false)
     private String name;
-
 
     @Column(name = "hex_code", length = 7)
     private String hexCode;
+
+    @OneToOne(mappedBy = "productColor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProductMedia media;
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
 }

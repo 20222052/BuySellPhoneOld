@@ -12,12 +12,18 @@ import java.util.*;
 import java.util.UUID;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "orders")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Order extends AuditBase {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
-    @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); } // tạo UUID tự động nếu chưa có
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID();
+    } // tạo UUID tự động nếu chưa có
 
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -59,6 +65,10 @@ public class Order extends AuditBase {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress; // Địa chỉ giao hàng
+
+    private String snapshotShippingFullName;
+    private String snapshotShippingPhone;
+    private String snapshotAddress;
 
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,10 +1,13 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Entity.Category;
-import com.eaut.backend.Entity.User;
+import com.eaut.backend.Entity.*;
+import com.eaut.backend.Model.Request.BrandRequest;
 import com.eaut.backend.Model.Request.CategoryRequest;
+import com.eaut.backend.Model.Request.ProductColorRequest;
 import com.eaut.backend.Model.Request.RegisterRequest;
+import com.eaut.backend.Model.Response.BrandResponse;
 import com.eaut.backend.Model.Response.CategoryResponse;
+import com.eaut.backend.Model.Response.ProductColorResponse;
 import com.eaut.backend.Model.Response.UserResponse;
 
 import com.eaut.backend.constant.UserStatus;
@@ -55,6 +58,40 @@ public class Mapper {
                 .description(request.getDescription())
                 .image(request.getImage())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .build();
+    }
+
+    public static BrandResponse toBrandResponse(Brand brand){
+        new BrandResponse();
+        return BrandResponse.builder()
+                .id(brand.getId())
+                .name(brand.getName())
+                .logoUrl(brand.getLogoUrl())
+                .build();
+    }
+
+    public static Brand toBrand(BrandRequest request) {
+        new Brand();
+        return Brand.builder()
+                .name(request.getName())
+                .logoUrl(request.getLogoUrl())
+                .build();
+    }
+
+    public static ProductColorResponse toProductColorResponse(ProductColor productColor) {
+        new ProductColorResponse();
+        return  ProductColorResponse.builder()
+                .id(productColor.getId())
+                .name(productColor.getName())
+                .hexCode(productColor.getHexCode())
+                .build();
+    }
+
+    public static ProductColor toProductColor(ProductColorRequest request) {
+        new ProductColor();
+        return ProductColor.builder()
+                .name(request.getName())
+                .hexCode(request.getHexCode())
                 .build();
     }
 }
