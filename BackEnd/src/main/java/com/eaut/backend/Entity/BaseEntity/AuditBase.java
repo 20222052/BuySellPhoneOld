@@ -3,6 +3,7 @@ package com.eaut.backend.Entity.BaseEntity;
 
 // === Lombok & JPA imports ===
 import com.eaut.backend.Entity.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
         import lombok.*;
         import java.time.OffsetDateTime;
@@ -17,6 +18,7 @@ public abstract class AuditBase {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "created_by")
     private User createdBy; // Người tạo
 
@@ -26,6 +28,7 @@ public abstract class AuditBase {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "modified_by")
     private User modifiedBy; // Người sửa đổi cuối cùng
 

@@ -14,8 +14,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "brands")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class Brand extends AuditBase {
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
+public class Brand{
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
     @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }
@@ -28,8 +30,10 @@ public class Brand extends AuditBase {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    @Column(name = "created_at", nullable = true)
+    private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
+
 
     @OneToMany(mappedBy = "brand")
-    @Builder.Default
     private List<Product> products = new ArrayList<>();
 }

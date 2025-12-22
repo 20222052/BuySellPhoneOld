@@ -13,7 +13,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "product_diagnostics")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class ProductDiagnostic extends AuditBase {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;

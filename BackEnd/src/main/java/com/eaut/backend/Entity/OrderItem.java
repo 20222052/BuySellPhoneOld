@@ -6,12 +6,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "order_items")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class OrderItem extends AuditBase {
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
+public class OrderItem {
     @Id @Column(columnDefinition = "uuid")
     private UUID id;
     @PrePersist public void prePersist(){ if(id==null) id = UUID.randomUUID(); }
@@ -25,6 +28,11 @@ public class OrderItem extends AuditBase {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_item_id", nullable = false)
     private ProductItem productItem;
+
+    private String snapshotProductName;
+    private String snapshotProductModel;
+    private String snapshotProductColor;
+    private String snapshotProductMediaUrl;
 
 
     @Column(nullable = false)
@@ -41,4 +49,7 @@ public class OrderItem extends AuditBase {
 
     @Column(name = "warranty_until")
     private LocalDate warrantyUntil;
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
 }

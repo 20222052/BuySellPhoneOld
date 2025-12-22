@@ -19,15 +19,25 @@ import java.util.*;
 @Slf4j
 @Configuration
 public class AplplicationInitConfig {
-    @Autowired
-    private RoleRepository roleRepository;
     @Bean
-    ApplicationRunner applicationRunner(UserRepository userRepository) {
+    ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
         return args -> {
             if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
                 System.out.println("Admin user not found. create account admin user username:'admin@gmail.com', password:'Admin1234!@#$' ");
-                var role = roleRepository.findById(UserRole.admin.getValue())
-                        .orElseThrow();
+                Role role = new Role();
+                if (!roleRepository.existsByName(UserRole.admin.getValue())) {
+                    role.setName(UserRole.admin.getValue());
+                    role.setDescription("Administrator role with full permissions");
+                    try {
+                        roleRepository.save(role);
+                        log.info("UserService: Role admin save success.");
+                    } catch (Exception e) {
+                        log.info("UserService: Role admin save failed.");
+                        throw new RuntimeException(e);
+                    }
+                }
+                role = roleRepository.findById(UserRole.admin.getValue())
+                        .orElseThrow(() -> new RuntimeException("Role admin not found"));
                 User user = User.builder()
                         .fullName("admin")
                         .email("admin@gmail.com")
