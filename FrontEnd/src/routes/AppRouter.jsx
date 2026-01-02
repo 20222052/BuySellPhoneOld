@@ -8,6 +8,18 @@ import AdminLayout from "@/layouts/AdminLayout";
 
 // Public Pages
 import Home from "@/pages/Home/Home";
+import Trade_inPage from "@/pages/Home/Trade_inPage";
+import Blogs from "@/pages/Home/Blogs";
+import BlogDetail from "@/pages/Home/BlogDetail";
+import Products from "@/pages/Home/Products";
+import ProductDetail from "@/pages/Home/ProductDetail";
+import Cart from "@/pages/Home/Cart";
+import CheckOut from "@/pages/Home/CheckOut";
+import About from "@/pages/Home/About";
+import Profile from "@/pages/Home/Profile";
+import Orders from "@/pages/Home/Orders";
+import Wishlist from "@/pages/Home/Wishlist";
+import Settings from "@/pages/Home/Settings";
 import NotFound from "@/pages/NotFound/NotFound";
 
 // Auth Pages
@@ -28,15 +40,18 @@ export default function AppRouter() {
         {/* Public Routes with Layout */}
         <Route element={<PublicLayout />}>
           <Route path={RoutePaths.HOME} element={<Home />} />
-          <Route path={RoutePaths.PRODUCTS} element={<div>Products Page</div>} />
-          <Route path={RoutePaths.BLOG} element={<div>Blog Page</div>} />
-          <Route path={RoutePaths.TRADEIN} element={<div>Trade-in Page</div>} />
-          <Route path={RoutePaths.CART} element={<div>Cart Page</div>} />
-          <Route path={RoutePaths.ABOUT} element={<div>About Page</div>} />
-          <Route path={RoutePaths.PROFILE} element={<div>Profile Page</div>} />
-          <Route path={RoutePaths.ORDERS} element={<div>Orders Page</div>} />
-          <Route path={RoutePaths.WISHLIST} element={<div>Wishlist Page</div>} />
-          <Route path={RoutePaths.SETTINGS} element={<div>Settings Page</div>} />
+          <Route path={RoutePaths.PRODUCTS} element={<Products />} />
+          <Route path={RoutePaths.PRODUCT_DETAIL} element={<ProductDetail />} />
+          <Route path={RoutePaths.BLOG} element={<Blogs />} />
+          <Route path={RoutePaths.BLOG_DETAIL} element={<BlogDetail />} />
+          <Route path={RoutePaths.TRADEIN} element={<Trade_inPage />} />
+          <Route path={RoutePaths.CART} element={<Cart />} />
+          <Route path={RoutePaths.CHECKOUT} element={<CheckOut />} />
+          <Route path={RoutePaths.ABOUT} element={<About />} />
+          <Route path={RoutePaths.PROFILE} element={<Profile />} />
+          <Route path={RoutePaths.ORDERS} element={<Orders />} />
+          <Route path={RoutePaths.WISHLIST} element={<Wishlist />} />
+          <Route path={RoutePaths.SETTINGS} element={<Settings />} />
         </Route>
 
         {/* Auth Routes without Layout */}

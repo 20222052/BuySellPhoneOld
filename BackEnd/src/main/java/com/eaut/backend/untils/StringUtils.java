@@ -1,6 +1,6 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Exception.ApplicationException;
+import com.eaut.backend.exception.ApplicationException;
 import com.eaut.backend.constant.ErrorCode;
 
 public class StringUtils {

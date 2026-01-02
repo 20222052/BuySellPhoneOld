@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 
 @SpringBootApplication
-@EnableJpaRepositories(basePackages = "com.eaut.backend.Repository")
-@EnableRedisRepositories(basePackages = "com.eaut.backend.Redis.Repository")
+@EnableJpaRepositories(basePackages = "com.eaut.backend.repository")
+@EnableRedisRepositories(basePackages = "com.eaut.backend.redis.repository")
 public class BackEndApplication {
 
 	public static void main(String[] args) {

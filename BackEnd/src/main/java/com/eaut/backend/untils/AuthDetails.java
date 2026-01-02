@@ -1,8 +1,8 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Entity.User;
-import com.eaut.backend.Exception.ApplicationException;
-import com.eaut.backend.Repository.UserRepository;
+import com.eaut.backend.entities.User;
+import com.eaut.backend.exception.ApplicationException;
+import com.eaut.backend.repository.UserRepository;
 import com.eaut.backend.constant.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;

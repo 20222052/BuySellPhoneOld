@@ -5,17 +5,19 @@
 
 /* Root Color Variables */
 :root {
-  /* Primary Colors - Gradient */
-  --primary-color: #ff0000;
-  --primary-dark: #cc0000;
-  --primary-light: #ff3333;
-  --secondary-color: #ff6105;
-  --secondary-dark: #cc4d04;
-  --secondary-light: #ff8033;
+  /* Primary Colors - Based on gradient #e45464 to #d70018 */
+  --primary-color: #d70018;
+  --primary-dark: #b50015;
+  --primary-light: #e45464;
+  --secondary-color: #e45464;
+  --secondary-dark: #c93a4a;
+  --secondary-light: #f06b7a;
 
   /* Gradient */
-  --gradient-primary: linear-gradient(135deg, #ff0000 0%, #ff6105 100%);
-  --gradient-hover: linear-gradient(135deg, #cc0000 0%, #cc4d04 100%);
+  --gradient-primary: linear-gradient(180deg, #e45464 -13%, #d70018);
+  // --gradient-primary: linear-gradient(to right, #337ae5 0, #408fe5 34%, #d4734a 71%, #ea6b2e 100%);
+  // --gradient-primary: linear-gradient(135deg, #ff0000 0%, #ff6105 100%);
+  --gradient-hover: linear-gradient(180deg, #c93a4a -13%, #b50015);
 
   /* Neutral Colors */
   --white: #ffffff;
@@ -127,4 +129,15 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  border: none;
+  color: var(--white);
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--gradient-hover);
+  }
 }

@@ -7,10 +7,11 @@
 
 /* Reset thẻ cơ bản */
 html, body {
+  background: url(../../../public/images/bg-body-2025_v2.webp) no-repeat bottom center;
   height: 100%;
   font-family: $font-family-base;
   font-size: $font-size-base;
-  background-color: #fff;
+  // background-color: #fff;
   color: #222;
 }
 

@@ -6,23 +6,23 @@ import "../../assets/css/home/Products/ProductItem.css";
 export default function ProductItem({ product }) {
     return (
         <Card className="product-card">
-            {product.badge && (
+            {/* {product.badge && (
                 <Badge
                     className={`product-badge badge-${product.badge.toLowerCase()}`}
                 >
                     {product.badge}
                 </Badge>
-            )}
+            )} */}
             <div className="product-image">
                 <img src={product.image} alt={product.name} />
-                <div className="product-overlay">
+                {/* <div className="product-overlay">
                     <Button className="btn-quick-view" title="Xem nhanh">
                         <i className="bi bi-eye"></i>
                     </Button>
                     <Button className="btn-wishlist" title="Yêu thích">
                         <i className="bi bi-heart"></i>
                     </Button>
-                </div>
+                </div> */}
             </div>
             <Card.Body>
                 <div className="product-condition">
@@ -37,10 +37,10 @@ export default function ProductItem({ product }) {
                     )}
                 </div>
                 <div className="product-actions">
-                    <Button className="btn-add-cart">
+                    {/* <Button className="btn-add-cart">
                         <i className="bi bi-cart-plus me-2"></i>
                         Thêm vào giỏ
-                    </Button>
+                    </Button> */}
                 </div>
             </Card.Body>
         </Card>

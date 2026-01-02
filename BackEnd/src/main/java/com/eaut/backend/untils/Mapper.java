@@ -1,14 +1,14 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Entity.*;
-import com.eaut.backend.Model.Request.BrandRequest;
-import com.eaut.backend.Model.Request.CategoryRequest;
-import com.eaut.backend.Model.Request.ProductColorRequest;
-import com.eaut.backend.Model.Request.RegisterRequest;
-import com.eaut.backend.Model.Response.BrandResponse;
-import com.eaut.backend.Model.Response.CategoryResponse;
-import com.eaut.backend.Model.Response.ProductColorResponse;
-import com.eaut.backend.Model.Response.UserResponse;
+import com.eaut.backend.entities.*;
+import com.eaut.backend.model.request.BrandRequest;
+import com.eaut.backend.model.request.CategoryRequest;
+import com.eaut.backend.model.request.ProductColorRequest;
+import com.eaut.backend.model.request.RegisterRequest;
+import com.eaut.backend.model.response.BrandResponse;
+import com.eaut.backend.model.response.CategoryResponse;
+import com.eaut.backend.model.response.ProductColorResponse;
+import com.eaut.backend.model.response.UserResponse;
 
 import com.eaut.backend.constant.UserStatus;
 

@@ -370,15 +370,7 @@ h3.cart-title {
     cursor: pointer;
     z-index: 9;
 }
-/* .search-box input.search-input {
-    font-size: 1.3em;
-    width: 70%;
-    height: 30px;
-    padding: 25px;
-    border-radius: 80px;
-    border-color: rgb(0 0 0 / 25%);
-    background: transparent;
-} */
+
 .search-box svg {
     width: 22px;
     height: 22px;
@@ -602,6 +594,10 @@ h3.cart-title {
 .navbar-nav .nav-item a.nav-link:focus, 
 .navbar-nav .nav-item a.nav-link:hover {
     color: var(--primary-color);
+}
+
+.navbar-nav{
+  text-decoration: none;
 }
 
 /*------------ Offcanvas -------------- */

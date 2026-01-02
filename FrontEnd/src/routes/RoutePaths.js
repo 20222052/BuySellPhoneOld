@@ -3,10 +3,11 @@ export const RoutePaths = {
   HOME: "/",
   PRODUCTS: "/products",
   PRODUCT_DETAIL: "/products/:id",
-  BLOG: "/blog",
-  BLOG_DETAIL: "/blog/:id",
+  BLOG: "/blogs",
+  BLOG_DETAIL: "/blogs/:id",
   TRADEIN: "/tradein",
   CART: "/cart",
+  CHECKOUT: "/checkout",
   ABOUT: "/about",
   CONTACT: "/contact",
 

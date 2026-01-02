@@ -17,7 +17,7 @@ export default function Home() {
       oldPrice: "25.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "99%",
+      condition: "A",
       badge: "Hot",
     },
     {
@@ -27,7 +27,7 @@ export default function Home() {
       oldPrice: "22.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/249948/samsung-galaxy-s23-ultra-green-thumbnew-600x600.jpg",
-      condition: "98%",
+      condition: "A",
       badge: "Sale",
     },
     {
@@ -37,7 +37,7 @@ export default function Home() {
       oldPrice: "28.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "99%",
+      condition: "A",
       badge: "New",
     },
     {
@@ -47,7 +47,7 @@ export default function Home() {
       oldPrice: "16.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "97%",
+      condition: "A",
       badge: "Hot",
     },
     {
@@ -57,7 +57,7 @@ export default function Home() {
       oldPrice: "19.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "98%",
+      condition: "A",
       badge: "Sale",
     },
     {
@@ -67,7 +67,7 @@ export default function Home() {
       oldPrice: "12.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "96%",
+      condition: "A",
       badge: "New",
     },
     {
@@ -77,7 +77,7 @@ export default function Home() {
       oldPrice: "32.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "99%",
+      condition: "B",
       badge: "Hot",
     },
     {
@@ -87,7 +87,7 @@ export default function Home() {
       oldPrice: "20.990.000",
       image:
         "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-      condition: "97%",
+      condition: "A",
       badge: "Sale",
     },
   ];
@@ -171,7 +171,7 @@ export default function Home() {
       <FeaturesSection features={features} />
       <TradeInBanner />
       <BlogSection blogs={blogs} />
-      <NewsletterSection />
+      {/* <NewsletterSection /> */}
     </div>
   );
 }
