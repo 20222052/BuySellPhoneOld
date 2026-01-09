@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar, Nav, Container, Badge, Dropdown, Form } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +9,8 @@ import '../../assets/css/home/Header.css';
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(3); // Example cart count
+  const [hideNav, setHideNav] = useState(false);
+  const lastScrollY = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -18,8 +20,17 @@ export default function Header() {
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+      if (window.scrollY > 80) {
+        if (window.scrollY > lastScrollY.current) {
+          setHideNav(true); // scroll down
+        } else {
+          setHideNav(false); // scroll up
+        }
+        lastScrollY.current = window.scrollY;
+      } else {
+        setHideNav(false);
+      }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -38,14 +49,15 @@ export default function Header() {
   return (
     <Navbar
       expand="lg"
-      className={`header-navbar ${scrolled ? 'scrolled' : ''}`}
+      className={`header-navbar ${scrolled ? 'scrolled' : ''} ${hideNav ? 'nav-hide' : ''}`}
       sticky="top"
+      style={{ transition: 'transform 0.5s' }}
     >
       <Container>
         {/* Logo/Brand */}
         <Navbar.Brand as={Link} to="/" className="brand-logo">
-          <i className="bi bi-phone me-2"></i>
-          <span className="brand-text">BuySellPhoneOld</span>
+          <i className=""><img src="/logo.png" width="70" alt="PhoneZin Logo" /></i>
+          <span className="brand-text">PhoneZin</span>
         </Navbar.Brand>
 
         {/* Mobile Toggle */}
@@ -115,28 +127,28 @@ export default function Header() {
               </Dropdown.Toggle>
 
               <Dropdown.Menu>
-                <Dropdown.Item as={Link} to="/blog">
+                <Dropdown.Item as={Link} to="/blogs">
                   <i className="bi bi-newspaper me-2"></i>
                   Tất Cả Bài Viết
                 </Dropdown.Item>
                 <Dropdown.Divider />
-                <Dropdown.Item as={Link} to="/blog/tech-news">
+                <Dropdown.Item as={Link} to="/blogs/tech-news">
                   <i className="bi bi-lightning me-2"></i>
                   Tin Công Nghệ
                 </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/reviews">
+                <Dropdown.Item as={Link} to="/blogs/reviews">
                   <i className="bi bi-star me-2"></i>
                   Đánh Giá
                 </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/tips-tricks">
+                <Dropdown.Item as={Link} to="/blogs/tips-tricks">
                   <i className="bi bi-lightbulb me-2"></i>
                   Mẹo Hay
                 </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/buying-guide">
+                <Dropdown.Item as={Link} to="/blogs/buying-guide">
                   <i className="bi bi-book me-2"></i>
                   Hướng Dẫn Mua
                 </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/comparisons">
+                <Dropdown.Item as={Link} to="/blogs/comparisons">
                   <i className="bi bi-arrow-left-right me-2"></i>
                   So Sánh
                 </Dropdown.Item>
@@ -161,7 +173,7 @@ export default function Header() {
 
             {/* Mobile Products Dropdown */}
             <Dropdown className="w-100">
-              <Dropdown.Toggle variant="link" className="mobile-nav-link w-100 text-start">
+              <Dropdown.Toggle variant="link" className="mobile-nav-link w-100">
                 <i className="bi bi-grid me-2"></i>Sản Phẩm
               </Dropdown.Toggle>
               <Dropdown.Menu className="w-100">
@@ -177,16 +189,16 @@ export default function Header() {
 
             {/* Mobile Blog Dropdown */}
             <Dropdown className="w-100">
-              <Dropdown.Toggle variant="link" className="mobile-nav-link w-100 text-start">
+              <Dropdown.Toggle variant="link" className="mobile-nav-link w-100">
                 <i className="bi bi-newspaper me-2"></i>Tin Tức
               </Dropdown.Toggle>
               <Dropdown.Menu className="w-100">
-                <Dropdown.Item as={Link} to="/blog">Tất Cả Bài Viết</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/blogs">Tất Cả Bài Viết</Dropdown.Item>
                 <Dropdown.Divider />
-                <Dropdown.Item as={Link} to="/blog/tech-news">Tin Công Nghệ</Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/reviews">Đánh Giá</Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/tips-tricks">Mẹo Hay</Dropdown.Item>
-                <Dropdown.Item as={Link} to="/blog/buying-guide">Hướng Dẫn Mua</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/blogs/tech-news">Tin Công Nghệ</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/blogs/reviews">Đánh Giá</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/blogs/tips-tricks">Mẹo Hay</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/blogs/buying-guide">Hướng Dẫn Mua</Dropdown.Item>
                 <Dropdown.Item as={Link} to="/blog/comparisons">So Sánh</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>

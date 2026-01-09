@@ -6,7 +6,7 @@ export default function PublicLayout() {
   return (
     <>
       <Header />
-      <main className="container py-4"><Outlet /></main>
+      <main className="container"><Outlet /></main>
       <Footer />
     </>
   );

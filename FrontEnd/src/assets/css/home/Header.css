@@ -1,10 +1,18 @@
 /* Header Base Styles */
+
 .header-navbar {
     background: var(--gradient-primary);
     box-shadow: var(--shadow-header);
-    transition: var(--transition-base);
+    transition: var(--transition-base), transform 0.4s cubic-bezier(.4, 2, .6, 1);
     padding: 0.5rem 0;
     width: 100%;
+    will-change: transform;
+}
+
+.header-navbar.nav-hide {
+    transform: translateY(-120%);
+    box-shadow: none;
+    pointer-events: none;
 }
 
 .header-navbar .container {

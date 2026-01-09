@@ -1,8 +1,8 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Exception.ApplicationException;
-import com.eaut.backend.Model.Request.RegisterRequest;
-import com.eaut.backend.Model.Request.UserUpdateRequest;
+import com.eaut.backend.exception.ApplicationException;
+import com.eaut.backend.model.request.RegisterRequest;
+import com.eaut.backend.model.request.UserUpdateRequest;
 import com.eaut.backend.constant.ErrorCode;
 
 import java.time.LocalDate;

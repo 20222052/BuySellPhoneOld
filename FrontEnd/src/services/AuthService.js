@@ -1,4 +1,5 @@
 import api from "./apiClient";
+import { getRoleFromToken, isTokenExpired, isAdmin } from "../utils/jwtHelper";
 
 // Auth Service
 const AuthService = {
@@ -6,21 +7,52 @@ const AuthService = {
     login: async (credentials) => {
         try {
             const response = await api.post("/auth/login", credentials);
-            if (response.data.accessToken) {
-                localStorage.setItem("accessToken", response.data.accessToken);
-                localStorage.setItem("refreshToken", response.data.refreshToken);
-                localStorage.setItem("user", JSON.stringify(response.data.user));
+            const result = response.data;
+
+            // Kiểm tra response theo cấu trúc từ backend
+            if (result.code === 200 && result.data?.authenticated) {
+                const { token, data: userData } = result.data;
+
+                // Lưu token vào localStorage
+                localStorage.setItem("accessToken", token);
+
+                // Lấy role từ token hoặc từ user data
+                const roleFromToken = getRoleFromToken(token);
+                const userRoles = userData?.roles?.map(r => r.name) || [];
+
+                // Tạo user object để lưu
+                const user = {
+                    id: userData.id,
+                    fullName: userData.fullName,
+                    email: userData.email,
+                    phone: userData.phone,
+                    roles: userRoles,
+                    role: roleFromToken || userRoles[0] || 'user',
+                    createdAt: userData.createdAt,
+                    modifiedAt: userData.modifiedAt
+                };
+
+                localStorage.setItem("user", JSON.stringify(user));
+
+                return {
+                    success: true,
+                    token,
+                    user,
+                    isAdmin: isAdmin(token)
+                };
             }
-            return response.data;
+
+            throw { message: "Đăng nhập thất bại" };
         } catch (error) {
-            throw error.response?.data || { message: "Đăng nhập thất bại" };
+            throw error.response?.data || error || { message: "Đăng nhập thất bại" };
         }
     },
 
     // Đăng ký
     register: async (userData) => {
         try {
-            const response = await api.post("/auth/register", userData);
+            const response = await api.post("/users/register", userData);
+            console.log("Register response:", response);
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Đăng ký thất bại" };
@@ -30,33 +62,44 @@ const AuthService = {
     // Đăng xuất
     logout: async () => {
         try {
-            await api.post("/auth/logout");
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("user");
+            // Gọi API logout sử dụng api client (đã có interceptor thêm token)
+            await api.get("/auth/logout");
         } catch (error) {
-            // Still remove tokens even if API call fails
+            // Dù API lỗi vẫn logout ở client
+            console.warn("Logout API failed, clearing local storage anyway", error);
+        } finally {
+            // Luôn luôn xóa localStorage
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             localStorage.removeItem("user");
-            throw error;
         }
     },
 
+
     // Quên mật khẩu - Gửi OTP
-    forgotPassword: async (email) => {
+    forgotPassword: async (email, password) => {
         try {
-            const response = await api.post("/auth/forgot-password", { email });
+            const response = await api.post("/auth/forgot-password", { email, password });
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Gửi OTP thất bại" };
         }
     },
 
+    // Quên mật khẩu - Xác thực OTP
+    forgotPasswordConfirmOTP: async (email, otp) => {
+        try {
+            const response = await api.post("/auth/forgot-password-confirm-otp", { email, otp });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Xác thực OTP thất bại" };
+        }
+    },
+
     // Xác thực OTP
     verifyOTP: async (email, otp) => {
         try {
-            const response = await api.post("/auth/verify-otp", { email, otp });
+            const response = await api.post("/auth/confirm-otp", { email, otp });
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Xác thực OTP thất bại" };
@@ -107,13 +150,48 @@ const AuthService = {
     // Kiểm tra token còn hợp lệ không
     isAuthenticated: () => {
         const token = localStorage.getItem("accessToken");
-        return !!token;
+        if (!token) return false;
+
+        // Kiểm tra token đã hết hạn chưa
+        if (isTokenExpired(token)) {
+            // Token hết hạn, xóa khỏi localStorage
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("user");
+            return false;
+        }
+
+        return true;
     },
 
     // Lấy user từ localStorage
     getStoredUser: () => {
         const userStr = localStorage.getItem("user");
         return userStr ? JSON.parse(userStr) : null;
+    },
+
+    // Lấy role của user hiện tại
+    getCurrentRole: () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return null;
+        return getRoleFromToken(token);
+    },
+
+    // Kiểm tra user hiện tại có phải admin không
+    isCurrentUserAdmin: () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return false;
+        return isAdmin(token);
+    },
+
+    // Kiểm tra user có role cụ thể không
+    hasRole: (role) => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return false;
+        const currentRole = getRoleFromToken(token);
+        if (Array.isArray(role)) {
+            return role.includes(currentRole);
+        }
+        return currentRole === role;
     },
 };
 

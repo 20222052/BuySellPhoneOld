@@ -1,0 +1,272 @@
+/* ============================================
+   Admin Brands Page Styles
+   ============================================ */
+
+.brands-page {
+    padding: 24px;
+}
+
+/* Stats Cards */
+.brand-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+/* Brand Logo Cell */
+.brand-logo-cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo-img {
+    max-width: 50px;
+    max-height: 50px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px;
+    border: 1px solid var(--admin-border);
+}
+
+.brand-logo-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: var(--admin-bg-tertiary);
+    color: var(--admin-text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* Brand Name Cell */
+.brand-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--admin-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Logo Preview in Modal */
+.logo-preview {
+    margin-top: 16px;
+}
+
+.logo-preview .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+}
+
+.logo-preview-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    background: #fff;
+    border: 2px dashed var(--admin-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.logo-preview-img img {
+    max-width: 90px;
+    max-height: 90px;
+    object-fit: contain;
+}
+
+/* Logo Upload Container */
+.logo-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.logo-dropzone {
+    width: 100%;
+    min-height: 160px;
+    border: 2px dashed var(--admin-border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--admin-bg-secondary);
+    overflow: hidden;
+}
+
+.logo-dropzone:hover {
+    border-color: var(--admin-primary);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--admin-text-tertiary);
+}
+
+.upload-placeholder i {
+    font-size: 40px;
+    color: var(--admin-primary);
+    opacity: 0.7;
+}
+
+.upload-placeholder span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.upload-placeholder small {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Logo Preview Wrapper */
+.logo-preview-wrapper {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-preview-image {
+    max-width: 140px;
+    max-height: 140px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.logo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 10px;
+}
+
+.logo-overlay i {
+    font-size: 24px;
+}
+
+.logo-overlay span {
+    font-size: 13px;
+}
+
+.logo-dropzone:hover .logo-overlay {
+    opacity: 1;
+}
+
+/* File Info */
+.file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--admin-bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+}
+
+.file-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--admin-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-name i {
+    color: var(--admin-primary);
+    font-size: 16px;
+}
+
+.btn-remove-file {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--admin-danger);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-remove-file:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.btn-remove-file i {
+    font-size: 14px;
+}
+
+/* Modal Styles */
+.brands-page .modal-container {
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+        0 10px 30px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .brands-page {
+        padding: 16px;
+    }
+
+    .brand-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .logo-dropzone {
+        min-height: 140px;
+    }
+
+    .logo-preview-image {
+        max-width: 100px;
+        max-height: 100px;
+    }
+}

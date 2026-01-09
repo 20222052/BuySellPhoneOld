@@ -3,10 +3,11 @@ export const RoutePaths = {
   HOME: "/",
   PRODUCTS: "/products",
   PRODUCT_DETAIL: "/products/:id",
-  BLOG: "/blog",
-  BLOG_DETAIL: "/blog/:id",
+  BLOG: "/blogs",
+  BLOG_DETAIL: "/blogs/:id",
   TRADEIN: "/tradein",
   CART: "/cart",
+  CHECKOUT: "/checkout",
   ABOUT: "/about",
   CONTACT: "/contact",
 
@@ -28,8 +29,11 @@ export const RoutePaths = {
   ADMIN: "/admin",
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_PRODUCTS: "/admin/products",
+  ADMIN_VARIANTS: "/admin/variants",
   ADMIN_ORDERS: "/admin/orders",
   ADMIN_USERS: "/admin/users",
+  ADMIN_CATEGORIES: "/admin/categories",
+  ADMIN_BRANDS: "/admin/brands",
 
   // Other
   NOT_FOUND: "*"

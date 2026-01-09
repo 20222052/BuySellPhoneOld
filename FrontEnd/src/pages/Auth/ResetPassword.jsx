@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 import '../../assets/css/home/Auth/ResetPassword.css';
@@ -24,18 +25,20 @@ export default function ResetPassword() {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
-            alert("Mật khẩu không khớp!");
+            toast.error("Mật khẩu không khớp!");
             return;
         }
 
         if (formData.password.length < 6) {
-            alert("Mật khẩu phải có ít nhất 6 ký tự!");
+            toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
             return;
         }
 
         // Reset password logic here
-        alert("Đặt lại mật khẩu thành công!");
-        navigate("/login");
+        toast.success("Đặt lại mật khẩu thành công!");
+        setTimeout(() => {
+            navigate("/login");
+        }, 1500);
     };
 
     return (

@@ -7,7 +7,7 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await AuthService.login(credentials);
-      return response;
+      return response; // { success, token, user, isAdmin }
     } catch (error) {
       return rejectWithValue(error.message || "Đăng nhập thất bại");
     }
@@ -15,7 +15,7 @@ export const loginUser = createAsyncThunk(
 );
 
 export const registerUser = createAsyncThunk(
-  "auth/register",
+  "user/register",
   async (userData, { rejectWithValue }) => {
     try {
       const response = await AuthService.register(userData);
@@ -53,6 +53,8 @@ const initialState = {
   user: AuthService.getStoredUser(),
   token: localStorage.getItem("accessToken") || null,
   isAuthenticated: AuthService.isAuthenticated(),
+  isAdmin: AuthService.isCurrentUserAdmin(),
+  role: AuthService.getCurrentRole(),
   loading: false,
   error: null,
   success: null,
@@ -75,6 +77,8 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.isAdmin = false;
+      state.role = null;
       state.loading = false;
       state.error = null;
       state.success = null;
@@ -92,7 +96,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.token = action.payload.accessToken;
+        state.token = action.payload.token;
+        state.isAdmin = action.payload.isAdmin || false;
+        state.role = action.payload.user?.role || null;
         state.success = "Đăng nhập thành công!";
         state.error = null;
       })
@@ -102,6 +108,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
+        state.isAdmin = false;
+        state.role = null;
       });
 
     // Register
@@ -131,6 +139,8 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.isAdmin = false;
+        state.role = null;
         state.success = "Đăng xuất thành công!";
       })
       .addCase(logoutUser.rejected, (state, action) => {
@@ -140,6 +150,8 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.isAdmin = false;
+        state.role = null;
       });
 
     // Get Current User
@@ -158,6 +170,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
+        state.isAdmin = false;
+        state.role = null;
       });
   },
 });

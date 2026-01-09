@@ -64,6 +64,12 @@ spring:
         order_inserts: true
         default_schema: public
 
+#        cấu hình upload file
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
 server:
   port: 8080
   servlet:
@@ -84,10 +90,9 @@ otp:
   dailyLimit: 5               # Số OTP tối đa được gửi cho cùng một số điện thoại trong 1 ngày (tính theo ngày calendar).
   maxAttempts: 3              # Số lần nhập OTP sai tối đa trước khi khoá tài nguyên/hủy OTP hoặc tăng throttle.
   lockoutDurationSeconds: 900 # khoá 15 phút nếu vượt maxAttempts
-#
-#logging:
-#  level:
-#    com.gtel: debug
-#
-#token:
-#  impl: 1
+#Cloudinary Configuration
+cloudinary:
+  cloud-name: "dwfwcjshh"
+  api-key: "419827593273897"
+  api-secret: "ZJoEztPLCEKScIbBxtNosYaPvKs"
+

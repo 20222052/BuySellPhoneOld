@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import AuthService from "../../services/AuthService";
 import '../../assets/css/home/Auth/Register.css';
 
 export default function Register() {
-    const [formData, setFormData] = useState({
+    const location = useLocation();
+    // Nhận lại formData từ OTPRegister nếu quay lại
+    const savedFormData = location.state?.formData;
+
+    const [formData, setFormData] = useState(savedFormData || {
         fullName: "",
+        gender: "",
+        birthDate: "",
         email: "",
         phone: "",
         password: "",
@@ -15,6 +23,7 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -24,21 +33,56 @@ export default function Register() {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
-            alert("Mật khẩu không khớp!");
+            toast.error("Mật khẩu không khớp!");
             return;
         }
 
         if (!acceptTerms) {
-            alert("Vui lòng đồng ý với điều khoản!");
+            toast.error("Vui lòng đồng ý với điều khoản!");
             return;
         }
 
-        // Navigate to OTP verification
-        navigate("/otp-register");
+        setIsLoading(true);
+
+        try {
+            // Format birthDate từ YYYY-MM-DD sang DD/MM/YYYY
+            const formatBirthDate = (dateString) => {
+                if (!dateString) return "";
+                const [year, month, day] = dateString.split("-");
+                return `${day}/${month}/${year}`;
+            };
+
+            // Gọi API đăng ký
+            const userData = {
+                fullName: formData.fullName,
+                gender: formData.gender,
+                birthDate: formatBirthDate(formData.birthDate),
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password
+            };
+
+            const response = await AuthService.register(userData);
+            console.log("Register success:", response);
+
+            // Navigate to OTP verification với email và formData
+            navigate("/otp-register", {
+                state: {
+                    email: formData.email,
+                    formData: formData,
+                    message: response.message || "Mã OTP đã được gửi đến email của bạn"
+                }
+            });
+        } catch (err) {
+            console.error("Register error:", err);
+            toast.error(err.message || "Đăng ký thất bại. Vui lòng thử lại!");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -71,6 +115,44 @@ export default function Register() {
                                             placeholder="Nhập họ và tên"
                                             required
                                         />
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group form-group-half">
+                                            <label htmlFor="gender" className="form-label">
+                                                <i className="bi bi-gender-ambiguous me-2"></i>
+                                                Giới tính
+                                            </label>
+                                            <select
+                                                className="form-control"
+                                                id="gender"
+                                                name="gender"
+                                                value={formData.gender}
+                                                onChange={handleChange}
+                                                required
+                                            >
+                                                <option value="">Chọn giới tính</option>
+                                                <option value="male">Nam</option>
+                                                <option value="female">Nữ</option>
+                                                <option value="other">Khác</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="form-group form-group-half">
+                                            <label htmlFor="birthDate" className="form-label">
+                                                <i className="bi bi-calendar me-2"></i>
+                                                Ngày sinh
+                                            </label>
+                                            <input
+                                                type="date"
+                                                className="form-control"
+                                                id="birthDate"
+                                                name="birthDate"
+                                                value={formData.birthDate}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="form-group">
@@ -179,9 +261,18 @@ export default function Register() {
                                         </label>
                                     </div>
 
-                                    <button type="submit" className="btn-submit">
-                                        <span>Đăng Ký</span>
-                                        <i className="bi bi-arrow-right"></i>
+                                    <button type="submit" className="btn-submit" disabled={isLoading}>
+                                        {isLoading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                <span>Đang xử lý...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>Đăng Ký</span>
+                                                <i className="bi bi-arrow-right"></i>
+                                            </>
+                                        )}
                                     </button>
                                 </form>
 

@@ -1,0 +1,1453 @@
+/* ============================================
+   ADMIN FORM COMPONENTS - MODERN DESIGN
+   Premium UI with smooth animations
+   ============================================ */
+
+/* CSS Variables for Forms */
+:root {
+    --form-radius: 10px;
+    --form-radius-lg: 14px;
+    --form-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --form-shadow-focus: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    --form-shadow-error: 0 0 0 4px rgba(239, 68, 68, 0.12);
+    --form-shadow-success: 0 0 0 4px rgba(16, 185, 129, 0.12);
+    --form-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   FORM CARD - GLASSMORPHISM STYLE
+   ============================================ */
+
+.form-card {
+    background: var(--admin-bg-card);
+    border-radius: var(--form-radius-lg);
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--admin-primary), #8b5cf6, #ec4899);
+    opacity: 0;
+    transition: var(--form-transition);
+}
+
+.form-card:hover::before {
+    opacity: 1;
+}
+
+.form-card-header {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--admin-border-color);
+    position: relative;
+}
+
+.form-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--admin-text-primary);
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-card-title::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(180deg, var(--admin-primary), #8b5cf6);
+    border-radius: 2px;
+}
+
+.form-card-subtitle {
+    font-size: 14px;
+    color: var(--admin-text-muted);
+    margin: 0;
+    padding-left: 14px;
+}
+
+/* ============================================
+   FORM GROUP & LABEL
+   ============================================ */
+
+.form-group {
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--admin-text-primary);
+    letter-spacing: 0.01em;
+}
+
+.form-label .text-danger {
+    color: var(--admin-danger);
+    font-weight: 500;
+}
+
+/* ============================================
+   BASE INPUT - MODERN STYLE
+   ============================================ */
+
+.admin-input {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--admin-text-primary);
+    background: var(--admin-bg-secondary);
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    border-radius: var(--form-radius);
+    transition: var(--form-transition);
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.admin-input::placeholder {
+    color: var(--admin-text-muted);
+    font-weight: 400;
+}
+
+.admin-input:hover:not(:disabled):not(:focus) {
+    border-color: rgba(100, 116, 139, 0.4);
+    background: var(--admin-bg-card);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.admin-input:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: var(--admin-bg-card);
+}
+
+.admin-input:disabled {
+    background: var(--admin-bg-primary);
+    color: var(--admin-text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Input Sizes */
+.admin-input-sm {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+.admin-input-lg {
+    padding: 16px 20px;
+    font-size: 16px;
+    border-radius: 12px;
+}
+
+/* Input States */
+.admin-input.input-error {
+    border-color: var(--admin-danger);
+    background: rgba(239, 68, 68, 0.03);
+    animation: shake 0.4s ease-in-out;
+}
+
+.admin-input.input-error:focus {
+    box-shadow: var(--form-shadow-error);
+}
+
+.admin-input.input-success {
+    border-color: var(--admin-success);
+    background: rgba(16, 185, 129, 0.03);
+}
+
+.admin-input.input-success:focus {
+    box-shadow: var(--form-shadow-success);
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20%,
+    60% {
+        transform: translateX(-4px);
+    }
+
+    40%,
+    80% {
+        transform: translateX(4px);
+    }
+}
+
+/* Input Wrapper */
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--admin-text-muted);
+    pointer-events: none;
+    font-size: 18px;
+    transition: var(--form-transition);
+    z-index: 1;
+}
+
+.input-icon.left {
+    left: 16px;
+}
+
+.input-icon.right {
+    right: 16px;
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: var(--admin-primary);
+}
+
+.input-icon.clickable {
+    pointer-events: auto;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+.input-icon.clickable:hover {
+    color: var(--admin-primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.admin-input.has-left-icon {
+    padding-left: 48px;
+}
+
+.admin-input.has-right-icon {
+    padding-right: 48px;
+}
+
+/* Form Feedback */
+.form-feedback {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-feedback.error {
+    color: var(--admin-danger);
+}
+
+.form-feedback.error::before {
+    content: '\F33A';
+    font-family: 'bootstrap-icons';
+    font-size: 14px;
+}
+
+.form-feedback.success {
+    color: var(--admin-success);
+}
+
+.form-feedback.success::before {
+    content: '\F26B';
+    font-family: 'bootstrap-icons';
+    font-size: 14px;
+}
+
+.form-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--admin-text-muted);
+}
+
+.form-hint::before {
+    content: '\F431';
+    font-family: 'bootstrap-icons';
+    font-size: 12px;
+}
+
+/* ============================================
+   PASSWORD INPUT - ENHANCED
+   ============================================ */
+
+.password-strength {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: var(--admin-bg-primary);
+    border-radius: 8px;
+}
+
+.strength-bars {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+}
+
+.strength-bar {
+    height: 6px;
+    flex: 1;
+    background: var(--admin-border-color);
+    border-radius: 3px;
+    transition: var(--form-transition);
+    overflow: hidden;
+}
+
+.strength-bar.active {
+    position: relative;
+}
+
+.strength-bar.active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    animation: strengthPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes strengthPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.strength-text {
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 90px;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   SELECT INPUT - PREMIUM DROPDOWN
+   ============================================ */
+
+.admin-select {
+    position: relative;
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--admin-bg-secondary);
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    border-radius: var(--form-radius);
+    cursor: pointer;
+    transition: var(--form-transition);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.admin-select:hover:not(.select-disabled) {
+    border-color: rgba(100, 116, 139, 0.4);
+    background: var(--admin-bg-card);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.admin-select.open {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.admin-select.select-error {
+    border-color: var(--admin-danger);
+}
+
+.admin-select.select-disabled {
+    background: var(--admin-bg-primary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.select-value {
+    flex: 1;
+    min-width: 0;
+}
+
+.selected-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+}
+
+.placeholder-text {
+    font-size: 15px;
+    color: var(--admin-text-muted);
+}
+
+.select-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.select-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--admin-bg-primary);
+    border: none;
+    border-radius: 50%;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    transition: var(--form-transition);
+    font-size: 12px;
+}
+
+.select-clear:hover {
+    background: var(--admin-danger);
+    color: white;
+    transform: scale(1.1);
+}
+
+.select-arrow {
+    color: var(--admin-text-muted);
+    transition: transform 0.3s ease;
+    font-size: 14px;
+}
+
+.admin-select.open .select-arrow {
+    transform: rotate(180deg);
+}
+
+/* Select Dropdown */
+.select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: -2px;
+    right: -2px;
+    background: var(--admin-bg-card);
+    border: 2px solid var(--admin-primary);
+    border-top: none;
+    border-radius: 0 0 var(--form-radius) var(--form-radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-height: 320px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: dropdownSlide 0.25s ease;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.select-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--admin-border-color);
+    background: var(--admin-bg-secondary);
+}
+
+.select-search i {
+    color: var(--admin-text-muted);
+    font-size: 16px;
+}
+
+.select-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    background: transparent;
+    color: var(--admin-text-primary);
+}
+
+.select-options {
+    overflow-y: auto;
+    max-height: 260px;
+    padding: 8px;
+}
+
+.select-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+    cursor: pointer;
+    transition: var(--form-transition);
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+.select-option:last-child {
+    margin-bottom: 0;
+}
+
+.select-option:hover {
+    background: var(--admin-bg-primary);
+}
+
+.select-option.selected {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    color: var(--admin-primary);
+}
+
+.select-option.selected::after {
+    content: '\F26B';
+    font-family: 'bootstrap-icons';
+    margin-left: auto;
+    font-size: 16px;
+}
+
+.option-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--admin-border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--form-transition);
+    font-size: 12px;
+}
+
+.option-checkbox.checked {
+    background: linear-gradient(135deg, var(--admin-primary), #8b5cf6);
+    border-color: transparent;
+    color: white;
+}
+
+.select-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--admin-text-muted);
+}
+
+.select-empty i {
+    font-size: 32px;
+    margin-bottom: 8px;
+    display: block;
+    opacity: 0.5;
+}
+
+/* ============================================
+   TEXTAREA - ENHANCED
+   ============================================ */
+
+.textarea-wrapper {
+    position: relative;
+}
+
+.admin-textarea {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--admin-text-primary);
+    background: var(--admin-bg-secondary);
+    border: 2px solid var(--admin-border-color);
+    border-radius: var(--form-radius);
+    transition: var(--form-transition);
+    outline: none;
+    min-height: 120px;
+    resize: vertical;
+    box-shadow: var(--form-shadow);
+    line-height: 1.6;
+}
+
+.admin-textarea::placeholder {
+    color: var(--admin-text-muted);
+}
+
+.admin-textarea:hover:not(:disabled):not(:focus) {
+    border-color: var(--admin-text-muted);
+}
+
+.admin-textarea:focus {
+    border-color: var(--admin-primary);
+    box-shadow: var(--form-shadow-focus);
+    background: var(--admin-bg-card);
+}
+
+.admin-textarea:disabled {
+    background: var(--admin-bg-primary);
+    color: var(--admin-text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.admin-textarea.input-error {
+    border-color: var(--admin-danger);
+}
+
+.admin-textarea.input-success {
+    border-color: var(--admin-success);
+}
+
+.textarea-count {
+    position: absolute;
+    bottom: 12px;
+    right: 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--admin-text-muted);
+    background: var(--admin-bg-card);
+    padding: 4px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.textarea-count.warning {
+    color: var(--admin-warning);
+}
+
+.textarea-count.danger {
+    color: var(--admin-danger);
+}
+
+/* ============================================
+   CHECKBOX & RADIO - MODERN STYLE
+   ============================================ */
+
+.admin-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 0;
+}
+
+.admin-checkbox input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.checkbox-mark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--admin-border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--form-transition);
+    flex-shrink: 0;
+    background: var(--admin-bg-secondary);
+    font-size: 12px;
+}
+
+.checkbox-mark.radio {
+    border-radius: 50%;
+}
+
+.admin-checkbox:hover .checkbox-mark {
+    border-color: var(--admin-primary);
+    transform: scale(1.05);
+}
+
+.admin-checkbox input:checked+.checkbox-mark {
+    background: linear-gradient(135deg, var(--admin-primary), #8b5cf6);
+    border-color: transparent;
+    color: white;
+    animation: checkPop 0.3s ease;
+}
+
+@keyframes checkPop {
+    0% {
+        transform: scale(0.8);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.admin-checkbox input:checked+.checkbox-mark.radio::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+}
+
+.admin-checkbox.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.checkbox-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+}
+
+.checkbox-group {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.checkbox-group.vertical {
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Checkbox Variants */
+.admin-checkbox.success input:checked+.checkbox-mark {
+    background: linear-gradient(135deg, var(--admin-success), #059669);
+}
+
+.admin-checkbox.warning input:checked+.checkbox-mark {
+    background: linear-gradient(135deg, var(--admin-warning), #d97706);
+}
+
+.admin-checkbox.danger input:checked+.checkbox-mark {
+    background: linear-gradient(135deg, var(--admin-danger), #dc2626);
+}
+
+/* ============================================
+   SWITCH TOGGLE - PREMIUM STYLE
+   ============================================ */
+
+.admin-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 0;
+}
+
+.admin-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-wrapper {
+    position: relative;
+}
+
+.switch-slider {
+    display: block;
+    width: 50px;
+    height: 28px;
+    background: var(--admin-border-color);
+    border-radius: 28px;
+    transition: var(--form-transition);
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.switch-slider::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    transition: var(--form-transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.admin-switch input:checked+.switch-slider {
+    background: linear-gradient(135deg, var(--admin-primary), #8b5cf6);
+}
+
+.admin-switch input:checked+.switch-slider::after {
+    transform: translateX(22px);
+}
+
+.admin-switch:hover .switch-slider::after {
+    transform: scale(1.05);
+}
+
+.admin-switch input:checked:hover+.switch-slider::after {
+    transform: translateX(22px) scale(1.05);
+}
+
+.admin-switch.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.switch-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+}
+
+/* Switch Sizes */
+.admin-switch.sm .switch-slider {
+    width: 40px;
+    height: 22px;
+}
+
+.admin-switch.sm .switch-slider::after {
+    width: 16px;
+    height: 16px;
+}
+
+.admin-switch.sm input:checked+.switch-slider::after {
+    transform: translateX(18px);
+}
+
+.admin-switch.lg .switch-slider {
+    width: 60px;
+    height: 32px;
+}
+
+.admin-switch.lg .switch-slider::after {
+    width: 26px;
+    height: 26px;
+}
+
+.admin-switch.lg input:checked+.switch-slider::after {
+    transform: translateX(28px);
+}
+
+/* Switch Variants */
+.admin-switch.success input:checked+.switch-slider {
+    background: linear-gradient(135deg, var(--admin-success), #059669);
+}
+
+.admin-switch.warning input:checked+.switch-slider {
+    background: linear-gradient(135deg, var(--admin-warning), #d97706);
+}
+
+.admin-switch.danger input:checked+.switch-slider {
+    background: linear-gradient(135deg, var(--admin-danger), #dc2626);
+}
+
+/* ============================================
+   FILE UPLOAD - MODERN STYLE
+   ============================================ */
+
+.file-upload-wrapper {
+    position: relative;
+    border: 2px solid var(--admin-border-color);
+    border-radius: var(--form-radius);
+    cursor: pointer;
+    transition: var(--form-transition);
+    overflow: hidden;
+    background: var(--admin-bg-secondary);
+}
+
+.file-upload-wrapper input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.file-upload-wrapper:hover {
+    border-color: var(--admin-primary);
+    background: var(--admin-bg-card);
+}
+
+.file-upload-wrapper.has-error {
+    border-color: var(--admin-danger);
+}
+
+.file-upload-wrapper.disabled {
+    background: var(--admin-bg-primary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.file-upload-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px 10px 18px;
+    gap: 12px;
+}
+
+.file-upload-text {
+    font-size: 14px;
+    color: var(--admin-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.file-upload-text.has-file {
+    color: var(--admin-text-primary);
+    font-weight: 500;
+}
+
+.file-upload-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    transition: var(--form-transition);
+}
+
+.file-clear:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--admin-danger);
+}
+
+.file-upload-btn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--admin-primary), #8b5cf6);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    transition: var(--form-transition);
+    white-space: nowrap;
+}
+
+.file-upload-wrapper:hover .file-upload-btn {
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* ============================================
+   DROPZONE - PREMIUM UPLOAD AREA
+   ============================================ */
+
+.dropzone {
+    border: 2px dashed var(--admin-border-color);
+    border-radius: var(--form-radius-lg);
+    padding: 50px 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--form-transition);
+    background: var(--admin-bg-secondary);
+    position: relative;
+    overflow: hidden;
+}
+
+.dropzone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+    opacity: 0;
+    transition: var(--form-transition);
+}
+
+.dropzone:hover::before,
+.dropzone.dragging::before {
+    opacity: 1;
+}
+
+.dropzone:hover,
+.dropzone.dragging {
+    border-color: var(--admin-primary);
+    border-style: solid;
+}
+
+.dropzone.has-error {
+    border-color: var(--admin-danger);
+}
+
+.dropzone.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.dropzone-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border-radius: 50%;
+    font-size: 32px;
+    color: var(--admin-primary);
+    transition: var(--form-transition);
+}
+
+.dropzone:hover .dropzone-icon,
+.dropzone.dragging .dropzone-icon {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+}
+
+.dropzone-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--admin-text-primary);
+    margin: 0;
+}
+
+.dropzone-text {
+    font-size: 14px;
+    color: var(--admin-text-muted);
+    margin: 0;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+.dropzone-text span {
+    color: var(--admin-primary);
+    font-weight: 600;
+}
+
+.dropzone-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--admin-primary), #8b5cf6);
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: var(--form-transition);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.dropzone-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Dropzone Files List */
+.dropzone-files {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dropzone-file-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--admin-bg-card);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--form-radius);
+    transition: var(--form-transition);
+    animation: fileSlideIn 0.3s ease;
+}
+
+@keyframes fileSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropzone-file-item:hover {
+    border-color: var(--admin-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.file-preview {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.file-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border-radius: 10px;
+    font-size: 24px;
+    color: var(--admin-primary);
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--admin-text-primary);
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 13px;
+    color: var(--admin-text-muted);
+}
+
+.file-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    transition: var(--form-transition);
+}
+
+.file-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--admin-danger);
+    transform: scale(1.1);
+}
+
+/* ============================================
+   INPUT GROUP - PREMIUM STYLE
+   ============================================ */
+
+.input-group-wrapper {
+    display: flex;
+    border: 2px solid var(--admin-border-color);
+    border-radius: var(--form-radius);
+    overflow: hidden;
+    transition: var(--form-transition);
+    background: var(--admin-bg-secondary);
+}
+
+.input-group-wrapper:focus-within {
+    border-color: var(--admin-primary);
+    box-shadow: var(--form-shadow-focus);
+}
+
+.input-group-wrapper.has-error {
+    border-color: var(--admin-danger);
+}
+
+.input-group-wrapper.disabled {
+    background: var(--admin-bg-primary);
+    opacity: 0.7;
+}
+
+.input-group-addon {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: var(--admin-bg-primary);
+    color: var(--admin-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    white-space: nowrap;
+}
+
+.input-group-addon.prefix {
+    border-right: 2px solid var(--admin-border-color);
+}
+
+.input-group-addon.suffix {
+    border-left: 2px solid var(--admin-border-color);
+}
+
+.input-group-addon.copy-btn {
+    cursor: pointer;
+    transition: var(--form-transition);
+    font-weight: 600;
+}
+
+.input-group-addon.copy-btn:hover {
+    background: linear-gradient(135deg, var(--admin-primary), #8b5cf6);
+    color: white;
+}
+
+.input-group-input {
+    flex: 1;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.country-select {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    color: var(--admin-text-primary);
+}
+
+.protocol-text {
+    font-weight: 600;
+    color: var(--admin-primary);
+}
+
+/* ============================================
+   DATE PICKER - ENHANCED
+   ============================================ */
+
+.date-range-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.date-range-wrapper .input-wrapper {
+    flex: 1;
+}
+
+.date-range-separator {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--admin-text-muted);
+    padding: 0 8px;
+}
+
+/* Style native date input */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"] {
+    position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* ============================================
+   FORM LAYOUT HELPERS
+   ============================================ */
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .form-row-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+
+    .form-row,
+    .form-row-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: flex-end;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--admin-border-color);
+}
+
+/* Form Divider */
+.form-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0;
+    color: var(--admin-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-divider::before,
+.form-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--admin-border-color);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+    .form-card {
+        padding: 20px;
+    }
+
+    .form-card-header {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+
+    .form-card-title {
+        font-size: 18px;
+    }
+
+    .admin-input,
+    .admin-select,
+    .admin-textarea {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .dropzone {
+        padding: 30px 20px;
+    }
+
+    .dropzone-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .date-range-wrapper {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .date-range-separator {
+        display: none;
+    }
+}
+
+/* ============================================
+   DARK MODE ENHANCEMENTS
+   ============================================ */
+
+[data-theme="dark"] .form-card {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .admin-input,
+[data-theme="dark"] .admin-select,
+[data-theme="dark"] .admin-textarea {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .admin-input:focus,
+[data-theme="dark"] .admin-select.open,
+[data-theme="dark"] .admin-textarea:focus {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+[data-theme="dark"] .select-dropdown {
+    background: rgb(30, 41, 59);
+}
+
+[data-theme="dark"] .dropzone {
+    background: rgba(15, 23, 42, 0.6);
+}

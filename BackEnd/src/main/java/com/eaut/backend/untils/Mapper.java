@@ -1,97 +1,268 @@
 package com.eaut.backend.untils;
 
-import com.eaut.backend.Entity.*;
-import com.eaut.backend.Model.Request.BrandRequest;
-import com.eaut.backend.Model.Request.CategoryRequest;
-import com.eaut.backend.Model.Request.ProductColorRequest;
-import com.eaut.backend.Model.Request.RegisterRequest;
-import com.eaut.backend.Model.Response.BrandResponse;
-import com.eaut.backend.Model.Response.CategoryResponse;
-import com.eaut.backend.Model.Response.ProductColorResponse;
-import com.eaut.backend.Model.Response.UserResponse;
+import com.eaut.backend.constant.ProductStatus;
+import com.eaut.backend.entities.*;
+import com.eaut.backend.model.request.BrandRequest;
+import com.eaut.backend.model.request.CategoryRequest;
+import com.eaut.backend.model.request.ProductColorRequest;
+import com.eaut.backend.model.request.ProductItemRequest;
+import com.eaut.backend.model.request.ProductRequest;
+import com.eaut.backend.model.request.RegisterRequest;
+import com.eaut.backend.model.response.BrandResponse;
+import com.eaut.backend.model.response.CategoryResponse;
+import com.eaut.backend.model.response.ProductColorResponse;
+import com.eaut.backend.model.response.ProductItemDetailResponse;
+import com.eaut.backend.model.response.ProductItemResponse;
+import com.eaut.backend.model.response.ProductMediaResponse;
+import com.eaut.backend.model.response.ProductModelDetailResponse;
+import com.eaut.backend.model.response.ProductRatingResponse;
+import com.eaut.backend.model.response.ProductResponse;
+import com.eaut.backend.model.response.UserResponse;
 
 import com.eaut.backend.constant.UserStatus;
 
 import static com.eaut.backend.untils.BcryptUtils.passwordEncoder;
 
 public class Mapper {
-    public static User ToUser(RegisterRequest registerRequest){
-        User user = new User();
-        user.setFullName(registerRequest.getFullName());
-        user.setGender(registerRequest.getGender());
-        user.setBirthDate(registerRequest.getBirthDate());
-        user.setEmail(registerRequest.getEmail());
-        user.setPhone(registerRequest.getPhone());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword())); // Encode password
-        user.setStatus(UserStatus.active);
-        return user;
-    }
-    public static UserResponse toUserReponse(User user) {
-        return new UserResponse(user);
-    }
-    public static RegisterRequest toRegisterRequest(User user) {
-        RegisterRequest registerRequest = new RegisterRequest();
-        registerRequest.setFullName(user.getFullName());
-        registerRequest.setGender(user.getGender());
-        registerRequest.setBirthDate(user.getBirthDate());
-        registerRequest.setEmail(user.getEmail());
-        registerRequest.setPhone(user.getPhone());
-        registerRequest.setPassword(user.getPassword());
-        return registerRequest;
-    }
-    public static CategoryResponse toCategoryResponse(Category category) {
-        new CategoryResponse();
-        return CategoryResponse.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .description(category.getDescription())
-                .image(category.getImage())
-                .isActive(category.isActive())
-                .createdAt(category.getCreatedAt())
-                .updatedAt(category.getModifiedAt())
-                .build();
-    }
-    public static Category toCategory(CategoryRequest request) {
-        new Category();
-        return Category.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .image(request.getImage())
-                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
-                .build();
-    }
+        public static User ToUser(RegisterRequest registerRequest) {
+                User user = new User();
+                user.setFullName(registerRequest.getFullName());
+                user.setGender(registerRequest.getGender());
+                user.setBirthDate(registerRequest.getBirthDate());
+                user.setEmail(registerRequest.getEmail());
+                user.setPhone(registerRequest.getPhone());
+                user.setPassword(passwordEncoder.encode(registerRequest.getPassword())); // Encode password
+                user.setStatus(UserStatus.active);
+                return user;
+        }
 
-    public static BrandResponse toBrandResponse(Brand brand){
-        new BrandResponse();
-        return BrandResponse.builder()
-                .id(brand.getId())
-                .name(brand.getName())
-                .logoUrl(brand.getLogoUrl())
-                .build();
-    }
+        public static UserResponse toUserReponse(User user) {
+                return new UserResponse(user);
+        }
 
-    public static Brand toBrand(BrandRequest request) {
-        new Brand();
-        return Brand.builder()
-                .name(request.getName())
-                .logoUrl(request.getLogoUrl())
-                .build();
-    }
+        public static RegisterRequest toRegisterRequest(User user) {
+                RegisterRequest registerRequest = new RegisterRequest();
+                registerRequest.setFullName(user.getFullName());
+                registerRequest.setGender(user.getGender());
+                registerRequest.setBirthDate(user.getBirthDate());
+                registerRequest.setEmail(user.getEmail());
+                registerRequest.setPhone(user.getPhone());
+                registerRequest.setPassword(user.getPassword());
+                return registerRequest;
+        }
 
-    public static ProductColorResponse toProductColorResponse(ProductColor productColor) {
-        new ProductColorResponse();
-        return  ProductColorResponse.builder()
-                .id(productColor.getId())
-                .name(productColor.getName())
-                .hexCode(productColor.getHexCode())
-                .build();
-    }
+        public static CategoryResponse toCategoryResponse(Category category) {
+                new CategoryResponse();
+                return CategoryResponse.builder()
+                                .id(category.getId())
+                                .name(category.getName())
+                                .description(category.getDescription())
+                                .image(category.getImage())
+                                .isActive(category.isActive())
+                                .createdAt(category.getCreatedAt())
+                                .updatedAt(category.getModifiedAt())
+                                .build();
+        }
 
-    public static ProductColor toProductColor(ProductColorRequest request) {
-        new ProductColor();
-        return ProductColor.builder()
-                .name(request.getName())
-                .hexCode(request.getHexCode())
-                .build();
-    }
+        public static Category toCategory(CategoryRequest request) {
+                new Category();
+                return Category.builder()
+                                .name(request.getName())
+                                .description(request.getDescription())
+                                .image(request.getImage())
+                                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                                .build();
+        }
+
+        public static BrandResponse toBrandResponse(Brand brand) {
+                new BrandResponse();
+                return BrandResponse.builder()
+                                .id(brand.getId())
+                                .name(brand.getName())
+                                .logoUrl(brand.getLogoUrl())
+                                .build();
+        }
+
+        public static Brand toBrand(BrandRequest request) {
+                new Brand();
+                return Brand.builder()
+                                .name(request.getName())
+                                .logoUrl(request.getLogoUrl())
+                                .build();
+        }
+
+        public static ProductColorResponse toProductColorResponse(ProductColor productColor) {
+                new ProductColorResponse();
+                return ProductColorResponse.builder()
+                                .id(productColor.getId())
+                                .name(productColor.getName())
+                                .hexCode(productColor.getHexCode())
+                                .qtyAvailable(productColor.getQtyAvailable())
+                                .build();
+        }
+
+        public static ProductColor toProductColor(ProductColorRequest request) {
+                new ProductColor();
+                return ProductColor.builder()
+                                .name(request.getName())
+                                .hexCode(request.getHexCode())
+                                .qtyAvailable(request.getQtyAvailable() != null ? request.getQtyAvailable() : 0)
+                                .build();
+        }
+
+        // Product Mappers
+        public static ProductResponse toProductResponse(Product product) {
+                return ProductResponse.builder()
+                                .id(product.getId())
+                                .name(product.getName())
+                                .description(product.getDescription())
+                                .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
+                                .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
+                                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                                .warrantyMonths(product.getWarrantyMonths())
+                                .status(product.getStatus())
+                                .createdAt(product.getCreatedAt())
+                                .updatedAt(product.getModifiedAt())
+                                .build();
+        }
+
+        public static Product toProduct(ProductRequest request, Brand brand, Category category) {
+                return Product.builder()
+                                .name(request.getName())
+                                .description(request.getDescription())
+                                .brand(brand)
+                                .category(category)
+                                .warrantyMonths(request.getWarrantyMonths() != null ? request.getWarrantyMonths() : 0)
+                                .status(request.getStatus() != null ? request.getStatus() : ProductStatus.active)
+                                .build();
+        }
+
+        // ProductItem Mappers
+        public static ProductItemResponse toProductItemResponse(ProductItem productItem) {
+                return ProductItemResponse.builder()
+                                .id(productItem.getId())
+                                .productId(productItem.getProduct() != null ? productItem.getProduct().getId() : null)
+                                .productName(productItem.getProduct() != null ? productItem.getProduct().getName()
+                                                : null)
+                                .basePrice(productItem.getBasePrice())
+                                .sellPrice(productItem.getSellPrice())
+                                .comparePrice(productItem.getComparePrice())
+                                .createdAt(productItem.getCreatedAt())
+                                .updatedAt(productItem.getModifiedAt())
+                                .build();
+        }
+
+        public static ProductItem toProductItem(ProductItemRequest request, Product product) {
+                return ProductItem.builder()
+                                .product(product)
+                                .basePrice(request.getBasePrice())
+                                .sellPrice(request.getSellPrice())
+                                .comparePrice(request.getComparePrice())
+                                .build();
+        }
+
+        // ProductMedia Mapper
+        public static ProductMediaResponse toProductMediaResponse(ProductMedia media) {
+                return ProductMediaResponse.builder()
+                                .id(media.getId())
+                                .productItemId(media.getProductItem() != null ? media.getProductItem().getId() : null)
+                                .url(media.getUrl())
+                                .publicId(media.getPublic_id())
+                                .type(media.getType())
+                                .isPrimary(media.isPrimary())
+                                .sortOrder(media.getSortOrder())
+                                .build();
+        }
+
+        // ProductModel Detail Mapper (with colors)
+        public static ProductModelDetailResponse toProductModelDetailResponse(ProductModel model) {
+                return ProductModelDetailResponse.builder()
+                                .id(model.getId())
+                                .productItemId(model.getProductItem() != null ? model.getProductItem().getId() : null)
+                                .name(model.getName())
+                                .ramGb(model.getRamGb())
+                                .romGb(model.getRomGb())
+                                .grade(model.getGrade())
+                                .description(model.getDescription())
+                                .colors(model.getColors() != null
+                                                ? model.getColors().stream().map(Mapper::toProductColorResponse)
+                                                                .toList()
+                                                : null)
+                                .createdAt(model.getCreatedAt())
+                                .build();
+        }
+
+        // ProductRating Mapper
+        public static ProductRatingResponse toProductRatingResponse(ProductRating rating) {
+                return ProductRatingResponse.builder()
+                                .id(rating.getId())
+                                .productId(rating.getProduct() != null ? rating.getProduct().getId() : null)
+                                .userId(rating.getUser() != null ? rating.getUser().getId() : null)
+                                .userName(rating.getUser() != null ? rating.getUser().getFullName() : null)
+                                .orderId(rating.getOrder() != null ? rating.getOrder().getId() : null)
+                                .rating(rating.getRating())
+                                .content(rating.getContent())
+                                .createdAt(rating.getCreatedAt())
+                                .build();
+        }
+
+        // ProductItem Detail Mapper (with all relations - separate lists)
+        public static ProductItemDetailResponse toProductItemDetailResponse(
+                        ProductItem productItem,
+                        java.util.List<ProductModel> models,
+                        java.util.List<ProductMedia> media,
+                        java.util.List<ProductRating> ratings,
+                        Double averageRating,
+                        Integer totalRatings) {
+
+                Product product = productItem.getProduct();
+
+                // Calculate total quantity from all colors in all models
+                int totalQtyAvailable = 0;
+                if (models != null) {
+                        for (var model : models) {
+                                if (model.getColors() != null) {
+                                        for (var color : model.getColors()) {
+                                                totalQtyAvailable += color.getQtyAvailable();
+                                        }
+                                }
+                        }
+                }
+
+                return ProductItemDetailResponse.builder()
+                                .id(productItem.getId())
+                                // Product info
+                                .productId(product != null ? product.getId() : null)
+                                .productName(product != null ? product.getName() : null)
+                                .productDescription(product != null ? product.getDescription() : null)
+                                .brandName(product != null && product.getBrand() != null ? product.getBrand().getName()
+                                                : null)
+                                .categoryName(product != null && product.getCategory() != null
+                                                ? product.getCategory().getName()
+                                                : null)
+                                .warrantyMonths(product != null ? product.getWarrantyMonths() : null)
+                                // Price info
+                                .basePrice(productItem.getBasePrice())
+                                .sellPrice(productItem.getSellPrice())
+                                .comparePrice(productItem.getComparePrice())
+                                .qtyAvailable(totalQtyAvailable)
+                                // Related data (from separate queries)
+                                .models(models != null
+                                                ? models.stream().map(Mapper::toProductModelDetailResponse).toList()
+                                                : null)
+                                .media(media != null
+                                                ? media.stream().map(Mapper::toProductMediaResponse).toList()
+                                                : null)
+                                .ratings(ratings != null
+                                                ? ratings.stream().map(Mapper::toProductRatingResponse).toList()
+                                                : null)
+                                // Aggregate rating
+                                .averageRating(averageRating)
+                                .totalRatings(totalRatings)
+                                // Timestamps
+                                .createdAt(productItem.getCreatedAt())
+                                .updatedAt(productItem.getModifiedAt())
+                                .build();
+        }
 }
