@@ -18,6 +18,7 @@ import com.eaut.backend.service.AuthenticationService;
 import com.eaut.backend.service.mailService.MailProducer;
 import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.constant.UserRole;
+import com.eaut.backend.constant.UserStatus;
 import com.eaut.backend.untils.Mapper;
 import com.eaut.backend.untils.Validate;
 import com.nimbusds.jose.*;
@@ -57,7 +58,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     private String jwtSecret;
 
-
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) {
         var token = request.getToken();
@@ -74,28 +74,36 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     // Authentication OTP Confirm
     @Override
-    public AuthenticationReponse<UserResponse> confirmOtpAndRegister(ConfirmOtpRegisterRequest request) throws ApplicationException {
-        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Starting OTP confirmation and user registration for Email: {}", request.getEmail());
+    public AuthenticationReponse<UserResponse> confirmOtpAndRegister(ConfirmOtpRegisterRequest request)
+            throws ApplicationException {
+        AuthenticationServiceImpl.log.info(
+                "[CONFIRM-OTP] Starting OTP confirmation and user registration for Email: {}", request.getEmail());
 
         // Validate OTP
         AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Verifying OTP for Email: {}", request.getEmail());
         if (!otpDomain.verifyOtpByEmail(request.getEmail(), request.getOtp())) {
-            AuthenticationServiceImpl.log.warn("[CONFIRM-OTP] OTP VERIFICATION FAILED for Email: {}", request.getEmail());
+            AuthenticationServiceImpl.log.warn("[CONFIRM-OTP] OTP VERIFICATION FAILED for Email: {}",
+                    request.getEmail());
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Invalid or expired OTP");
         }
 
-        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] OTP verified successfully, proceeding with user creation for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info(
+                "[CONFIRM-OTP] OTP verified successfully, proceeding with user creation for Email: {}",
+                request.getEmail());
 
         // Nhận dữ liệu đăng ký từ Redis bằng cách sử dụng email được định dạng làm khóa
-        Optional<RedisRegisterEntity<RegisterRequest>> registerEntityOpt = registerRedisRepository.findById(request.getEmail());
+        Optional<RedisRegisterEntity<RegisterRequest>> registerEntityOpt = registerRedisRepository
+                .findById(request.getEmail());
         if (registerEntityOpt.isEmpty()) {
-            AuthenticationServiceImpl.log.error("[CONFIRM-OTP] REGISTRATION FAILED - Registration session not found for Email: {}", request.getEmail());
+            AuthenticationServiceImpl.log.error(
+                    "[CONFIRM-OTP] REGISTRATION FAILED - Registration session not found for Email: {}",
+                    request.getEmail());
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Registration session not found");
         }
 
         RedisRegisterEntity<RegisterRequest> registerEntity = registerEntityOpt.get();
-        AuthenticationServiceImpl.log.debug("[CONFIRM-OTP] Retrieved registration data for Email: {}", registerEntity.getEmail());
-
+        AuthenticationServiceImpl.log.debug("[CONFIRM-OTP] Retrieved registration data for Email: {}",
+                registerEntity.getEmail());
 
         // Create user in database
         User user = Mapper.ToUser(registerEntity.getData());
@@ -103,21 +111,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow();
         user.setRoles(Set.of(role));
         // Generate JWT token
-        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Generating JWT token for user - ID: {}, Email: {}", user.getId(), user.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Generating JWT token for user - ID: {}, Email: {}",
+                user.getId(), user.getEmail());
         User result = userRepository.save(user);
         String token = otpDomain.generateToken(result);
-        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] User created successfully - ID: {}, Email: {}", result.getId(), result.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] User created successfully - ID: {}, Email: {}",
+                result.getId(), result.getEmail());
 
         // Clean up Redis data using formatted phone number as key
         registerRedisRepository.deleteById(request.getEmail());
-        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Cleaned up Redis registration data for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] Cleaned up Redis registration data for Email: {}",
+                request.getEmail());
 
-        AuthenticationServiceImpl.log.info("[CONFIRM-OTP] REGISTRATION COMPLETED successfully for Email: {} - User ID: {}", result.getEmail(), result.getId());
+        AuthenticationServiceImpl.log.info(
+                "[CONFIRM-OTP] REGISTRATION COMPLETED successfully for Email: {} - User ID: {}", result.getEmail(),
+                result.getId());
 
         return new AuthenticationReponse<UserResponse>(true, token, Mapper.toUserReponse(user));
     }
 
-    //Forgot Password - Send OTP
+    // Forgot Password - Send OTP
     @Override
     public RegisterReponse forgotPassword(ForgotPasswordRequest fgpwRequest) throws ApplicationException {
         if (fgpwRequest.getEmail() == null && fgpwRequest.getPassword() == null) {
@@ -125,10 +138,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new ApplicationException(ErrorCode.INVALID_REQUEST);
         }
 
-
-
         var user = userRepository.findByEmail(fgpwRequest.getEmail())
-                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, "User not found with email: " + fgpwRequest.getEmail()));
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with email: " + fgpwRequest.getEmail()));
         AuthenticationServiceImpl.log.info("UserService: User found with email: {}", user);
         user.setPassword(fgpwRequest.getPassword());
         Validate.validateRegisterForm(Mapper.toRegisterRequest(user));
@@ -142,57 +154,86 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     // Confirm Password - verify OTP
     @Override
-    public AuthenticationReponse<UserResponse> confirmForgotPassword(ConfirmOtpRegisterRequest request) throws ApplicationException {
-        AuthenticationServiceImpl.log.info("AuthenticationService: Starting OTP confirmation for password reset for Email: {}", request.getEmail());
+    public AuthenticationReponse<UserResponse> confirmForgotPassword(ConfirmOtpRegisterRequest request)
+            throws ApplicationException {
+        AuthenticationServiceImpl.log.info(
+                "AuthenticationService: Starting OTP confirmation for password reset for Email: {}",
+                request.getEmail());
 
         // Validate OTP
         AuthenticationServiceImpl.log.info("AuthenticationService: Verifying OTP for Email: {}", request.getEmail());
         if (!otpDomain.verifyOtpByEmail(request.getEmail(), request.getOtp())) {
-            AuthenticationServiceImpl.log.warn("AuthenticationService: OTP VERIFICATION FAILED for Email: {}", request.getEmail());
+            AuthenticationServiceImpl.log.warn("AuthenticationService: OTP VERIFICATION FAILED for Email: {}",
+                    request.getEmail());
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Invalid or expired OTP");
         }
 
-        AuthenticationServiceImpl.log.info("AuthenticationService: OTP verified successfully, proceeding with password reset for Email: {}", request.getEmail());
+        AuthenticationServiceImpl.log.info(
+                "AuthenticationService: OTP verified successfully, proceeding with password reset for Email: {}",
+                request.getEmail());
 
         // Get registration data from Redis using formatted email as key
-        Optional<RedisRegisterEntity<RegisterRequest>> registerEntityOpt = registerRedisRepository.findById(request.getEmail());
+        Optional<RedisRegisterEntity<RegisterRequest>> registerEntityOpt = registerRedisRepository
+                .findById(request.getEmail());
         if (registerEntityOpt.isEmpty()) {
-            AuthenticationServiceImpl.log.error("AuthenticationService: REGISTRATION FAILED - Registration session not found for Email: {}", request.getEmail());
+            AuthenticationServiceImpl.log.error(
+                    "AuthenticationService: REGISTRATION FAILED - Registration session not found for Email: {}",
+                    request.getEmail());
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Registration session not found");
         }
         RedisRegisterEntity<RegisterRequest> registerEntity = registerEntityOpt.get();
-        AuthenticationServiceImpl.log.debug("AuthenticationService: Retrieved registration data for Email: {}", registerEntity.getEmail());
+        AuthenticationServiceImpl.log.debug("AuthenticationService: Retrieved registration data for Email: {}",
+                registerEntity.getEmail());
         var user = userRepository.findByEmail(registerEntity.getEmail())
-                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, "User not found with email: " + registerEntity.getEmail()));
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with email: " + registerEntity.getEmail()));
         user.setPassword(registerEntity.getData().getPassword());
         User result = userRepository.save(user);
-        AuthenticationServiceImpl.log.info("AuthenticationService: Password reset successfully - ID: {}, Email: {}", result.getId(), result.getEmail());
+        AuthenticationServiceImpl.log.info("AuthenticationService: Password reset successfully - ID: {}, Email: {}",
+                result.getId(), result.getEmail());
         // Clean up Redis data using formatted email as key
         registerRedisRepository.deleteById(request.getEmail());
-        AuthenticationServiceImpl.log.info("AuthenticationService: Cleaned up Redis registration data for Email: {}", request.getEmail());
-        AuthenticationServiceImpl.log.info("AuthenticationService: PASSWORD RESET COMPLETED successfully for Email: {} - User ID: {}", result.getEmail(), result.getId());
+        AuthenticationServiceImpl.log.info("AuthenticationService: Cleaned up Redis registration data for Email: {}",
+                request.getEmail());
+        AuthenticationServiceImpl.log.info(
+                "AuthenticationService: PASSWORD RESET COMPLETED successfully for Email: {} - User ID: {}",
+                result.getEmail(), result.getId());
         return new AuthenticationReponse<UserResponse>(true, Mapper.toUserReponse(user));
     }
+
     // Login
     @Transactional(readOnly = true)
     @Override
     public AuthenticationReponse<UserResponse> authenticated(LoginRequest loginRequest) {
-        AuthenticationServiceImpl.log.info("AuthenticationService: Attempting to authenticate user with email: {}", loginRequest.getEmail());
+        AuthenticationServiceImpl.log.info("AuthenticationService: Attempting to authenticate user with email: {}",
+                loginRequest.getEmail());
         var user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, "User not found with email: " + loginRequest.getEmail()));
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with email: " + loginRequest.getEmail()));
+
+        // Kiểm tra trạng thái tài khoản - nếu bị khóa thì không cho đăng nhập
+        if (user.getStatus() == UserStatus.inactive) {
+            AuthenticationServiceImpl.log.warn("AuthenticationService: Account is locked for email: {}",
+                    loginRequest.getEmail());
+            throw new ApplicationException(ErrorCode.ACCOUNT_LOCKED,
+                    "Your account has been locked. Please contact the Admin for assistance.");
+        }
+
         var loginSuccess = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
         if (loginSuccess) {
             String token = otpDomain.generateToken(user);
-            AuthenticationServiceImpl.log.info("AuthenticationService: Successfully authenticated user with email: {}", loginRequest.getEmail());
+            AuthenticationServiceImpl.log.info("AuthenticationService: Successfully authenticated user with email: {}",
+                    loginRequest.getEmail());
             return new AuthenticationReponse<UserResponse>(true, token, Mapper.toUserReponse(user));
-        }else
-            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "Password is incorrect for email: " + loginRequest.getEmail());
+        } else
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                    "Password is incorrect for email: " + loginRequest.getEmail());
     }
+
     // Logout
     @Override
     public AuthenticationReponse<UserResponse> logout() throws ApplicationException, ParseException, JOSEException {
-        JwtAuthenticationToken auth =
-                (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        JwtAuthenticationToken auth = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = auth.getToken();
 
         String email = jwt.getSubject();
@@ -217,6 +258,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .logout(true)
                 .build();
     }
-
 
 }

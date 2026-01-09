@@ -21,6 +21,11 @@ export default defineConfig({
         // ✅ Chỉ silence các deprecations còn tồn tại trong Sass 3.0
         api: 'modern-compiler',
         silenceDeprecations: ['import', 'global-builtin', 'color-functions'],
+        // ✅ Thêm alias path cho SCSS imports
+        additionalData: `
+          @use "sass:math";
+          $assets-path: '@/assets';
+        `,
       },
     },
   },

@@ -22,8 +22,15 @@ public class ProductMediaController {
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse<Boolean>> uploadProductMedia(
             @RequestParam("files") List<MultipartFile> files,
-            @RequestParam("productMediaRequest") ProductMediaRequest productMediaRequest) {
-        ApiResponse<Boolean> response = productMediaService.uploadProductMedia(files, productMediaRequest);
+            @RequestParam("productItemId") UUID productItemId,
+            @RequestParam("hexCode") String hexCode,
+            @RequestParam("isPrimary") Boolean isPrimary
+    ) {
+        ApiResponse<Boolean> response = productMediaService.
+                uploadProductMedia(files, ProductMediaRequest.builder()
+                        .productId(productItemId)
+                        .isPrimary(isPrimary)
+                        .build());
         return ResponseEntity.ok(response);
     }
 

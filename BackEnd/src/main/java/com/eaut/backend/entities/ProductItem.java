@@ -28,6 +28,9 @@ public class ProductItem extends AuditBase {
             id = UUID.randomUUID();
     }
 
+    @Column(name = "name")
+    private String name;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
@@ -48,10 +51,6 @@ public class ProductItem extends AuditBase {
 
     @Column(name = "compare_price", precision = 12, scale = 2)
     private BigDecimal comparePrice; // Giá so sánh
-
-    @Column(name = "qty_available", nullable = false)
-    @Builder.Default
-    private Integer qtyAvailable = 1; // Số lượng có sẵn
 
     @OneToMany(mappedBy = "productItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

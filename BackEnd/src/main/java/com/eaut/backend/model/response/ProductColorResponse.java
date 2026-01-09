@@ -15,4 +15,5 @@ public class ProductColorResponse {
     private UUID id;
     private String name;
     private String hexCode;
+    private Integer qtyAvailable; // Số lượng có sẵn cho màu này
 }

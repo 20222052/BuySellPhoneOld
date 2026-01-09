@@ -37,6 +37,18 @@ public class AplplicationInitConfig {
                         throw new RuntimeException(e);
                     }
                 }
+
+                if (!roleRepository.existsByName(UserRole.customer.getValue())) {
+                    role.setName(UserRole.customer.getValue());
+                    role.setDescription("Customer role with full permissions");
+                    try {
+                        roleRepository.save(role);
+                        log.info("UserService: Role Customer save success.");
+                    } catch (Exception e) {
+                        log.info("UserService: Role Customer save failed.");
+                        throw new RuntimeException(e);
+                    }
+                }
                 role = roleRepository.findById(UserRole.admin.getValue())
                         .orElseThrow(() -> new RuntimeException("Role admin not found"));
                 User user = User.builder()

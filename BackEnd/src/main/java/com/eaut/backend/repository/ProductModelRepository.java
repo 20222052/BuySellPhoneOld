@@ -2,6 +2,8 @@ package com.eaut.backend.repository;
 
 import com.eaut.backend.entities.ProductModel;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,4 +19,13 @@ public interface ProductModelRepository extends JpaRepository<ProductModel, UUID
     boolean existsByNameAndProductItemId(String name, UUID productItemId);
 
     void deleteByProductItemId(UUID productItemId);
+
+    @Query("""
+            SELECT DISTINCT m
+            FROM ProductModel m
+            LEFT JOIN FETCH m.colors
+            WHERE m.productItem.id = :productItemId
+            ORDER BY m.createdAt DESC
+            """)
+    List<ProductModel> findByProductItemIdWithColors(@Param("productItemId") UUID productItemId);
 }

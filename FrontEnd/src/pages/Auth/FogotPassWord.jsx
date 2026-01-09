@@ -1,24 +1,56 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import AuthService from "../../services/AuthService";
 import '../../assets/css/home/Auth/FogotPassWord.css';
 
 export default function ForgotPassword() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const location = useLocation();
+    // Nhận lại email/password từ OTPForgot nếu quay lại
+    const savedEmail = location.state?.email || "";
+    const savedPassword = location.state?.password || "";
+
+    const [email, setEmail] = useState(savedEmail);
+    const [password, setPassword] = useState(savedPassword);
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (email) {
+        if (!email || !password) {
+            toast.error("Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // Gọi API forgot-password
+            const response = await AuthService.forgotPassword(email, password);
+            console.log("Forgot password success:", response);
+
             setIsSubmitted(true);
+
+            // Chuyển đến trang OTP sau 2 giây
             setTimeout(() => {
-                navigate("/otp-forgot");
+                navigate("/otp-forgot", {
+                    state: {
+                        email: email,
+                        password: password,
+                        message: response.message || "Mã OTP đã được gửi đến email của bạn"
+                    }
+                });
             }, 2000);
+        } catch (err) {
+            console.error("Forgot password error:", err);
+            toast.error(err.message || "Gửi yêu cầu thất bại. Vui lòng thử lại!");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -59,22 +91,40 @@ export default function ForgotPassword() {
                                             <div className="form-group">
                                                 <label htmlFor="password" className="form-label">
                                                     <i className="bi bi-lock me-2"></i>
-                                                    Mật khẩu
+                                                    Mật khẩu mới
                                                 </label>
-                                                <input
-                                                    type={showPassword ? "text" : "password"}
-                                                    className="form-control"
-                                                    id="password"
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    placeholder="Nhập mật khẩu"
-                                                    required
-                                                />
+                                                <div className="password-input-wrapper">
+                                                    <input
+                                                        type={showPassword ? "text" : "password"}
+                                                        className="form-control"
+                                                        id="password"
+                                                        value={password}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                        placeholder="Nhập mật khẩu mới"
+                                                        required
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="password-toggle"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                    >
+                                                        <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
+                                                    </button>
+                                                </div>
                                             </div>
 
-                                            <button type="submit" className="btn-submit">
-                                                <span>Gửi Mã Xác Thực</span>
-                                                <i className="bi bi-arrow-right"></i>
+                                            <button type="submit" className="btn-submit" disabled={isLoading}>
+                                                {isLoading ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                        <span>Đang gửi...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span>Gửi Mã Xác Thực</span>
+                                                        <i className="bi bi-arrow-right"></i>
+                                                    </>
+                                                )}
                                             </button>
                                         </form>
 

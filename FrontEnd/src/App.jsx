@@ -1,6 +1,8 @@
 import AppRouter from "./routes/AppRouter";
 import "./App.css";
 import { useState, useEffect } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -20,6 +22,18 @@ function App() {
 
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <AppRouter />
       {/* Nút cuộn lên và nút chat */}
       <div

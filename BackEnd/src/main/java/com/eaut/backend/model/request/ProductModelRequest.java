@@ -3,7 +3,6 @@ package com.eaut.backend.model.request;
 // === Lombok & JPA imports ===
 
 import com.eaut.backend.constant.GradeEnum;
-import com.eaut.backend.entities.ProductColor;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,12 +11,18 @@ import java.util.UUID;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@NoArgsConstructor @AllArgsConstructor @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ProductModelRequest {
-    UUID productItemId;
+    UUID id; // Dùng cho update, null nếu create mới
+    UUID productItemId; // Dùng khi tạo riêng lẻ
     String name;
     Integer ramGb;
     Integer romGb;
     GradeEnum grade;
     String description;
+
+    // List colors để cascade create/update
+    List<ProductColorRequest> colors;
 }

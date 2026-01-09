@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { RoutePaths } from "./RoutePaths";
-import ProtectedRoute from "./ProtectedRoute";
+import ProtectedRoute, { AdminRoute } from "./ProtectedRoute";
 
 // Layouts
 import PublicLayout from "@/layouts/PublicLayout";
@@ -32,6 +32,12 @@ import ResetPassword from "@/pages/Auth/ResetPassword";
 
 // Admin Pages
 import Dashboard from "@/pages/Admin/Dashboard";
+import FormElements from "@/pages/Admin/FormElements";
+import CategoryList from "@/pages/Admin/Categories/CategoryList";
+import BrandList from "@/pages/Admin/Brands/BrandList";
+import UserList from "@/pages/Admin/Users/UserList";
+import ProductItemList from "@/pages/Admin/Products/ProductItemList";
+import ProductList from "@/pages/Admin/Products/ProductList";
 
 export default function AppRouter() {
   return (
@@ -48,10 +54,28 @@ export default function AppRouter() {
           <Route path={RoutePaths.CART} element={<Cart />} />
           <Route path={RoutePaths.CHECKOUT} element={<CheckOut />} />
           <Route path={RoutePaths.ABOUT} element={<About />} />
-          <Route path={RoutePaths.PROFILE} element={<Profile />} />
-          <Route path={RoutePaths.ORDERS} element={<Orders />} />
-          <Route path={RoutePaths.WISHLIST} element={<Wishlist />} />
-          <Route path={RoutePaths.SETTINGS} element={<Settings />} />
+
+          {/* Protected User Routes */}
+          <Route path={RoutePaths.PROFILE} element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path={RoutePaths.ORDERS} element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          } />
+          <Route path={RoutePaths.WISHLIST} element={
+            <ProtectedRoute>
+              <Wishlist />
+            </ProtectedRoute>
+          } />
+          <Route path={RoutePaths.SETTINGS} element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
         </Route>
 
         {/* Auth Routes without Layout */}
@@ -62,20 +86,24 @@ export default function AppRouter() {
         <Route path={RoutePaths.OTP_FORGOT} element={<OTPForgot />} />
         <Route path={RoutePaths.RESET_PASSWORD} element={<ResetPassword />} />
 
-        {/* Protected Admin Routes */}
+        {/* Protected Admin Routes - Only for admin role */}
         <Route
           path={RoutePaths.ADMIN}
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <AdminLayout />
-            </ProtectedRoute>
+            </AdminRoute>
           }
         >
           <Route index element={<Navigate to={RoutePaths.ADMIN_DASHBOARD} replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="products" element={<div>Admin Products</div>} />
+          <Route path="form-elements" element={<FormElements />} />
+          <Route path="categories" element={<CategoryList />} />
+          <Route path="brands" element={<BrandList />} />
+          <Route path="users" element={<UserList />} />
+          <Route path="products" element={<ProductList />} />
+          <Route path="variants" element={<ProductItemList />} />
           <Route path="orders" element={<div>Admin Orders</div>} />
-          <Route path="users" element={<div>Admin Users</div>} />
         </Route>
 
         {/* 404 Not Found */}

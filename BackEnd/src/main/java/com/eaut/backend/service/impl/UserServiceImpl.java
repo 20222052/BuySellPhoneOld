@@ -1,5 +1,6 @@
 package com.eaut.backend.service.impl;
 
+import com.eaut.backend.constant.UserStatus;
 import com.eaut.backend.domain.OtpDomain;
 import com.eaut.backend.entities.User;
 import com.eaut.backend.exception.ApplicationException;
@@ -81,8 +82,8 @@ public class UserServiceImpl implements UserService {
         log.info("UserService: authenticatedDate: {}", authenticatedUser.getDetails());
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ApplicationException(ErrorCode.USER_NOT_FOUND, "User not found with ID: " + userId));
+                .orElseThrow(
+                        () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, "User not found with ID: " + userId));
         // access roles to initialize while session is open
         user.getRoles().size();
         return new UserResponse(user);
@@ -100,7 +101,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Validate the register form first
-//        Validate.UserServiceValidateUpdateForm(request);
+        // Validate.UserServiceValidateUpdateForm(request);
 
         // Check if email already exists with another user
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
@@ -109,7 +110,6 @@ public class UserServiceImpl implements UserService {
             }
             existingUser.setEmail(request.getEmail());
         }
-
 
         // Check if phone already exists with another user
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
@@ -120,18 +120,12 @@ public class UserServiceImpl implements UserService {
             }
 
             existingUser.setPhone(phone);
+            log.info("UserService: updateUser Phone: {}", phone);
         }
-
-
-        request.setPhone(PhoneNumberUtils.validatePhoneNumber(request.getPhone()));
-        log.info("UserService: updateUser Phone: {}", request.getPhone());
 
         // Update existing user fields
-        if (request.getFullName() != null) {
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
             existingUser.setFullName(request.getFullName());
-        }
-        if (request.getPassword() != null) {
-            existingUser.setPassword(request.getPassword());
         }
         if (request.getBirthDate() != null) {
             existingUser.setBirthDate(request.getBirthDate());
@@ -139,14 +133,17 @@ public class UserServiceImpl implements UserService {
         if (request.getGender() != null) {
             existingUser.setGender(request.getGender());
         }
-        // Only update password if it's provided
+        // Only update password if it's provided (không cần mật khẩu cũ)
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             existingUser.setPassword(BcryptUtils.encode(request.getPassword()));
+            log.info("UserService: Password updated for user: {}", userId);
         }
 
-
-        var roles = roleRepository.findAllById(request.getRoles());
-        existingUser.setRoles(new HashSet<>(roles));
+        // Only update roles if provided (admin feature)
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            var roles = roleRepository.findAllById(request.getRoles());
+            existingUser.setRoles(new HashSet<>(roles));
+        }
 
         User result = userRepository.save(existingUser);
         log.info("UserService: User updated successfully with email: {}", request.getEmail());
@@ -178,22 +175,21 @@ public class UserServiceImpl implements UserService {
         Pageable pageable = PageRequest.of(
                 pageNumber,
                 pageSize,
-                Sort.by(direction, "createdAt")
-        );
+                Sort.by(direction, "createdAt"));
 
         // Chuẩn hóa role + permission
         String roleName = (role != null && !role.isBlank()) ? role.trim() : null;
         String permissionName = (permission != null && !permission.isBlank()) ? permission.trim() : null;
 
         log.info("""
-            UserService: getAllUsers
-            searchPattern: {}
-            role: {}
-            permission: {}
-            status: {}
-            pageNumber: {}
-            pageSize: {}
-            """,
+                UserService: getAllUsers
+                searchPattern: {}
+                role: {}
+                permission: {}
+                status: {}
+                pageNumber: {}
+                pageSize: {}
+                """,
                 pattern, roleName, permissionName, status, pageNumber, pageSize);
 
         // Gọi repository (với permission đã thêm)
@@ -202,8 +198,7 @@ public class UserServiceImpl implements UserService {
                 roleName,
                 permissionName,
                 status,
-                pageable
-        );
+                pageable);
 
         // Map sang DTO
         List<UserResponse> dtoList = entityPage
@@ -216,8 +211,7 @@ public class UserServiceImpl implements UserService {
                 entityPage.getNumber(),
                 entityPage.getSize(),
                 entityPage.getTotalElements(),
-                entityPage.getTotalPages()
-        );
+                entityPage.getTotalPages());
 
         return new ApiResponse<>(HttpStatus.OK.value(), pagingResponse);
     }
@@ -236,5 +230,34 @@ public class UserServiceImpl implements UserService {
         // access roles to initialize while session is open
         user.getRoles().size();
         return new UserResponse(user);
+    }
+
+    /**
+     * Cập nhật trạng thái tài khoản (chỉ admin)
+     * 
+     * @param userId ID của user cần cập nhật
+     * @param status Trạng thái mới (active hoặc inactive)
+     * @return UserResponse sau khi cập nhật
+     */
+    @Transactional
+    @Override
+    public UserResponse updateUserStatus(UUID userId, UserStatus status) throws ApplicationException {
+        log.info("UserService: updateUserStatus - userId: {}, newStatus: {}", userId, status);
+
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with ID: " + userId));
+
+        if (status == null) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "Status cannot be null");
+        }
+
+        existingUser.setStatus(status);
+        User updatedUser = userRepository.save(existingUser);
+
+        log.info("UserService: User status updated successfully - userId: {}, newStatus: {}",
+                userId, status);
+
+        return new UserResponse(updatedUser);
     }
 }

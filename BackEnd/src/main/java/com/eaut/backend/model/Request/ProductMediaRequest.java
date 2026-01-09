@@ -10,14 +10,16 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-
- @Data
- @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ProductMediaRequest {
-     private UUID productId;
-     private String url;
-     private String hexCode;
-     private MediaType type = MediaType.image;
+    private UUID id; // Dùng cho update, null nếu create mới
+    private UUID productId; // Dùng khi tạo riêng lẻ
+    private String url; // URL ảnh (dùng khi đã upload sẵn)
+    private String publicId; // Public ID từ Cloudinary
+    private MediaType type = MediaType.image;
     private boolean isPrimary = false;
     private Integer sortOrder = 0;
 }

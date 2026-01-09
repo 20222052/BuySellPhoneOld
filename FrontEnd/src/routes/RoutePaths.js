@@ -29,8 +29,11 @@ export const RoutePaths = {
   ADMIN: "/admin",
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_PRODUCTS: "/admin/products",
+  ADMIN_VARIANTS: "/admin/variants",
   ADMIN_ORDERS: "/admin/orders",
   ADMIN_USERS: "/admin/users",
+  ADMIN_CATEGORIES: "/admin/categories",
+  ADMIN_BRANDS: "/admin/brands",
 
   // Other
   NOT_FOUND: "*"

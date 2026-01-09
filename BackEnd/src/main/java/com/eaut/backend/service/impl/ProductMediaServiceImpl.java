@@ -47,18 +47,13 @@ public class ProductMediaServiceImpl implements ProductMediaService {
         List<CompletableFuture<CloudinaryResponse>> uploadFutures = new java.util.ArrayList<>();
         List<String> uploadedPublicIds = new java.util.ArrayList<>();
 
+        if (!productItemRepository.existsById(productMediaRequest.getProductId())) {
+            throw new ApplicationException(
+                    ErrorCode.NOT_FOUND,
+                    "ProductItem with ID " + productMediaRequest.getProductId() + " does not exist."
+            );
+        }
         ProductItem productItem = productItemRepository.getById(productMediaRequest.getProductId());
-        ProductColor productColor = new ProductColor();
-        if (productMediaRequest.getHexCode() != null || !productMediaRequest.getHexCode().isEmpty() || !(productMediaRequest.getHexCode() == "")) {
-            productColor = productColorRepository.findByHexCode(productMediaRequest.getHexCode());
-        }
-        if (productItem == null) {
-            return ApiResponse.builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ProductItem with ID " + productMediaRequest.getProductId() + " does not exist.")
-                    .build();
-        }
         try {
             for (MultipartFile file : files) {
                 uploadFutures.add(cloudinaryService.uploadImages(file));
@@ -79,10 +74,6 @@ public class ProductMediaServiceImpl implements ProductMediaService {
                         .type(productMediaRequest.getType())
                         .isPrimary(sortOrder == 0 && productMediaRequest.isPrimary()) // Chỉ ảnh đầu tiên là primary
                         .sortOrder(sortOrder++);
-
-                if (productColor != null) {
-                    mediaBuilder.productColor(productColor);
-                }
 
                 productMediaRepository.save(mediaBuilder.build());
 
@@ -120,7 +111,6 @@ public class ProductMediaServiceImpl implements ProductMediaService {
                         .productItemId(media.getProductItem().getId())
                         .url(media.getUrl())
                         .publicId(media.getPublic_id())
-                        .hexCode(media.getProductColor() != null ? media.getProductColor().getHexCode() : null)
                         .type(media.getType())
                         .isPrimary(media.isPrimary())
                         .sortOrder(media.getSortOrder())

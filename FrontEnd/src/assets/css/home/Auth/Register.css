@@ -57,9 +57,47 @@
     text-decoration: underline;
 }
 
+/* Form Row - 2 inputs on same line */
+.form-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: 0;
+}
+
+.form-group-half {
+    flex: 1;
+    min-width: 0;
+}
+
+.form-group-half select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.form-group-half select.form-control:focus {
+    border-color: var(--primary-color);
+}
+
+.form-group-half input[type="date"].form-control {
+    cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .register-card {
         flex-direction: column-reverse;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .form-group-half {
+        width: 100%;
     }
 }

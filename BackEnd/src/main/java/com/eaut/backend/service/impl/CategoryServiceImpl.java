@@ -102,7 +102,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ApplicationException(ErrorCode.CONFLICT, "Category name already exists");
         }
 
-        User user = getAuthenticatedUser();
+        User user = getAuthenticatedUser(userRepository);
         Category newCategory = Mapper.toCategory(request);
         newCategory.setCreatedBy(user);
 
@@ -143,7 +143,7 @@ public class CategoryServiceImpl implements CategoryService {
             category.setActive(request.getIsActive());
         }
 
-        User user = getAuthenticatedUser();
+        User user = getAuthenticatedUser(userRepository);
         category.setModifiedBy(user);
         category.setModifiedAt(OffsetDateTime.now());
 

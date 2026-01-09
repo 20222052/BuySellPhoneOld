@@ -1,7 +1,9 @@
 package com.eaut.backend.service.impl;
 
+import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.entities.ProductItem;
 import com.eaut.backend.entities.ProductModel;
+import com.eaut.backend.exception.ApplicationException;
 import com.eaut.backend.model.request.ProductModelRequest;
 import com.eaut.backend.model.response.ApiResponse;
 import com.eaut.backend.model.response.ProductModelResponse;
@@ -31,32 +33,22 @@ public class ProductModelServiceImpl implements ProductModelService {
     public ApiResponse<ProductModelResponse> createProductModel(ProductModelRequest request) {
         // Validate input
         if (request.getProductItemId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product Item Id is required");
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Item Id is required");
         }
 
         if (request.getName() == null || request.getName().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product Name is required");
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Name is required");
         }
 
         // Kiểm tra ProductItem tồn tại
         ProductItem productItem = productItemRepository.getById(request.getProductItemId());
         if (productItem == null) {
-            return ApiResponse.<ProductModelResponse>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ProductItem với ID " + request.getProductItemId() + " không tồn tại")
-                    .data(null)
-                    .build();
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "ProductItem ID '" + request.getProductItemId() + "' not found");
         }
 
         // Kiểm tra trùng tên model trong cùng ProductItem
         if (productModelRepository.existsByNameAndProductItemId(request.getName(), request.getProductItemId())) {
-            return ApiResponse.<ProductModelResponse>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("Model với tên '" + request.getName() + "' đã tồn tại trong ProductItem này")
-                    .data(null)
-                    .build();
+            throw new ApplicationException(ErrorCode.CONFLICT, "ModelName '" + request.getName() + "' already exists by ProductItem ID '" + request.getProductItemId() + "'");
         }
 
         // Tạo ProductModel mới
@@ -70,12 +62,12 @@ public class ProductModelServiceImpl implements ProductModelService {
                 .build();
 
         ProductModel savedModel = productModelRepository.save(productModel);
-        log.info("Tạo ProductModel thành công: {}", savedModel.getId());
+        log.info("create ProductModel SuccessFully: {}", savedModel.getId());
 
         return ApiResponse.<ProductModelResponse>builder()
                 .code(HttpStatus.CREATED.value())
                 .status(true)
-                .message("Tạo ProductModel thành công")
+                .message("create ProductModel SuccessFully")
                 .data(mapToResponse(savedModel))
                 .build();
     }
@@ -83,28 +75,18 @@ public class ProductModelServiceImpl implements ProductModelService {
     @Override
     public ApiResponse<ProductModelResponse> getProductModelById(UUID id) {
         if (id == null) {
-            return ApiResponse.<ProductModelResponse>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ID không được để trống")
-                    .data(null)
-                    .build();
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Model ID is required");
         }
 
         ProductModel productModel = productModelRepository.findById(id).orElse(null);
         if (productModel == null) {
-            return ApiResponse.<ProductModelResponse>builder()
-                    .code(HttpStatus.NOT_FOUND.value())
-                    .status(false)
-                    .message("Không tìm thấy ProductModel với ID: " + id)
-                    .data(null)
-                    .build();
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "ProductModel ID '" + id + "' not found");
         }
 
         return ApiResponse.<ProductModelResponse>builder()
                 .code(HttpStatus.OK.value())
                 .status(true)
-                .message("Lấy ProductModel thành công")
+                .message("Get ProductModel SuccessFully")
                 .data(mapToResponse(productModel))
                 .build();
     }
@@ -120,7 +102,7 @@ public class ProductModelServiceImpl implements ProductModelService {
         return ApiResponse.<List<ProductModelResponse>>builder()
                 .code(HttpStatus.OK.value())
                 .status(true)
-                .message("Lấy danh sách ProductModel thành công")
+                .message("Get all ProductModels SuccessFully")
                 .data(responses)
                 .build();
     }
@@ -128,12 +110,7 @@ public class ProductModelServiceImpl implements ProductModelService {
     @Override
     public ApiResponse<List<ProductModelResponse>> getProductModelsByProductItemId(UUID productItemId) {
         if (productItemId == null) {
-            return ApiResponse.<List<ProductModelResponse>>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ProductItem ID không được để trống")
-                    .data(null)
-                    .build();
+            throw  new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Item ID is required");
         }
 
         List<ProductModel> models = productModelRepository.findByProductItemIdOrderByCreatedAtDesc(productItemId);
@@ -145,7 +122,7 @@ public class ProductModelServiceImpl implements ProductModelService {
         return ApiResponse.<List<ProductModelResponse>>builder()
                 .code(HttpStatus.OK.value())
                 .status(true)
-                .message("Lấy danh sách ProductModel thành công")
+                .message("Get ProductModels by ProductItem ID SuccessFully")
                 .data(responses)
                 .build();
     }
@@ -154,22 +131,12 @@ public class ProductModelServiceImpl implements ProductModelService {
     @Transactional
     public ApiResponse<ProductModelResponse> updateProductModel(UUID id, ProductModelRequest request) {
         if (id == null) {
-            return ApiResponse.<ProductModelResponse>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ID không được để trống")
-                    .data(null)
-                    .build();
+            throw new  ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Model ID is required");
         }
 
         ProductModel existingModel = productModelRepository.findById(id).orElse(null);
         if (existingModel == null) {
-            return ApiResponse.<ProductModelResponse>builder()
-                    .code(HttpStatus.NOT_FOUND.value())
-                    .status(false)
-                    .message("Không tìm thấy ProductModel với ID: " + id)
-                    .data(null)
-                    .build();
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "ProductModel ID '" + id + "' not found");
         }
 
         // Update fields nếu có giá trị mới
@@ -181,7 +148,7 @@ public class ProductModelServiceImpl implements ProductModelService {
                 return ApiResponse.<ProductModelResponse>builder()
                         .code(HttpStatus.BAD_REQUEST.value())
                         .status(false)
-                        .message("Model với tên '" + request.getName() + "' đã tồn tại")
+                        .message("Model with name '" + request.getName() + "' already exists for this ProductItem")
                         .data(null)
                         .build();
             }
@@ -205,12 +172,12 @@ public class ProductModelServiceImpl implements ProductModelService {
         }
 
         ProductModel updatedModel = productModelRepository.save(existingModel);
-        log.info("Cập nhật ProductModel thành công: {}", updatedModel.getId());
+        log.info("Update ProductModel SuccessFully: {}", updatedModel.getId());
 
         return ApiResponse.<ProductModelResponse>builder()
                 .code(HttpStatus.OK.value())
                 .status(true)
-                .message("Cập nhật ProductModel thành công")
+                .message("Update ProductModel SuccessFully")
                 .data(mapToResponse(updatedModel))
                 .build();
     }
@@ -219,30 +186,20 @@ public class ProductModelServiceImpl implements ProductModelService {
     @Transactional
     public ApiResponse<Boolean> deleteProductModel(UUID id) {
         if (id == null) {
-            return ApiResponse.<Boolean>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ID không được để trống")
-                    .data(false)
-                    .build();
+            throw  new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Model ID is required");
         }
 
         if (!productModelRepository.existsById(id)) {
-            return ApiResponse.<Boolean>builder()
-                    .code(HttpStatus.NOT_FOUND.value())
-                    .status(false)
-                    .message("Không tìm thấy ProductModel với ID: " + id)
-                    .data(false)
-                    .build();
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "ProductModel ID '" + id + "' not found");
         }
 
         productModelRepository.deleteById(id);
-        log.info("Xóa ProductModel thành công: {}", id);
+        log.info("Delete ProductModel SuccessFully: {}", id);
 
         return ApiResponse.<Boolean>builder()
                 .code(HttpStatus.OK.value())
                 .status(true)
-                .message("Xóa ProductModel thành công")
+                .message("Delete ProductModel SuccessFully")
                 .data(true)
                 .build();
     }
@@ -251,12 +208,7 @@ public class ProductModelServiceImpl implements ProductModelService {
     @Transactional
     public ApiResponse<Boolean> deleteProductModelsByProductItemId(UUID productItemId) {
         if (productItemId == null) {
-            return ApiResponse.<Boolean>builder()
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .status(false)
-                    .message("ProductItem ID không được để trống")
-                    .data(false)
-                    .build();
+            throw   new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product Item ID is required");
         }
 
         List<ProductModel> models = productModelRepository.findByProductItemId(productItemId);
@@ -264,18 +216,18 @@ public class ProductModelServiceImpl implements ProductModelService {
             return ApiResponse.<Boolean>builder()
                     .code(HttpStatus.OK.value())
                     .status(true)
-                    .message("Không có ProductModel nào để xóa")
+                    .message("No ProductModels found for ProductItem ID '" + productItemId + "'")
                     .data(true)
                     .build();
         }
 
         productModelRepository.deleteByProductItemId(productItemId);
-        log.info("Xóa {} ProductModel của ProductItem: {}", models.size(), productItemId);
+        log.info("Delete {} ProductModel with ProductItem: {}", models.size(), productItemId);
 
         return ApiResponse.<Boolean>builder()
                 .code(HttpStatus.OK.value())
                 .status(true)
-                .message("Xóa thành công " + models.size() + " ProductModel")
+                .message("Delete SuccessFully " + models.size() + " ProductModel")
                 .data(true)
                 .build();
     }

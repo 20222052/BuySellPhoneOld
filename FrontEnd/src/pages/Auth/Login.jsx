@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, clearError, clearSuccess } from "../../store/slices/authSlice";
-import { Toast } from "react-bootstrap";
+import { toast } from "react-toastify";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import { RoutePaths } from "../../routes/RoutePaths";
 import '../../assets/css/home/Auth/Login.css';
 
 export default function Login() {
@@ -12,36 +13,49 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
-  const { loading, error, success, isAuthenticated } = useSelector((state) => state.auth);
+  const { loading, error, success, isAuthenticated, isAdmin } = useSelector((state) => state.auth);
+
+  // Lấy đường dẫn trước đó để redirect sau khi đăng nhập
+  const from = location.state?.from?.pathname || RoutePaths.HOME;
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      // Nếu là admin, redirect về trang admin dashboard
+      if (isAdmin) {
+        navigate(RoutePaths.ADMIN_DASHBOARD, { replace: true });
+      } else {
+        // Nếu là user thường, redirect về trang trước đó hoặc trang chủ
+        navigate(from, { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isAdmin, navigate, from]);
 
   // Show toast on error or success
   useEffect(() => {
-    if (error || success) {
-      setShowToast(true);
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
     }
-  }, [error, success]);
+    if (success) {
+      toast.success(success);
+      dispatch(clearSuccess());
+    }
+  }, [error, success, dispatch]);
 
-  // Clear messages after toast closes
+  // Hiển thị message từ trang khác (ví dụ: đăng ký thành công)
   useEffect(() => {
-    if (!showToast) {
-      const timer = setTimeout(() => {
-        dispatch(clearError());
-        dispatch(clearSuccess());
-      }, 300);
-      return () => clearTimeout(timer);
+    const message = location.state?.message;
+    if (message) {
+      toast.success(message);
+      // Xóa message khỏi state
+      window.history.replaceState({}, document.title);
     }
-  }, [showToast, dispatch]);
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,11 +69,14 @@ export default function Login() {
 
       // Navigate based on user role
       console.log("Login successful:", result);
-      // if (result.user?.role === "admin") {
-      //   navigate("/admin");
-      // } else {
-      //   navigate("/");
-      // }
+
+      if (result.isAdmin) {
+        // Nếu là admin, redirect về trang admin dashboard
+        navigate(RoutePaths.ADMIN_DASHBOARD, { replace: true });
+      } else {
+        // Nếu là user thường, redirect về trang trước đó hoặc trang chủ
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       console.error("Login failed:", err);
     }
@@ -69,25 +86,6 @@ export default function Login() {
     <>
       <Header />
       <div className="auth-container">
-        {/* Toast Notification */}
-        <div className="toast-container position-fixed top-0 end-0 p-3" style={{ zIndex: 9999 }}>
-          <Toast
-            show={showToast}
-            onClose={() => setShowToast(false)}
-            delay={3000}
-            autohide
-            bg={error ? "danger" : "success"}
-          >
-            <Toast.Header closeButton>
-              <i className={`bi bi-${error ? "exclamation-circle" : "check-circle"} me-2`}></i>
-              <strong className="me-auto">{error ? "Lỗi" : "Thành công"}</strong>
-            </Toast.Header>
-            <Toast.Body className="text-white">
-              {error || success}
-            </Toast.Body>
-          </Toast>
-        </div>
-
         <div className="auth-wrapper">
           <div className="auth-card">
             {/* Left Side - Image/Branding */}

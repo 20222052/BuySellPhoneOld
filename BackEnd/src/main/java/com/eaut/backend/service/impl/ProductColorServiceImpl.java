@@ -1,12 +1,15 @@
 package com.eaut.backend.service.impl;
 
 import com.eaut.backend.entities.ProductColor;
+import com.eaut.backend.entities.ProductItem;
+import com.eaut.backend.entities.ProductModel;
 import com.eaut.backend.exception.ApplicationException;
 import com.eaut.backend.model.request.ProductColorRequest;
 import com.eaut.backend.model.response.ApiResponse;
 import com.eaut.backend.model.response.ProductColorResponse;
 import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.repository.ProductColorRepository;
+import com.eaut.backend.repository.ProductModelRepository;
 import com.eaut.backend.service.ProductColorService;
 import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.untils.Mapper;
@@ -26,6 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductColorServiceImpl implements ProductColorService {
     final ProductColorRepository productColorRepository;
+    final ProductModelRepository productModelRepository;
 
     @Transactional(readOnly = true)
     @Override
@@ -70,7 +74,10 @@ public class ProductColorServiceImpl implements ProductColorService {
     @Override
     public ProductColorResponse create(ProductColorRequest request) {
         validateProductColorRequestCreate(request);
+        ProductModel productModel = productModelRepository.findById(UUID.fromString(request.getProductModelId()))
+                .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND,"ProductModel not found"));
         ProductColor result = Mapper.toProductColor(request);
+        result.setProductModel(productModel);
         result.setCreatedAt(OffsetDateTime.now());
         ProductColor productColor = productColorRepository.save(result);
         return Mapper.toProductColorResponse(productColor);
@@ -100,14 +107,12 @@ public class ProductColorServiceImpl implements ProductColorService {
         if (request.getHexCode() == null || request.getHexCode().isEmpty()) {
             throw new ApplicationException(ErrorCode.INVALID_PARAMETER,"ProductColor hexCode is required");
         }
-        if (productColorRepository.existsByName(request.getName())) {
-            throw new ApplicationException(ErrorCode.CONFLICT,"ProductColor name already exists");
+
+        if (request.getProductModelId() == null || request.getProductModelId().isEmpty()) {
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER,"ProductModel id is required");
         }
-        if (productColorRepository.existsByHexCode(request.getHexCode())) {
-            throw new ApplicationException(ErrorCode.CONFLICT,"ProductColor hexCode already exists");
-        }
-        if (request.getHexCode().length() > 6) {
-            throw new ApplicationException(ErrorCode.INVALID_PARAMETER,"ProductColor hexCode max length is 6");
+        if (request.getHexCode().length() > 7) {
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER,"ProductColor hexCode max length is 7");
         }
     }
     private ProductColor validateProductColorRequestUpdate(ProductColorRequest request, UUID id) {
@@ -118,19 +123,13 @@ public class ProductColorServiceImpl implements ProductColorService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND,"ProductColor not found"));
         // Update name nếu được cung cấp
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
-            if (productColorRepository.existsByNameAndIdNot(request.getName(), id)) {
-                throw new ApplicationException(ErrorCode.CONFLICT, "ProductColor name already exists");
-            }
             productColor.setName(request.getName());
         }
 
         // Update hexCode nếu được cung cấp
         if (request.getHexCode() != null && !request.getHexCode().trim().isEmpty()) {
-            if (productColorRepository.existsByHexCode(request.getHexCode())) {
-                throw new ApplicationException(ErrorCode.CONFLICT, "ProductColor hexCode already exists");
-            }
-            if (request.getHexCode().length() > 6) {
-                throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "ProductColor hexCode max length is 6");
+            if (request.getHexCode().length() > 7) {
+                throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "ProductColor hexCode max length is 7");
             }
             productColor.setHexCode(request.getHexCode());
         }

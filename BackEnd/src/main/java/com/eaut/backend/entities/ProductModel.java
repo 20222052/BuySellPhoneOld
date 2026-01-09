@@ -4,6 +4,7 @@ package com.eaut.backend.entities;
 import com.eaut.backend.constant.GradeEnum;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class ProductModel {
     @OneToMany(mappedBy = "productModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductColor> colors = new ArrayList<>();
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
 }

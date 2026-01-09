@@ -1,7 +1,10 @@
-@import "bootstrap/scss/bootstrap";
-@import "@/assets/styles/variables";
-@import "@/assets/styles/mixins";
-@import "@/assets/styles/reset";
+// Import custom styles first (variables & mixins)
+@import "./assets/styles/variables";
+@import "./assets/styles/mixins";
+@import "./assets/styles/reset";
+
+// Import Bootstrap CSS (pre-compiled) instead of SCSS to avoid unit incompatibility
+@import "bootstrap/dist/css/bootstrap.min.css";
 
 /* Root Color Variables */
 :root {

@@ -2,6 +2,7 @@ package com.eaut.backend.model.response;
 
 // === Lombok & JPA imports ===
 
+import com.eaut.backend.constant.UserStatus;
 import com.eaut.backend.entities.baseEntity.AuditBase;
 
 import com.eaut.backend.entities.Role;
@@ -17,6 +18,7 @@ public class UserResponse extends AuditBase {
     private String fullName;
     private String email;
     private String phone;
+    private UserStatus status;
     private Set<Role> roles;
 
     public UserResponse(User user) {
@@ -24,6 +26,7 @@ public class UserResponse extends AuditBase {
         this.fullName = user.getFullName();
         this.email = user.getEmail();
         this.phone = user.getPhone();
+        this.status = user.getStatus();
         this.roles = user.getRoles();
     }
 }

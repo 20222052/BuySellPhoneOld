@@ -4,6 +4,7 @@ package com.eaut.backend.entities;
 import com.eaut.backend.constant.MediaType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -26,10 +27,6 @@ public class ProductMedia {
             id = UUID.randomUUID();
     }
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_color_id")
-    private ProductColor productColor;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_item_id", nullable = false)
     private ProductItem productItem;
@@ -41,7 +38,7 @@ public class ProductMedia {
     private String public_id;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 10, nullable = false)
+    @Column(length = 10)
     private MediaType type = MediaType.image;
 
     @Column(name = "is_primary", nullable = false)
@@ -50,6 +47,7 @@ public class ProductMedia {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
 }

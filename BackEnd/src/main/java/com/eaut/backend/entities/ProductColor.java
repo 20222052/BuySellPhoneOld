@@ -32,11 +32,11 @@ public class ProductColor {
     @Column(length = 50, nullable = false)
     private String name;
 
-    @Column(name = "hex_code", length = 7, unique = true)
+    @Column(name = "hex_code", length = 7)
     private String hexCode;
 
-    @OneToOne(mappedBy = "productColor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ProductMedia media;
+    @Column(name = "qty_available")
+    private int qtyAvailable; // số lượng có sẵn với màu này với biến thể sản phẩm cụ thể
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now(); // Thời gian tạo
