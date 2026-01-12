@@ -469,7 +469,7 @@ export default function BrandList() {
                                             <input
                                                 type="file"
                                                 id="logo-input"
-                                                accept="image/*"
+                                                accept="image/png,image/jpeg,image/jpg,image/webp"
                                                 onChange={handleFileChange}
                                                 style={{ display: 'none' }}
                                             />

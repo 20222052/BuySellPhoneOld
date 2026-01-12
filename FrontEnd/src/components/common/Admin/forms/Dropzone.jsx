@@ -126,7 +126,7 @@ export default function Dropzone({
                 <input
                     ref={inputRef}
                     type="file"
-                    accept={accept}
+                    accept={accept || "image/png,image/jpeg,image/jpg,image/webp"}
                     multiple={multiple}
                     onChange={handleFileSelect}
                     disabled={disabled}

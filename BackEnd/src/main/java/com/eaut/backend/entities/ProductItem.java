@@ -31,6 +31,9 @@ public class ProductItem extends AuditBase {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

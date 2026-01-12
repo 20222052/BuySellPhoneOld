@@ -90,7 +90,7 @@ export default function TradeInPage() {
                             </Form.Group>
                             <Form.Group className="mb-3">
                                 <Form.Label>Ảnh sản phẩm</Form.Label>
-                                <Form.Control type="file" accept="image/*" onChange={handleImageChange} required />
+                                <Form.Control type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleImageChange} required />
                                 {preview && (
                                     <div className="mt-2 text-center">
                                         <img src={preview} alt="preview" style={{ maxWidth: 180, maxHeight: 180, borderRadius: 8, border: "1px solid #eee" }} />

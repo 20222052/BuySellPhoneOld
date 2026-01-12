@@ -38,6 +38,7 @@ public interface ProductItemService {
             BigDecimal maxPrice,
             String sortBy,
             String sortDir,
+            Boolean randomEnabled,
             int pageNumber,
             int pageSize);
 

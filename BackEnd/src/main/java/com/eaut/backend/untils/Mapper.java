@@ -145,6 +145,8 @@ public class Mapper {
                                 .productId(productItem.getProduct() != null ? productItem.getProduct().getId() : null)
                                 .productName(productItem.getProduct() != null ? productItem.getProduct().getName()
                                                 : null)
+                                .name(productItem.getName())
+                                .description(productItem.getDescription())
                                 .basePrice(productItem.getBasePrice())
                                 .sellPrice(productItem.getSellPrice())
                                 .comparePrice(productItem.getComparePrice())
@@ -156,6 +158,8 @@ public class Mapper {
         public static ProductItem toProductItem(ProductItemRequest request, Product product) {
                 return ProductItem.builder()
                                 .product(product)
+                                .name(request.getName())
+                                .description(request.getDescription())
                                 .basePrice(request.getBasePrice())
                                 .sellPrice(request.getSellPrice())
                                 .comparePrice(request.getComparePrice())
@@ -235,6 +239,8 @@ public class Mapper {
                                 // Product info
                                 .productId(product != null ? product.getId() : null)
                                 .productName(product != null ? product.getName() : null)
+                                .name(productItem.getName())
+                                .description(productItem.getDescription())
                                 .productDescription(product != null ? product.getDescription() : null)
                                 .brandName(product != null && product.getBrand() != null ? product.getBrand().getName()
                                                 : null)

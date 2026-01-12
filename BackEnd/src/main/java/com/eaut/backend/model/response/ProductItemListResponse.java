@@ -23,6 +23,7 @@ public class ProductItemListResponse {
 
     // ProductItem name (variant name)
     private String name;
+    private String description; // ProductItem description (variant description)
 
     // Product info
     private UUID productId;

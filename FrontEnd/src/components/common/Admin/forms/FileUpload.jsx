@@ -65,7 +65,7 @@ const FileUpload = forwardRef(({
                 <input
                     ref={inputRef}
                     type="file"
-                    accept={accept}
+                    accept={accept || "image/png,image/jpeg,image/jpg,image/webp"}
                     onChange={handleChange}
                     disabled={disabled}
                     {...props}

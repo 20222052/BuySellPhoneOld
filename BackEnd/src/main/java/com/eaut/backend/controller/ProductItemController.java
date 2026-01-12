@@ -56,6 +56,7 @@ public class ProductItemController {
                         @RequestParam(name = "max_price", required = false) BigDecimal maxPrice,
                         @RequestParam(name = "sort_by", required = false, defaultValue = "createdAt") String sortBy,
                         @RequestParam(name = "sort_dir", required = false, defaultValue = "DESC") String sortDir,
+                        @RequestParam(name = "random_enabled", required = false, defaultValue = "false") Boolean randomEnabled,
                         @RequestParam(name = "page", defaultValue = "0") int pageNumber,
                         @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
 
@@ -64,7 +65,7 @@ public class ProductItemController {
 
                 ApiResponse<PagingResponse<ProductItemListResponse>> response = productItemService
                                 .findAllForList(searchText, productId, brandId, categoryId, status,
-                                                minPrice, maxPrice, sortBy, sortDir, pageNumber, pageSize);
+                                                minPrice, maxPrice, sortBy, sortDir, randomEnabled, pageNumber, pageSize);
                 return ResponseEntity.ok(response);
         }
 

@@ -422,7 +422,7 @@ const FormElements = () => {
 
                     <FileUpload
                         label="Ảnh đại diện"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
                         placeholder="Chọn ảnh đại diện..."
                     />
 
