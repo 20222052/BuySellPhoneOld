@@ -17,6 +17,8 @@ public class ProductItemResponse {
     private UUID id;
     private UUID productId;
     private String productName;
+    private String name; // Tên biến thể
+    private String description; // Mô tả biến thể
     private BigDecimal basePrice;
     private BigDecimal sellPrice;
     private BigDecimal comparePrice;

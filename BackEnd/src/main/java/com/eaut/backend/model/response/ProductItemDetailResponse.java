@@ -20,7 +20,9 @@ public class ProductItemDetailResponse {
     // Product info
     private UUID productId;
     private String productName;
-    private String productDescription;
+    private String name; // Tên biến thể
+    private String description; // Mô tả biến thể
+    private String productDescription; // Mô tả sản phẩm
     private String brandName;
     private String categoryName;
     private Integer warrantyMonths;

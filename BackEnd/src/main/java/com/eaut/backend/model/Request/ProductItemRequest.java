@@ -15,6 +15,8 @@ import java.util.UUID;
 @Builder
 public class ProductItemRequest {
     private UUID productId;
+    private String name; // Tên biến thể (tùy chọn)
+    private String description; // Mô tả biến thể (tùy chọn)
     private BigDecimal basePrice;
     private BigDecimal sellPrice;
     private BigDecimal comparePrice;

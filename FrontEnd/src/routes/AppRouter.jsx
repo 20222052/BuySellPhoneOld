@@ -51,11 +51,19 @@ export default function AppRouter() {
           <Route path={RoutePaths.BLOG} element={<Blogs />} />
           <Route path={RoutePaths.BLOG_DETAIL} element={<BlogDetail />} />
           <Route path={RoutePaths.TRADEIN} element={<Trade_inPage />} />
-          <Route path={RoutePaths.CART} element={<Cart />} />
-          <Route path={RoutePaths.CHECKOUT} element={<CheckOut />} />
           <Route path={RoutePaths.ABOUT} element={<About />} />
 
           {/* Protected User Routes */}
+          <Route path={RoutePaths.CART} element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          } />
+          <Route path={RoutePaths.CHECKOUT} element={
+            <ProtectedRoute>
+              <CheckOut />
+            </ProtectedRoute>
+          } />
           <Route path={RoutePaths.PROFILE} element={
             <ProtectedRoute>
               <Profile />

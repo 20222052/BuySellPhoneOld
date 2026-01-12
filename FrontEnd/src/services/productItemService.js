@@ -112,6 +112,7 @@ const ProductItemService = {
                 maxPrice = '',
                 sortBy = 'createdAt',
                 sortDir = 'DESC',
+                randomEnabled = true,
                 page = 0,
                 pageSize = 10
             } = params;
@@ -127,6 +128,7 @@ const ProductItemService = {
                     max_price: maxPrice || undefined,
                     sort_by: sortBy,
                     sort_dir: sortDir,
+                    random_enabled: randomEnabled,
                     page,
                     page_size: pageSize
                 }

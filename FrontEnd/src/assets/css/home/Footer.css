@@ -152,6 +152,7 @@
     color: var(--white);
     transition: var(--transition-base);
     backdrop-filter: blur(10px);
+    border: solid 1.5px #d70018 !important;
 }
 
 .submit-btn:hover {

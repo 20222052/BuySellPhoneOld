@@ -5,6 +5,7 @@ import FeaturesSection from "../../components/common/Home/FeaturesSection";
 import TradeInBanner from "../../components/common/Home/TradeInBanner";
 import BlogSection from "../../components/common/Home/BlogSection";
 import NewsletterSection from "../../components/common/Home/NewsletterSection";
+import VideoShortsSection from "../../components/common/Home/VideoShortsSection";
 import "../../assets/css/home/Home.css";
 
 
@@ -163,6 +164,39 @@ export default function Home() {
     { value: "99%", label: "Hài lòng" },
   ];
 
+  const videos = [
+    {
+      url: "https://www.youtube.com/embed/eWCepCi7aEg?si=0R7sDJm-51Fd8mNB",
+      title: "Review iPhone 15 Pro Max",
+      description: "Đánh giá chi tiết về iPhone 15 Pro Max - Có nên mua máy cũ?",
+    },
+    {
+      url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      title: "Samsung Galaxy S24 Ultra",
+      description: "Trải nghiệm Galaxy S24 Ultra sau 1 tháng sử dụng",
+    },
+    {
+      url: "https://www.youtube.com/embed/jNQXAC9IVRw",
+      title: "Top 5 Điện Thoại Cũ",
+      description: "5 chiếc điện thoại cũ đáng mua nhất hiện nay",
+    },
+    {
+      url: "https://www.youtube.com/embed/kJQP7kiw5Fk",
+      title: "Hướng Dẫn Kiểm Tra Máy Cũ",
+      description: "Cách kiểm tra điện thoại cũ tránh mua phải hàng dựng",
+    },
+    {
+      url: "https://www.youtube.com/embed/M7lc1UVf-VE",
+      title: "Xiaomi 14 Pro",
+      description: "Liệu Xiaomi 14 Pro có xứng đáng với mức giá hiện tại?",
+    },
+    {
+      url: "https://www.youtube.com/embed/YQHsXMglC9A",
+      title: "So Sánh iPhone vs Android",
+      description: "Nên chọn iPhone hay Android trong tầm giá dưới 10 triệu",
+    },
+  ];
+
   return (
     <div className="home-page">
       <HeroSection stats={stats} />
@@ -170,6 +204,7 @@ export default function Home() {
       <FeaturedProducts products={featuredProducts} />
       <FeaturesSection features={features} />
       <TradeInBanner />
+      {/* <VideoShortsSection videos={videos} /> */}
       <BlogSection blogs={blogs} />
       {/* <NewsletterSection /> */}
     </div>

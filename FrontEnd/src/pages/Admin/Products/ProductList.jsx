@@ -373,7 +373,7 @@ export default function ProductList() {
                         </select>
                     </div>
 
-                    <div className="filter-group">
+                    {/* <div className="filter-group">
                         <select
                             className="filter-select"
                             value={pageSize}
@@ -384,12 +384,9 @@ export default function ProductList() {
                             <option value={20}>20 / trang</option>
                             <option value={50}>50 / trang</option>
                         </select>
-                    </div>
+                    </div> */}
                 </div>
 
-                <div className="toolbar-info">
-                    Hiển thị <strong>{products.length}</strong> / {totalItems} sản phẩm
-                </div>
             </div>
 
             {/* Data Table */}

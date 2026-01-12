@@ -1,209 +1,385 @@
-
-import { useState } from "react";
-import { Container, Row, Col, Card, Button, Form, Badge, ListGroup, Tab, Nav } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import classNames from "classnames";
+import "@/assets/css/home/ProductDetail.css";
+import {
+    Container,
+    Row,
+    Col,
+    Card,
+    Button,
+    Form,
+    Badge,
+    Tab,
+    Nav,
+    Spinner,
+    Toast,
+    ToastContainer
+} from "react-bootstrap";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import LatestProducts from "@/components/common/LatestProducts";
-
-// Dữ liệu mẫu
-const product = {
-    id: 1,
-    name: "Samsung Galaxy S24 Plus 12GB 256GB",
-    image: "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-    description: "Samsung Galaxy S24 Plus là mẫu điện thoại cao cấp với hiệu năng mạnh mẽ, camera xuất sắc và thiết kế sang trọng.",
-    specs: {
-        screen: "Dynamic AMOLED 2X 6.7 inch",
-        cpu: "Snapdragon 8 Gen 3",
-        camera: "50MP + 12MP + 10MP",
-        battery: "4900 mAh",
-        os: "Android 14",
-        sim: "2 Nano SIM, 5G",
-        weight: "196g",
-        charging: "45W",
-    },
-    memories: ["128GB", "256GB", "512GB"],
-    colors: ["Đen", "Xanh", "Vàng", "Tím"],
-    price: "15.490.000",
-    oldPrice: "18.990.000",
-    salePrice: "14.490.000",
-    rating: 5.0,
-    reviews: [
-        { user: "Cô Công Thành", comment: "Máy đẹp, pin trâu, camera nét!", rating: 5 },
-        { user: "Cô Công Định", comment: "Dùng rất mượt, hài lòng!", rating: 5 },
-        { user: "Nguyễn Quang Huy", comment: "Thích hàng của Samsung", rating: 5 },
-        { user: "Lương Tiến Giỏi", comment: "Chất lượng camera tốt, chuyên nghiệp", rating: 5 },
-    ],
-    questions: [
-        { user: "Triệu Quỳnh Lan", question: "Máy này có chống nước không?", answer: "Có, chuẩn IP68." },
-        { user: "Cô Hiếu Nguyễn", question: "Có hỗ trợ sạc nhanh không?", answer: "Có, sạc nhanh 45W." },
-    ],
-    promotions: [
-        "Giảm thêm 1 triệu khi thanh toán qua VNPAY",
-        "Tặng phiếu mua phụ kiện 500.000đ",
-        "Trả góp 0% qua thẻ tín dụng",
-    ],
-    accessories: [
-        { name: "Ốp lưng S24 Plus", price: "250.000₫", image: "https://cdn.tgdd.vn/Products/Images/60/299034/op-lung.jpg" },
-        { name: "Cường lực S24 Plus", price: "150.000₫", image: "https://cdn.tgdd.vn/Products/Images/60/299035/cuong-luc.jpg" },
-        { name: "Tai nghe Bluetooth", price: "990.000₫", image: "https://cdn.tgdd.vn/Products/Images/54/299036/tai-nghe.jpg" },
-    ],
-};
-
-const latestProducts = Array.from({ length: 6 }, (_, i) => ({
-    id: i + 10,
-    name: `Sản phẩm mới ${i + 1}`,
-    image: "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-    price: "12.990.000",
-}));
-
+import ProductItemService from "../../services/productItemService";
+import { addToCart, clearCartError, clearCartSuccess } from "../../store/slices/cartSlice";
 
 export default function ProductDetail() {
     const { id } = useParams();
-    const [selectedMemory, setSelectedMemory] = useState(product.memories[0]);
-    const [selectedColor, setSelectedColor] = useState(product.colors[0]);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    // Redux state
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const { loading: cartLoading, error: cartError, success: cartSuccess } = useSelector((state) => state.cart);
+
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const [selectedModel, setSelectedModel] = useState(null);
+    const [selectedColor, setSelectedColor] = useState(null);
+    const [selectedImage, setSelectedImage] = useState("");
+
+    const [latestProducts, setLatestProducts] = useState([]);
     const [tab, setTab] = useState("desc");
 
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastVariant, setToastVariant] = useState("success");
+
+    /* ================= FETCH PRODUCT DETAIL ================= */
+    useEffect(() => {
+        const fetchProduct = async () => {
+            setLoading(true);
+            try {
+                const res = await ProductItemService.getDetails(id);
+                const data = res?.data;
+
+                if (!data) throw new Error("Không có dữ liệu sản phẩm");
+
+                setProduct(data);
+
+                // Default model
+                const defaultModel = data.models?.[0] || null;
+                setSelectedModel(defaultModel);
+
+                // Default color theo model
+                if (defaultModel?.colors?.length) {
+                    setSelectedColor(defaultModel.colors[0]);
+                }
+
+                // Primary image
+                const primaryImg = data.media?.find(m => m.primary)?.url;
+                setSelectedImage(primaryImg || "");
+            } catch (err) {
+                setError(err.message || "Lỗi tải sản phẩm");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) fetchProduct();
+    }, [id]);
+
+    /* ================= FETCH LATEST PRODUCTS ================= */
+    useEffect(() => {
+        const fetchLatest = async () => {
+            try {
+                const res = await ProductItemService.getAllForList({
+                    sortBy: "createdAt",
+                    sortDir: "DESC",
+                    page: 0,
+                    pageSize: 6
+                });
+                setLatestProducts(res?.data?.items || []);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchLatest();
+    }, []);
+
+    const formatPrice = (price) =>
+        new Intl.NumberFormat("vi-VN").format(price || 0);
+
+    /* ================= HANDLE ADD TO CART ================= */
+    const handleAddToCart = () => {
+        if (!isAuthenticated) {
+            setToastMessage("Vui lòng đăng nhập để thêm vào giỏ hàng!");
+            setToastVariant("warning");
+            setShowToast(true);
+            setTimeout(() => navigate("/login"), 1500);
+            return;
+        }
+
+        if (!selectedColor) {
+            setToastMessage("Vui lòng chọn màu sắc!");
+            setToastVariant("warning");
+            setShowToast(true);
+            return;
+        }
+
+        if (selectedColor.qtyAvailable <= 0) {
+            setToastMessage("Sản phẩm này đã hết hàng!");
+            setToastVariant("danger");
+            setShowToast(true);
+            return;
+        }
+
+        dispatch(addToCart({
+            userId: user.id,
+            productColorId: selectedColor.id,
+            quantity: 1
+        }));
+    };
+
+    // Watch cart success/error
+    useEffect(() => {
+        if (cartSuccess) {
+            setToastMessage(cartSuccess);
+            setToastVariant("success");
+            setShowToast(true);
+            dispatch(clearCartSuccess());
+        }
+    }, [cartSuccess, dispatch]);
+
+    useEffect(() => {
+        if (cartError) {
+            setToastMessage(cartError);
+            setToastVariant("danger");
+            setShowToast(true);
+            dispatch(clearCartError());
+        }
+    }, [cartError, dispatch]);
+
+    /* ================= LOADING / ERROR ================= */
+    if (loading) {
+        return (
+            <Container className="py-5 text-center">
+                <Spinner animation="border" />
+            </Container>
+        );
+    }
+
+    if (error) {
+        return (
+            <Container className="py-5">
+                <div className="alert alert-danger">{error}</div>
+            </Container>
+        );
+    }
+
+    if (!product) return null;
+
+    // ================= convert color ====================
+    const getContrastTextColor = (hex) => {
+        if (!hex) return '#000';
+
+        const color = hex.replace('#', '');
+
+        const r = parseInt(color.substring(0, 2), 16);
+        const g = parseInt(color.substring(2, 4), 16);
+        const b = parseInt(color.substring(4, 6), 16);
+
+        // Công thức độ sáng
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+        // Màu sáng → chữ đen, màu tối → chữ trắng
+        return brightness > 150 ? '#000' : '#fff';
+    };
+
+
+    /* ================= RENDER ================= */
     return (
         <Container className="py-3">
-            {/* Header + chọn phiên bản */}
-            <Card className="mb-3 p-3 shadow-sm border-0">
+            {/* ===== PRODUCT HEADER ===== */}
+            <Card className="product-detail-header mb-3 border-0 shadow-sm">
                 <Row>
-                    <Col md={5} className="d-flex flex-column align-items-center justify-content-center">
-                        <img src={product.image} alt={product.name} style={{ maxWidth: 320, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }} />
-                        <div className="mt-2">
-                            <Button variant="danger" size="sm"><i className="bi bi-play-circle"></i> Xem video</Button>
-                        </div>
+                    <Col md={5} className="text-center">
+                        <img
+                            src={selectedImage || "https://via.placeholder.com/300"}
+                            alt={product.productName}
+                            className="product-detail-image"
+                        />
+                        {/* Thumbnails media */}
+                        {product.media && product.media.length > 1 && (
+                            <div className="product-detail-thumbnails mt-3 d-flex flex-wrap gap-2 justify-content-start">
+                                {product.media.map((m, idx) => (
+                                    <img
+                                        key={m.url || idx}
+                                        src={m.url}
+                                        alt={"media-" + idx}
+                                        className={classNames("product-detail-thumb-img", {
+                                            selected: selectedImage === m.url
+                                        })}
+                                        style={{
+                                            width: 56,
+                                            height: 56,
+                                            objectFit: "cover",
+                                            borderRadius: 8,
+                                            border: selectedImage === m.url ? "2px solid #d70018" : "1px solid #eee",
+                                            cursor: "pointer",
+                                            boxShadow: selectedImage === m.url ? "0 2px 8px rgba(215,0,24,0.12)" : "none",
+                                            transition: "border 0.2s, box-shadow 0.2s"
+                                        }}
+                                        onClick={() => setSelectedImage(m.url)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </Col>
+
                     <Col md={7}>
-                        <h2 className="fw-bold mb-2" style={{ textAlign: "left" }}>{product.name}</h2>
-                        <div className="mb-2" style={{ textAlign: "left" }}>
-                            <Badge bg="warning" text="dark" className="me-2">{product.rating} ★</Badge>
-                            <span className="text-muted">({product.reviews.length} đánh giá)</span>
+                        <h3 className="product-detail-title">
+                            {product.productName} – {product.name}
+                        </h3>
+
+                        <div className="product-detail-price mb-2">
+                            {formatPrice(product.sellPrice)}₫
+                            {product.comparePrice && (
+                                <span className="product-detail-compare-price">
+                                    {formatPrice(product.comparePrice)}₫
+                                </span>
+                            )}
                         </div>
-                        <div className="mb-2" style={{ textAlign: "left" }}>
-                            <span className="fs-4 fw-bold text-danger me-3">{product.price}₫</span>
-                            <span className="text-decoration-line-through text-secondary">{product.oldPrice}₫</span>
-                            <span className="ms-3 text-success fw-bold">{product.salePrice}₫</span>
+
+                        {/* ===== MODELS ===== */}
+                        <div className="product-detail-models mb-3">
+                            <Form.Label>Phiên bản</Form.Label>
+                            <div>
+                                {product.models.map(model => (
+                                    <Button
+                                        key={model.id}
+                                        className="me-2 mb-2"
+                                        variant={
+                                            selectedModel?.id === model.id
+                                                ? "primary"
+                                                : "outline-primary"
+                                        }
+                                        onClick={() => {
+                                            setSelectedModel(model);
+                                            setSelectedColor(model.colors?.[0] || null);
+                                        }}
+                                    >
+                                        {model.name}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="mb-3" style={{ textAlign: "left" }}>
-                            <Form.Label className="me-2">Phiên bản:</Form.Label>
-                            {product.memories.map(mem => (
-                                <Button key={mem} variant={selectedMemory === mem ? "primary" : "outline-primary"} className="me-2 mb-2" onClick={() => setSelectedMemory(mem)}>{mem}</Button>
-                            ))}
+
+                        {/* ===== COLORS BY MODEL ===== */}
+                        {selectedModel?.colors?.length > 0 && (
+                            <div className="product-detail-colors mb-3">
+                                <Form.Label>Màu sắc</Form.Label>
+                                <div>
+                                    {selectedModel.colors.map(color => (
+                                        <Button
+                                            key={color.id}
+                                            className="me-2 mb-2"
+                                            style={{
+                                                backgroundColor: color.hexCode,
+                                                color: getContrastTextColor(color.hexCode),
+                                                border: selectedColor?.id === color.id ? '2.5px solid #222' : '1.5px solid #fff',
+                                                fontWeight: 700,
+                                                boxShadow: selectedColor?.id === color.id ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
+                                                minWidth: 90,
+                                                padding: '8px 18px',
+                                                borderRadius: 20,
+                                                textShadow: '0 1px 4px rgba(0,0,0,0.12)'
+                                            }}
+                                            onClick={() => setSelectedColor(color)}
+                                        >
+                                            {color.name}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ===== STOCK ===== */}
+                        <div className="product-detail-stock mb-3">
+                            <strong>Tồn kho:</strong>{" "}
+                            {selectedColor?.qtyAvailable ?? 0} sản phẩm
                         </div>
-                        <div className="mb-3" style={{ textAlign: "left" }}>
-                            <Form.Label className="me-2">Màu sắc:</Form.Label>
-                            {product.colors.map(color => (
-                                <Button key={color} variant={selectedColor === color ? "dark" : "outline-dark"} className="me-2 mb-2" onClick={() => setSelectedColor(color)}>{color}</Button>
-                            ))}
-                        </div>
-                        <div className="mb-3" style={{ textAlign: "left" }}>
-                            <Button variant="danger" size="lg">Mua ngay</Button>
-                            <Button variant="outline-danger" size="lg" className="ms-2">Thêm vào giỏ</Button>
-                        </div>
+
+                        <Button
+                            size="lg"
+                            variant="danger"
+                            onClick={() => {
+                                handleAddToCart();
+                                if (isAuthenticated && selectedColor) {
+                                    setTimeout(() => navigate("/cart"), 500);
+                                }
+                            }}
+                            disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
+                        >
+                            {cartLoading ? <Spinner size="sm" /> : "Mua ngay"}
+                        </Button>
+                        <Button
+                            size="lg"
+                            variant="outline-danger"
+                            className="ms-2"
+                            onClick={handleAddToCart}
+                            disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
+                        >
+                            {cartLoading ? <Spinner size="sm" /> : "Thêm vào giỏ"}
+                        </Button>
                     </Col>
                 </Row>
             </Card>
 
-            {/* Khuyến mãi + thông số + phụ kiện */}
-            <Row className="mb-3">
-                <Col md={7}>
-                    <Card className="mb-3 p-3 border-0 shadow-sm">
-                        <h5 className="fw-bold mb-2" style={{ textAlign: "left" }}>Thông số kỹ thuật</h5>
-                        <ListGroup variant="flush" style={{ textAlign: "left" }}>
-                            <ListGroup.Item><strong>Màn hình:</strong> {product.specs.screen}</ListGroup.Item>
-                            <ListGroup.Item><strong>CPU:</strong> {product.specs.cpu}</ListGroup.Item>
-                            <ListGroup.Item><strong>Camera:</strong> {product.specs.camera}</ListGroup.Item>
-                            <ListGroup.Item><strong>Pin:</strong> {product.specs.battery}</ListGroup.Item>
-                            <ListGroup.Item><strong>HĐH:</strong> {product.specs.os}</ListGroup.Item>
-                            <ListGroup.Item><strong>SIM:</strong> {product.specs.sim}</ListGroup.Item>
-                            <ListGroup.Item><strong>Trọng lượng:</strong> {product.specs.weight}</ListGroup.Item>
-                            <ListGroup.Item><strong>Sạc nhanh:</strong> {product.specs.charging}</ListGroup.Item>
-                        </ListGroup>
-                    </Card>
-                </Col>
-                <Col md={5}>
-                    <Card className="mb-3 p-3 border-0 shadow-sm">
-                        <h5 className="fw-bold mb-2" style={{ textAlign: "left" }}>Khuyến mãi nổi bật</h5>
-                        <ul className="mb-0" style={{ textAlign: "left" }}>
-                            {product.promotions.map((promo, idx) => (
-                                <li key={idx} style={{ color: "#d32f2f" }}>{promo}</li>
-                            ))}
-                        </ul>
-                    </Card>
-
-                    <Card className="mb-3 p-3 border-0 shadow-sm">
-                        <h5 className="fw-bold mb-2" style={{ textAlign: "left" }}>Phụ kiện mua cùng</h5>
-                        <Row>
-                            {product.accessories.map((acc, idx) => (
-                                <Col xs={12} sm={6} md={12} key={idx} className="mb-2">
-                                    <Card className="h-100 flex-row align-items-center p-2" style={{ minHeight: 80, border: "1px solid #eee", borderRadius: 8 }}>
-                                        <Form.Check type="checkbox" className="me-2" style={{ minWidth: 24 }} />
-                                        <img src={acc.image} alt={acc.name} style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, marginRight: 12, border: "1px solid #eee" }} />
-                                        <div style={{ flex: 1 }}>
-                                            <div className="fw-bold" style={{ fontSize: "1rem" }}>{acc.name}</div>
-                                            <div className="text-danger fw-bold">{acc.price}</div>
-                                        </div>
-                                    </Card>
-                                </Col>
-                            ))}
-                        </Row>
-                    </Card>
-                </Col>
-            </Row>
-
-            {/* Tabs mô tả, đánh giá, hỏi đáp */}
+            {/* ===== TABS ===== */}
             <Card className="mb-3 p-3 border-0 shadow-sm">
                 <Tab.Container activeKey={tab} onSelect={setTab}>
-                    <Nav variant="tabs" className="mb-3" style={{ textAlign: "left" }}>
-                        <Nav.Item><Nav.Link eventKey="desc">Đặc điểm nổi bật</Nav.Link></Nav.Item>
-                        <Nav.Item><Nav.Link eventKey="review">Đánh giá</Nav.Link></Nav.Item>
-                        <Nav.Item><Nav.Link eventKey="qa">Hỏi & đáp</Nav.Link></Nav.Item>
+                    <Nav variant="tabs">
+                        <Nav.Item>
+                            <Nav.Link eventKey="desc">Mô tả</Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="review">Đánh giá</Nav.Link>
+                        </Nav.Item>
                     </Nav>
-                    <Tab.Content style={{ textAlign: "left" }}>
+
+                    <Tab.Content className="pt-3">
                         <Tab.Pane eventKey="desc">
-                            <h5 className="fw-bold mb-2">Đặc điểm nổi bật của {product.name}</h5>
-                            <p>{product.description}</p>
-                            <ul>
-                                <li>Thiết kế sang trọng, màn hình lớn</li>
-                                <li>Camera chất lượng cao, nhiều tính năng AI</li>
-                                <li>Pin dung lượng lớn, sạc nhanh</li>
-                                <li>Hiệu năng mạnh mẽ, đa nhiệm tốt</li>
-                                <li>Hỗ trợ 5G, kết nối nhanh</li>
-                            </ul>
+                            {product.description ? (
+                                <div
+                                    className="product-detail-description"
+                                    dangerouslySetInnerHTML={{ __html: product.description }}
+                                />
+                            ) : (
+                                "Chưa có mô tả"
+                            )}
                         </Tab.Pane>
                         <Tab.Pane eventKey="review">
-                            <h5 className="fw-bold mb-2">Đánh giá sản phẩm</h5>
-                            {product.reviews.length === 0 ? (
-                                <p>Chưa có đánh giá nào.</p>
-                            ) : (
-                                product.reviews.map((r, idx) => (
-                                    <div key={idx} className="mb-2">
-                                        <strong>{r.user}</strong> <Badge bg="info">{r.rating}★</Badge>
-                                        <div>{r.comment}</div>
-                                    </div>
-                                ))
-                            )}
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="qa">
-                            <h5 className="fw-bold mb-2">Hỏi & đáp</h5>
-                            {product.questions.length === 0 ? (
-                                <p>Chưa có câu hỏi nào.</p>
-                            ) : (
-                                product.questions.map((q, idx) => (
-                                    <div key={idx} className="mb-2">
-                                        <strong>{q.user}</strong>: {q.question}
-                                        <div className="ms-3 text-danger">Quản trị viên: {q.answer}</div>
-                                    </div>
-                                ))
-                            )}
-                            <Button variant="outline-primary" size="sm" className="mt-2">Gửi câu hỏi</Button>
+                            Chưa có đánh giá
                         </Tab.Pane>
                     </Tab.Content>
                 </Tab.Container>
             </Card>
 
-            {/* Sản phẩm mới nhất */}
+            {/* ===== LATEST PRODUCTS ===== */}
             <LatestProducts products={latestProducts} />
+
+            {/* ===== TOAST NOTIFICATIONS ===== */}
+            <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+                <Toast
+                    show={showToast}
+                    onClose={() => setShowToast(false)}
+                    delay={3000}
+                    autohide
+                    bg={toastVariant}
+                >
+                    <Toast.Header>
+                        <strong className="me-auto">
+                            {toastVariant === "success" ? "Thành công" :
+                                toastVariant === "warning" ? "Cảnh báo" : "Lỗi"}
+                        </strong>
+                    </Toast.Header>
+                    <Toast.Body className={toastVariant === "success" || toastVariant === "danger" ? "text-white" : ""}>
+                        {toastMessage}
+                    </Toast.Body>
+                </Toast>
+            </ToastContainer>
         </Container>
     );
 }

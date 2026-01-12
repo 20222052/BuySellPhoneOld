@@ -1,59 +1,105 @@
-import { useState } from "react";
-import { Container, Card, Table, Button, Image, Form, Row, Col, Alert } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Container, Card, Table, Button, Image, Form, Row, Col, Spinner } from "react-bootstrap";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import LatestProducts from "@/components/common/LatestProducts";
-
-// Dữ liệu mẫu cho giỏ hàng
-const initialCart = [
-    {
-        id: 1,
-        name: "Samsung Galaxy S24 Plus 12GB 256GB",
-        image: "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-        price: 15490000,
-        quantity: 1,
-        color: "Đen",
-        memory: "256GB",
-    },
-    {
-        id: 2,
-        name: "iPhone 13 Pro Max 128GB",
-        image: "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-        price: 18990000,
-        quantity: 2,
-        color: "Xanh",
-        memory: "128GB",
-    },
-];
-
-const latestProducts = Array.from({ length: 6 }, (_, i) => ({
-    id: i + 10,
-    name: `Sản phẩm mới ${i + 1}`,
-    image: "https://cdn.tgdd.vn/Products/Images/42/230529/iphone-13-pro-max-sierra-blue-600x600.jpg",
-    price: "12.990.000",
-}));
+import ProductItemService from "../../services/productItemService";
+import { fetchCart, updateCartItem, removeFromCart, clearCartError, clearCartSuccess } from "../../store/slices/cartSlice";
 
 export default function Cart() {
-    const [cart, setCart] = useState(initialCart);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    const handleQuantityChange = (id, value) => {
-        setCart(cart =>
-            cart.map(item =>
-                item.id === id ? { ...item, quantity: Math.max(1, Number(value)) } : item
-            )
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const { items: cart, loading, error, success, totalPrice } = useSelector((state) => state.cart);
+
+    const [latestProducts, setLatestProducts] = useState([]);
+
+    // Fetch cart khi component mount hoặc khi user thay đổi
+    useEffect(() => {
+        if (isAuthenticated && user?.id) {
+            dispatch(fetchCart(user.id));
+        }
+    }, [dispatch, isAuthenticated, user?.id]);
+
+    // Fetch latest products
+    useEffect(() => {
+        const fetchLatest = async () => {
+            try {
+                const res = await ProductItemService.getAllForList({
+                    sortBy: "createdAt",
+                    sortDir: "DESC",
+                    page: 0,
+                    pageSize: 6
+                });
+                setLatestProducts(res?.data?.items || []);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchLatest();
+    }, []);
+
+    // Hiển thị toast khi có success hoặc error
+    useEffect(() => {
+        if (success) {
+            toast.success(success, { onClose: () => dispatch(clearCartSuccess()), autoClose: 3000 });
+        }
+    }, [success, dispatch]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error, { onClose: () => dispatch(clearCartError()), autoClose: 5000 });
+        }
+    }, [error, dispatch]);
+
+    const handleQuantityChange = (cartItemId, value) => {
+        const quantity = Math.max(0, Number(value));
+        dispatch(updateCartItem({ cartItemId, quantity }));
+    };
+
+    const handleRemove = (cartItemId) => {
+        dispatch(removeFromCart(cartItemId));
+    };
+
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat("vi-VN").format(price || 0);
+    };
+
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+        return (
+            <Container className="py-4">
+                <Card className="p-4 border-0 shadow-sm mb-4 text-center">
+                    <h2 className="mb-3"><i className="bi bi-cart3"></i> Giỏ hàng</h2>
+                    <Alert variant="warning">
+                        Vui lòng <Button variant="link" className="p-0" onClick={() => navigate("/login")}>đăng nhập</Button> để xem giỏ hàng.
+                    </Alert>
+                </Card>
+            </Container>
         );
-    };
-
-    const handleRemove = id => {
-        setCart(cart => cart.filter(item => item.id !== id));
-    };
-
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    }
 
     return (
         <Container className="py-4">
+            <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
             <Card className="p-4 border-0 shadow-sm mb-4">
                 <h2 className="mb-3 text-center"><i className="bi bi-cart3"></i> Giỏ hàng</h2>
-                {cart.length === 0 ? (
-                    <Alert variant="info" className="text-center mb-0">Giỏ hàng của bạn đang trống.</Alert>
+
+                {loading ? (
+                    <div className="text-center py-5">
+                        <Spinner animation="border" variant="primary" />
+                        <p className="mt-2">Đang tải giỏ hàng...</p>
+                    </div>
+                ) : cart.length === 0 ? (
+                    <div className="text-center mb-0">
+                        <p>Giỏ hàng của bạn đang trống.</p>
+                        <Button variant="primary" className="mt-3" onClick={() => navigate("/products")}>
+                            Tiếp tục mua sắm
+                        </Button>
+                    </div>
                 ) : (
                     <>
                         <Table responsive hover className="align-middle mb-4">
@@ -69,33 +115,60 @@ export default function Cart() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {cart.map(item => (
-                                    <tr key={item.id}>
-                                        <td>
-                                            <Image src={item.image} alt={item.name} width={60} height={60} rounded />
-                                        </td>
-                                        <td style={{ minWidth: 180 }}>
-                                            <div className="fw-bold">{item.name}</div>
-                                        </td>
-                                        <td>{item.memory} / {item.color}</td>
-                                        <td className="text-danger fw-bold">{item.price.toLocaleString()}₫</td>
-                                        <td style={{ maxWidth: 80 }}>
-                                            <Form.Control
-                                                type="number"
-                                                min={1}
-                                                value={item.quantity}
-                                                onChange={e => handleQuantityChange(item.id, e.target.value)}
-                                                size="sm"
-                                            />
-                                        </td>
-                                        <td className="fw-bold">{(item.price * item.quantity).toLocaleString()}₫</td>
-                                        <td>
-                                            <Button variant="outline-danger" size="sm" onClick={() => handleRemove(item.id)}>
-                                                <i className="bi bi-trash"></i>
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {cart.map(item => {
+                                    // Lấy ảnh từ productDetail nếu có
+                                    const primaryImage = item.productDetail?.media?.find(m => m.primary)?.url
+                                        || item.productDetail?.media?.[0]?.url
+                                        || "https://via.placeholder.com/60";
+
+                                    return (
+                                        <tr key={item.id}>
+                                            <td>
+                                                <Image
+                                                    src={primaryImage}
+                                                    alt={item.productName}
+                                                    width={60}
+                                                    height={60}
+                                                    rounded
+                                                    style={{ objectFit: "cover" }}
+                                                />
+                                            </td>
+                                            <td style={{ minWidth: 180 }}>
+                                                <div className="fw-bold">{item.productName}</div>
+                                            </td>
+                                            <td>
+                                                {item.productModelName && <span>{item.productModelName}</span>}
+                                                {item.colorName && <span> / {item.colorName}</span>}
+                                            </td>
+                                            <td className="text-danger fw-bold">
+                                                {formatPrice(item.unitPrice)}₫
+                                            </td>
+                                            <td style={{ maxWidth: 100 }}>
+                                                <Form.Control
+                                                    type="number"
+                                                    min={0}
+                                                    value={item.quantity}
+                                                    onChange={e => handleQuantityChange(item.id, e.target.value)}
+                                                    size="sm"
+                                                    disabled={loading}
+                                                />
+                                            </td>
+                                            <td className="fw-bold">
+                                                {formatPrice(item.totalPrice)}₫
+                                            </td>
+                                            <td>
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    onClick={() => handleRemove(item.id)}
+                                                    disabled={loading}
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </Table>
                         <Row className="justify-content-end">
@@ -103,9 +176,17 @@ export default function Cart() {
                                 <Card className="p-3 border-0 shadow-sm mb-2">
                                     <div className="d-flex justify-content-between align-items-center mb-2">
                                         <span className="fw-bold">Tổng tiền:</span>
-                                        <span className="fs-5 text-danger fw-bold">{total.toLocaleString()}₫</span>
+                                        <span className="fs-5 text-danger fw-bold">
+                                            {formatPrice(totalPrice)}₫
+                                        </span>
                                     </div>
-                                    <Button variant="danger" className="w-100">Tiến hành đặt hàng</Button>
+                                    <Button
+                                        variant="danger"
+                                        className="w-100"
+                                        onClick={() => navigate("/checkout")}
+                                    >
+                                        Tiến hành đặt hàng
+                                    </Button>
                                 </Card>
                             </Col>
                         </Row>

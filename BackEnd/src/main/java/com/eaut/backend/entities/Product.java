@@ -37,7 +37,7 @@ public class Product extends AuditBase {
     @Column(length = 200, nullable = false)
     private String name; // tên sản phẩm
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description; // mô tả sản phẩm
 
     @Column(name = "warranty_months", nullable = false)

@@ -111,17 +111,25 @@ public class ProductItemServiceImpl implements ProductItemService {
             BigDecimal maxPrice,
             String sortBy,
             String sortDir,
+            Boolean randomEnabled,
             int pageNumber,
             int pageSize) {
 
         String pattern = PagingUtils.buildSearchPattern(searchText);
 
-        // Build sort
-        Sort.Direction direction = (sortDir != null && sortDir.equalsIgnoreCase("ASC"))
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-        String sortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "createdAt";
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(direction, sortField));
+        Pageable pageable;
+        // Build sort - for random, we'll shuffle after fetching
+        if (Boolean.TRUE.equals(randomEnabled)) {
+            // For random, just use default sort by createdAt to fetch data
+            pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        } else {
+            // Normal sort
+            Sort.Direction direction = (sortDir != null && sortDir.equalsIgnoreCase("ASC"))
+                    ? Sort.Direction.ASC
+                    : Sort.Direction.DESC;
+            String sortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "createdAt";
+            pageable = PageRequest.of(pageNumber, pageSize, Sort.by(direction, sortField));
+        }
 
         // Query 1: Get paginated ProductItems with Product, Brand, Category
         Page<ProductItem> result = productItemRepository.findAllWithFilters(
@@ -134,7 +142,14 @@ public class ProductItemServiceImpl implements ProductItemService {
                 maxPrice,
                 pageable);
 
-        List<ProductItem> productItems = result.getContent();
+        // If random enabled, shuffle the results
+        List<ProductItem> productItems;
+        if (Boolean.TRUE.equals(randomEnabled)) {
+            productItems = new ArrayList<>(result.getContent());
+            Collections.shuffle(productItems);
+        } else {
+            productItems = result.getContent();
+        }
 
         if (productItems.isEmpty()) {
             PagingResponse<ProductItemListResponse> emptyResponse = PagingResponse.<ProductItemListResponse>builder()
@@ -261,6 +276,7 @@ public class ProductItemServiceImpl implements ProductItemService {
                 .id(pi.getId())
                 // ProductItem name (variant)
                 .name(pi.getName())
+                .description(pi.getDescription())
                 // Product info
                 .productId(product.getId())
                 .productName(product.getName())
@@ -392,6 +408,16 @@ public class ProductItemServiceImpl implements ProductItemService {
             productItem.setProduct(product);
         }
 
+        // Update name (variant name)
+        if (request.getName() != null) {
+            productItem.setName(request.getName());
+        }
+
+        // Update description
+        if (request.getDescription() != null) {
+            productItem.setDescription(request.getDescription());
+        }
+
         // Update prices
         if (request.getBasePrice() != null) {
             productItem.setBasePrice(request.getBasePrice());
@@ -479,6 +505,9 @@ public class ProductItemServiceImpl implements ProductItemService {
      * Tạo mới ProductMedia cho ProductItem
      */
     private void createProductMedia(ProductItem productItem, List<ProductMediaRequest> mediaRequests) {
+        // Tìm ảnh nào được đánh dấu là primary trong request
+        boolean hasPrimaryInRequest = mediaRequests.stream().anyMatch(ProductMediaRequest::isPrimary);
+
         int sortOrder = 0;
         for (ProductMediaRequest mediaRequest : mediaRequests) {
             // Validate URL
@@ -487,18 +516,27 @@ public class ProductItemServiceImpl implements ProductItemService {
                 continue;
             }
 
+            // Ảnh đầu tiên sẽ là primary nếu không có ảnh nào được đánh dấu primary
+            boolean shouldBePrimary = (sortOrder == 0 && !hasPrimaryInRequest) || mediaRequest.isPrimary();
+
+            // Nếu có ảnh được đánh dấu primary trước đó, các ảnh sau không được là primary
+            if (hasPrimaryInRequest && sortOrder > 0) {
+                shouldBePrimary = mediaRequest.isPrimary();
+            }
+
             ProductMedia productMedia = ProductMedia.builder()
                     .productItem(productItem)
                     .url(mediaRequest.getUrl())
                     .public_id(mediaRequest.getPublicId())
                     .type(mediaRequest.getType())
-                    .isPrimary(sortOrder == 0 && mediaRequest.isPrimary()) // Chỉ ảnh đầu tiên có thể là primary
+                    .isPrimary(shouldBePrimary)
                     .sortOrder(mediaRequest.getSortOrder() != null ? mediaRequest.getSortOrder() : sortOrder)
                     .createdAt(OffsetDateTime.now())
                     .build();
 
             ProductMedia savedMedia = productMediaRepository.save(productMedia);
-            log.info("ProductMedia created: {} for ProductItem: {}", savedMedia.getId(), productItem.getId());
+            log.info("ProductMedia created: {} for ProductItem: {} (isPrimary={})",
+                    savedMedia.getId(), productItem.getId(), shouldBePrimary);
             sortOrder++;
         }
     }
@@ -573,14 +611,13 @@ public class ProductItemServiceImpl implements ProductItemService {
             }
         }
 
-        // Xóa các model không có trong request (optional - có thể comment nếu không
-        // muốn auto delete)
-        // for (ProductModel existingModel : existingModels) {
-        // if (!requestModelIds.contains(existingModel.getId())) {
-        // productModelRepository.delete(existingModel);
-        // log.info("ProductModel deleted: {}", existingModel.getId());
-        // }
-        // }
+        // Xóa các model không có trong request
+        for (ProductModel existingModel : existingModels) {
+            if (!requestModelIds.contains(existingModel.getId())) {
+                productModelRepository.delete(existingModel);
+                log.info("ProductModel deleted: {}", existingModel.getId());
+            }
+        }
     }
 
     /**
@@ -628,6 +665,14 @@ public class ProductItemServiceImpl implements ProductItemService {
                 }
             }
         }
+
+        // Xóa các color không có trong request
+        for (ProductColor existingColor : existingColors) {
+            if (!requestColorIds.contains(existingColor.getId())) {
+                productColorRepository.delete(existingColor);
+                log.info("ProductColor deleted: {}", existingColor.getId());
+            }
+        }
     }
 
     /**
@@ -637,8 +682,29 @@ public class ProductItemServiceImpl implements ProductItemService {
         List<ProductMedia> existingMedia = productMediaRepository.findByProductItemId(productItem.getId());
         Set<UUID> requestMediaIds = new HashSet<>();
 
+        // Tìm ảnh nào được đánh dấu là primary trong request
+        UUID primaryMediaId = null;
+        for (ProductMediaRequest mediaRequest : mediaRequests) {
+            if (mediaRequest.isPrimary()) {
+                primaryMediaId = mediaRequest.getId();
+                break;
+            }
+        }
+
+        // Nếu không có ảnh nào được đánh dấu primary, chọn ảnh đầu tiên làm primary
+        boolean hasPrimary = primaryMediaId != null;
+        if (!hasPrimary && !mediaRequests.isEmpty()) {
+            primaryMediaId = mediaRequests.get(0).getId();
+            hasPrimary = true;
+        }
+
         int sortOrder = 0;
         for (ProductMediaRequest mediaRequest : mediaRequests) {
+            // Xác định xem ảnh này có phải là primary không
+            boolean shouldBePrimary = hasPrimary &&
+                    ((mediaRequest.getId() != null && mediaRequest.getId().equals(primaryMediaId)) ||
+                            (mediaRequest.getId() == null && sortOrder == 0 && primaryMediaId == null));
+
             if (mediaRequest.getId() != null) {
                 // Update existing media
                 requestMediaIds.add(mediaRequest.getId());
@@ -657,12 +723,13 @@ public class ProductItemServiceImpl implements ProductItemService {
                     if (mediaRequest.getType() != null) {
                         existingItem.setType(mediaRequest.getType());
                     }
-                    existingItem.setPrimary(mediaRequest.isPrimary());
+                    // Chỉ ảnh được chọn làm primary mới set isPrimary = true
+                    existingItem.setPrimary(shouldBePrimary);
                     if (mediaRequest.getSortOrder() != null) {
                         existingItem.setSortOrder(mediaRequest.getSortOrder());
                     }
                     productMediaRepository.save(existingItem);
-                    log.info("ProductMedia updated: {}", existingItem.getId());
+                    log.info("ProductMedia updated: {} (isPrimary={})", existingItem.getId(), shouldBePrimary);
                 }
             } else {
                 // Create new media
@@ -672,16 +739,25 @@ public class ProductItemServiceImpl implements ProductItemService {
                             .url(mediaRequest.getUrl())
                             .public_id(mediaRequest.getPublicId())
                             .type(mediaRequest.getType())
-                            .isPrimary(mediaRequest.isPrimary())
+                            .isPrimary(shouldBePrimary)
                             .sortOrder(mediaRequest.getSortOrder() != null ? mediaRequest.getSortOrder() : sortOrder)
                             .createdAt(OffsetDateTime.now())
                             .build();
 
                     ProductMedia savedMedia = productMediaRepository.save(newMedia);
-                    log.info("ProductMedia created: {} for ProductItem: {}", savedMedia.getId(), productItem.getId());
+                    log.info("ProductMedia created: {} for ProductItem: {} (isPrimary={})",
+                            savedMedia.getId(), productItem.getId(), shouldBePrimary);
                 }
             }
             sortOrder++;
+        }
+
+        // Xóa các media không có trong request
+        for (ProductMedia existingItem : existingMedia) {
+            if (!requestMediaIds.contains(existingItem.getId())) {
+                productMediaRepository.delete(existingItem);
+                log.info("ProductMedia deleted: {}", existingItem.getId());
+            }
         }
     }
 

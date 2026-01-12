@@ -23,9 +23,8 @@ public class CartItem{
     private User user;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_item_id", nullable = false)
-    private ProductItem productItem;
+    @Column(name = "product_color_id", nullable = false)
+    private UUID productColorId;
 
 
     @Column(nullable = false)

@@ -34,8 +34,8 @@ public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
             "/auth/**",
             "/users/register",
-            "/permission/**",
-            "/role/**"
+            "/product-items/list",
+            "/product-items/**/details"
     };
     @Value("${app.jwt.secret}")
     @NonFinal

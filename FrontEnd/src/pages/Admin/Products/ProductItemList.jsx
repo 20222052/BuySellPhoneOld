@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
+import SummernoteEditor from '../../../components/common/Admin/SummernoteEditor';
 import DataTable from '../../../components/common/Admin/DataTable';
 import { FormInput, FormSelect } from '../../../components/common/Admin';
 import ProductItemService from '../../../services/productItemService';
@@ -70,6 +71,8 @@ export default function ProductItemList() {
     // Form data
     const [formData, setFormData] = useState({
         productId: '',
+        name: '',
+        description: '',
         basePrice: '',
         sellPrice: '',
         comparePrice: '',
@@ -145,6 +148,7 @@ export default function ProductItemList() {
                 status: statusFilter,
                 sortBy,
                 sortDir,
+                randomEnabled: false,
                 page: currentPage,
                 pageSize
             });
@@ -177,6 +181,8 @@ export default function ProductItemList() {
                 const details = response.data;
                 setFormData({
                     productId: details.productId || '',
+                    name: details.name || '',
+                    description: details.description || '',
                     basePrice: details.basePrice || '',
                     sellPrice: details.sellPrice || '',
                     comparePrice: details.comparePrice || '',
@@ -187,6 +193,8 @@ export default function ProductItemList() {
                 console.error('Load details error:', error);
                 setFormData({
                     productId: product.productId || '',
+                    name: product.name || '',
+                    description: product.description || '',
                     basePrice: product.basePrice || '',
                     sellPrice: product.sellPrice || '',
                     comparePrice: product.comparePrice || '',
@@ -197,6 +205,8 @@ export default function ProductItemList() {
         } else {
             setFormData({
                 productId: '',
+                name: '',
+                description: '',
                 basePrice: '',
                 sellPrice: '',
                 comparePrice: '',
@@ -217,6 +227,8 @@ export default function ProductItemList() {
         setEditingProductItemId(null);
         setFormData({
             productId: '',
+            name: '',
+            description: '',
             basePrice: '',
             sellPrice: '',
             comparePrice: '',
@@ -276,6 +288,8 @@ export default function ProductItemList() {
             const details = response.data;
             setFormData(prev => ({
                 ...prev,
+                name: details.name || '',
+                description: details.description || '',
                 basePrice: details.basePrice || '',
                 sellPrice: details.sellPrice || '',
                 comparePrice: details.comparePrice || '',
@@ -287,6 +301,8 @@ export default function ProductItemList() {
             // Fallback to basic info from list
             setFormData(prev => ({
                 ...prev,
+                name: item.name || '',
+                description: item.description || '',
                 basePrice: item.basePrice || '',
                 sellPrice: item.sellPrice || '',
                 comparePrice: item.comparePrice || '',
@@ -300,6 +316,8 @@ export default function ProductItemList() {
         setEditingProductItemId(null);
         setFormData(prev => ({
             ...prev,
+            name: '',
+            description: '',
             basePrice: '',
             sellPrice: '',
             comparePrice: '',
@@ -387,7 +405,9 @@ export default function ProductItemList() {
     };
 
     // ==================== MODEL HANDLERS ====================
-    const addModel = () => {
+    const addModel = (e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         setFormData(prev => ({
             ...prev,
             models: [
@@ -413,15 +433,24 @@ export default function ProductItemList() {
         }));
     };
 
-    const removeModel = (modelIndex) => {
-        setFormData(prev => ({
-            ...prev,
-            models: prev.models.filter((_, idx) => idx !== modelIndex)
-        }));
+    const removeModel = (modelIndex, e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+        console.log('Removing model at index:', modelIndex);
+        setFormData(prev => {
+            const newModels = prev.models.filter((_, idx) => idx !== modelIndex);
+            console.log('Models before:', prev.models.length, 'after:', newModels.length);
+            return {
+                ...prev,
+                models: newModels
+            };
+        });
     };
 
     // ==================== COLOR HANDLERS ====================
-    const addColor = (modelIndex) => {
+    const addColor = (modelIndex, e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         setFormData(prev => ({
             ...prev,
             models: prev.models.map((model, idx) =>
@@ -459,24 +488,38 @@ export default function ProductItemList() {
         }));
     };
 
-    const removeColor = (modelIndex, colorIndex) => {
-        setFormData(prev => ({
-            ...prev,
-            models: prev.models.map((model, mIdx) =>
+    const removeColor = (modelIndex, colorIndex, e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+        console.log('Removing color at model:', modelIndex, 'color:', colorIndex);
+        setFormData(prev => {
+            const newModels = prev.models.map((model, mIdx) =>
                 mIdx === modelIndex
                     ? {
                         ...model,
                         colors: model.colors.filter((_, cIdx) => cIdx !== colorIndex)
                     }
                     : model
-            )
-        }));
+            );
+            return {
+                ...prev,
+                models: newModels
+            };
+        });
     };
 
     // ==================== MEDIA HANDLERS ====================
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
+
+        // Chỉ chấp nhận file png, jpg, webp
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+        const invalidFile = files.find(file => !allowedTypes.includes(file.type));
+        if (invalidFile) {
+            alert("Chỉ chấp nhận file ảnh PNG hoặc JPG!");
+            return;
+        }
 
         setUploadingMedia(true);
         try {
@@ -530,7 +573,9 @@ export default function ProductItemList() {
         }
     };
 
-    const addMedia = () => {
+    const addMedia = (e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         setFormData(prev => ({
             ...prev,
             mediaList: [
@@ -554,9 +599,13 @@ export default function ProductItemList() {
         }));
     };
 
-    const removeMedia = (mediaIndex) => {
+    const removeMedia = (mediaIndex, e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+        console.log('Removing media at index:', mediaIndex);
         setFormData(prev => {
             const newMediaList = prev.mediaList.filter((_, idx) => idx !== mediaIndex);
+            console.log('Media before:', prev.mediaList.length, 'after:', newMediaList.length);
             // If removed primary, set first one as primary
             if (newMediaList.length > 0 && !newMediaList.some(m => m.isPrimary)) {
                 newMediaList[0].isPrimary = true;
@@ -565,7 +614,9 @@ export default function ProductItemList() {
         });
     };
 
-    const setPrimaryMedia = (mediaIndex) => {
+    const setPrimaryMedia = (mediaIndex, e) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         setFormData(prev => ({
             ...prev,
             mediaList: prev.mediaList.map((media, idx) => ({
@@ -593,6 +644,8 @@ export default function ProductItemList() {
         try {
             const submitData = {
                 productId: formData.productId,
+                name: formData.name || null,
+                description: formData.description || null,
                 basePrice: parseFloat(formData.basePrice),
                 sellPrice: parseFloat(formData.sellPrice),
                 comparePrice: formData.comparePrice ? parseFloat(formData.comparePrice) : null,
@@ -615,6 +668,8 @@ export default function ProductItemList() {
                     // Reset form for next create
                     setFormData(prev => ({
                         ...prev,
+                        name: '',
+                        description: '',
                         basePrice: '',
                         sellPrice: '',
                         comparePrice: '',
@@ -633,6 +688,8 @@ export default function ProductItemList() {
                     // Reset form for next create
                     setFormData(prev => ({
                         ...prev,
+                        name: '',
+                        description: '',
                         basePrice: '',
                         sellPrice: '',
                         comparePrice: '',
@@ -706,21 +763,15 @@ export default function ProductItemList() {
             )
         },
         {
-            key: 'productName',
-            label: 'Sản phẩm',
-            render: (value, row) => (
-                <div className="product-info-cell">
-                    <span className="product-name">{value}</span>
-                    <span className="product-brand">{row.brandName}</span>
-                </div>
-            )
-        },
-        {
             key: 'name',
             label: 'Biến thể',
-            width: '150px',
-            render: (value) => (
-                <span className="variant-name">{value || '-'}</span>
+            render: (value, row) => (
+                <div className="product-info-cell">
+                    <span className="product-name">
+                        {row.productName}{value ? ` - ${value}` : ''}
+                    </span>
+                    <span className="product-brand">{row.brandName}</span>
+                </div>
             )
         },
         {
@@ -799,6 +850,7 @@ export default function ProductItemList() {
                         <i className="bi bi-pencil"></i>
                     </button>
                     <button
+                        hidden
                         className="btn-action btn-delete"
                         onClick={(e) => { e.stopPropagation(); confirmDelete(row.id); }}
                         title="Xóa"
@@ -814,16 +866,13 @@ export default function ProductItemList() {
     const statusOptions = [
         { value: '', label: 'Tất cả trạng thái' },
         { value: 'active', label: 'Đang bán' },
-        { value: 'inactive', label: 'Ngừng bán' },
-        { value: 'draft', label: 'Nháp' },
-        { value: 'out_of_stock', label: 'Hết hàng' }
+        { value: 'inactive', label: 'Ngừng bán' }
     ];
 
     // Sort options
     const sortOptions = [
         { value: 'createdAt', label: 'Ngày tạo' },
-        { value: 'sellPrice', label: 'Giá bán' },
-        { value: 'qtyAvailable', label: 'Số lượng' }
+        { value: 'sellPrice', label: 'Giá bán' }
     ];
 
     return (
@@ -929,9 +978,7 @@ export default function ProductItemList() {
                     </div>
                 </div>
 
-                <div className="toolbar-info" hi>
-                    Hiển thị <strong>{products.length}</strong> / {totalItems} sản phẩm
-                </div>
+
             </div>
 
             {/* Data Table */}
@@ -1064,7 +1111,41 @@ export default function ProductItemList() {
                                                     </>
                                                 )}
                                             </div>
-                                            {getStatusBadge(selectedProduct.productStatus)}
+                                            {/* Models Section */}
+                                            {modalMode === 'view' && formData.models?.length > 0 && (
+                                                <div className="models-section">
+                                                    {/* <h5><i className="bi bi-collection me-2"></i>Phiên bản</h5> */}
+                                                    <div className="models-grid">
+                                                        {formData.models.map((model, idx) => (
+                                                            <div key={model.id || idx} className="model-card">
+                                                                {/* <div className="model-name">{model.name}</div> */}
+                                                                <div className="model-specs">
+                                                                    {model.ramGb && <span>RAM: {model.ramGb}GB</span>}
+                                                                    {model.romGb && <span>ROM: {model.romGb}GB</span>}
+                                                                    {model.grade && <span>Grade: {model.grade}</span>}
+                                                                </div>
+                                                                {model.colors?.length > 0 && (
+                                                                    <div className="model-colors-list">
+                                                                        {model.colors.map((color, cIdx) => (
+                                                                            <div key={color.id || cIdx} className="color-item-view">
+                                                                                <span
+                                                                                    className="color-dot"
+                                                                                    style={{ backgroundColor: color.hexCode || '#ccc' }}
+                                                                                ></span>
+                                                                                <span className="color-name">{color.name || 'N/A'}</span>
+                                                                                <span className={`color-qty ${(color.qtyAvailable || 0) === 0 ? 'qty-zero' : (color.qtyAvailable || 0) <= 5 ? 'qty-low' : ''}`}>
+                                                                                    SL: {color.qtyAvailable || 0}
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {/* {getStatusBadge(selectedProduct.productStatus)} */}
                                         </div>
                                     </div>
                                 )}
@@ -1270,7 +1351,20 @@ export default function ProductItemList() {
                                             </div>
                                         )}
 
+
+
                                         <div className="form-row">
+                                            <div className="form-col">
+                                                <FormInput
+                                                    label="Tên biến thể"
+                                                    name="name"
+                                                    value={formData.name}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập tên biến thể (tùy chọn)..."
+                                                    leftIcon={<i className="bi bi-tag"></i>}
+                                                />
+                                                <small className="text-muted">Ví dụ: "128GB - Xanh dương", "Bản Quốc tế", v.v. (Có thể để trống)</small>
+                                            </div>
                                             <div className="form-col">
                                                 <FormInput
                                                     label="Giá gốc"
@@ -1280,18 +1374,6 @@ export default function ProductItemList() {
                                                     onChange={handleChange}
                                                     placeholder="Nhập giá gốc..."
                                                     leftIcon={<i className="bi bi-currency-dollar"></i>}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="form-col">
-                                                <FormInput
-                                                    label="Giá bán"
-                                                    name="sellPrice"
-                                                    type="number"
-                                                    value={formData.sellPrice}
-                                                    onChange={handleChange}
-                                                    placeholder="Nhập giá bán..."
-                                                    leftIcon={<i className="bi bi-tag"></i>}
                                                     required
                                                 />
                                             </div>
@@ -1309,48 +1391,37 @@ export default function ProductItemList() {
                                                     leftIcon={<i className="bi bi-arrow-left-right"></i>}
                                                 />
                                             </div>
+                                            <div className="form-col">
+                                                <FormInput
+                                                    label="Giá bán"
+                                                    name="sellPrice"
+                                                    type="number"
+                                                    value={formData.sellPrice}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập giá bán..."
+                                                    leftIcon={<i className="bi bi-tag"></i>}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Mô tả biến thể (ProductItem Description) */}
+                                        <div className="editable">
+                                            <label className="form-label">
+                                                <i className="bi bi-file-text me-2"></i>
+                                                Mô tả biến thể
+                                            </label>
+                                            <SummernoteEditor
+                                                value={formData.description}
+                                                onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                                                placeholder="Nhập mô tả chi tiết cho biến thể sản phẩm..."
+                                                height={800}
+                                            />
+                                            <small className="text-muted">Mô tả chi tiết về tình trạng, đặc điểm riêng của biến thể này</small>
                                         </div>
                                     </>
                                 )}
-
-                                {/* View Details */}
-                                {modalMode === 'view' && selectedProduct && (
-                                    <div className="view-details">
-                                        <div className="detail-row">
-                                            <span className="detail-label">ID:</span>
-                                            <span className="detail-value detail-id">#{selectedProduct.id}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Danh mục:</span>
-                                            <span className="detail-value">{selectedProduct.categoryName}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Đánh giá:</span>
-                                            <span className="detail-value">
-                                                {selectedProduct.averageRating ? (
-                                                    <>
-                                                        <i className="bi bi-star-fill text-warning me-1"></i>
-                                                        {selectedProduct.averageRating.toFixed(1)} ({selectedProduct.totalRatings} đánh giá)
-                                                    </>
-                                                ) : 'Chưa có đánh giá'}
-                                            </span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Bảo hành:</span>
-                                            <span className="detail-value">{selectedProduct.warrantyMonths || 0} tháng</span>
-                                        </div>
-                                        {selectedProduct.createdAt && (
-                                            <div className="detail-row">
-                                                <span className="detail-label">Ngày tạo:</span>
-                                                <span className="detail-value">
-                                                    {new Date(selectedProduct.createdAt).toLocaleString('vi-VN')}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Models Section */}
+                                {/* Models Section
                                 {modalMode === 'view' && formData.models?.length > 0 && (
                                     <div className="models-section">
                                         <h5><i className="bi bi-collection me-2"></i>Phiên bản</h5>
@@ -1379,7 +1450,76 @@ export default function ProductItemList() {
                                             ))}
                                         </div>
                                     </div>
+                                )} */}
+
+                                {/* Media Section */}
+                                {modalMode === 'view' && formData.mediaList?.length > 0 && (
+                                    <div className="media-section">
+                                        <h5><i className="bi bi-images me-2"></i>Hình ảnh</h5>
+                                        <div className="media-grid">
+                                            {formData.mediaList.map((media, idx) => (
+                                                <div key={media.id || idx} className="media-item">
+                                                    <img src={media.url} alt={`Product ${idx + 1}`} />
+                                                    {media.isPrimary && (
+                                                        <span className="primary-badge">Chính</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
+                                <h5>Mô tả chi tiết</h5>
+
+                                {/* View Details */}
+                                {modalMode === 'view' && selectedProduct && (
+                                    <div className="view-details">
+                                        <div className="detail-row" hidden>
+                                            <span className="detail-label">ID:</span>
+                                            <span className="detail-value detail-id">#{selectedProduct.id}</span>
+                                        </div>
+                                        {formData.name && (
+                                            <div className="detail-row">
+                                                <span className="detail-label">Tên biến thể:</span>
+                                                <span className="detail-value">{formData.name}</span>
+                                            </div>
+                                        )}
+                                        <div className="detail-row">
+                                            <span className="detail-label">Danh mục:</span>
+                                            <span className="detail-value">{selectedProduct.categoryName}</span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span className="detail-label">Đánh giá:</span>
+                                            <span className="detail-value">
+                                                {selectedProduct.averageRating ? (
+                                                    <>
+                                                        <i className="bi bi-star-fill text-warning me-1"></i>
+                                                        {selectedProduct.averageRating.toFixed(1)} ({selectedProduct.totalRatings} đánh giá)
+                                                    </>
+                                                ) : 'Chưa có đánh giá'}
+                                            </span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span className="detail-label">Bảo hành:</span>
+                                            <span className="detail-value">{selectedProduct.warrantyMonths || 0} tháng</span>
+                                        </div>
+                                        {selectedProduct.createdAt && (
+                                            <div className="detail-row">
+                                                <span className="detail-label">Ngày tạo:</span>
+                                                <span className="detail-value">
+                                                    {new Date(selectedProduct.createdAt).toLocaleString('vi-VN')}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {formData.description && (
+                                            <div className="detail-row description-row">
+                                                <span className="detail-label">Mô tả biến thể:</span>
+                                                <div className="detail-value description-content" dangerouslySetInnerHTML={{ __html: formData.description }}></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+
 
                                 {/* Models Section - Edit Mode */}
                                 {modalMode !== 'view' && (
@@ -1406,7 +1546,7 @@ export default function ProductItemList() {
                                                         <button
                                                             type="button"
                                                             className="btn-remove-item"
-                                                            onClick={() => removeModel(modelIdx)}
+                                                            onClick={(e) => removeModel(modelIdx, e)}
                                                             title="Xóa phiên bản"
                                                         >
                                                             <i className="bi bi-trash"></i>
@@ -1474,7 +1614,7 @@ export default function ProductItemList() {
                                                                 <button
                                                                     type="button"
                                                                     className="btn-add-color"
-                                                                    onClick={() => addColor(modelIdx)}
+                                                                    onClick={(e) => addColor(modelIdx, e)}
                                                                 >
                                                                     <i className="bi bi-plus"></i> Thêm màu
                                                                 </button>
@@ -1509,7 +1649,7 @@ export default function ProductItemList() {
                                                                         <button
                                                                             type="button"
                                                                             className="btn-remove-color"
-                                                                            onClick={() => removeColor(modelIdx, colorIdx)}
+                                                                            onClick={(e) => removeColor(modelIdx, colorIdx, e)}
                                                                             title="Xóa màu"
                                                                         >
                                                                             <i className="bi bi-x"></i>
@@ -1525,22 +1665,7 @@ export default function ProductItemList() {
                                     </div>
                                 )}
 
-                                {/* Media Section */}
-                                {modalMode === 'view' && formData.mediaList?.length > 0 && (
-                                    <div className="media-section">
-                                        <h5><i className="bi bi-images me-2"></i>Hình ảnh</h5>
-                                        <div className="media-grid">
-                                            {formData.mediaList.map((media, idx) => (
-                                                <div key={media.id || idx} className="media-item">
-                                                    <img src={media.url} alt={`Product ${idx + 1}`} />
-                                                    {media.isPrimary && (
-                                                        <span className="primary-badge">Chính</span>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+
 
                                 {/* Media Section - Edit Mode */}
                                 {modalMode !== 'view' && (
@@ -1553,7 +1678,7 @@ export default function ProductItemList() {
                                                     {uploadingMedia ? 'Đang tải...' : 'Tải ảnh lên'}
                                                     <input
                                                         type="file"
-                                                        accept="image/*"
+                                                        accept="image/png,image/jpeg,image/jpg,image/webp"
                                                         multiple
                                                         onChange={handleFileUpload}
                                                         disabled={uploadingMedia}
@@ -1611,7 +1736,7 @@ export default function ProductItemList() {
                                                             <button
                                                                 type="button"
                                                                 className={`btn-set-primary ${media.isPrimary ? 'active' : ''}`}
-                                                                onClick={() => setPrimaryMedia(mediaIdx)}
+                                                                onClick={(e) => setPrimaryMedia(mediaIdx, e)}
                                                                 title={media.isPrimary ? 'Ảnh chính' : 'Đặt làm ảnh chính'}
                                                                 disabled={media.isPrimary}
                                                             >
@@ -1620,7 +1745,7 @@ export default function ProductItemList() {
                                                             <button
                                                                 type="button"
                                                                 className="btn-remove-media"
-                                                                onClick={() => removeMedia(mediaIdx)}
+                                                                onClick={(e) => removeMedia(mediaIdx, e)}
                                                                 title="Xóa ảnh"
                                                             >
                                                                 <i className="bi bi-trash"></i>
