@@ -12,43 +12,45 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface ProductItemService {
-    ApiResponse<PagingResponse<ProductItemResponse>> findAll(
-            String searchText,
-            UUID productId,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            String sort,
-            int pageNumber,
-            int pageSize);
+        ApiResponse<PagingResponse<ProductItemResponse>> findAll(
+                        String searchText,
+                        UUID productId,
+                        BigDecimal minPrice,
+                        BigDecimal maxPrice,
+                        String sort,
+                        int pageNumber,
+                        int pageSize);
 
-    /**
-     * Get all product items for list display with full info:
-     * - Product, Brand, Category info
-     * - Primary image
-     * - Rating stats (average, count)
-     * - Discount percentage
-     */
-    ApiResponse<PagingResponse<ProductItemListResponse>> findAllForList(
-            String searchText,
-            UUID productId,
-            UUID brandId,
-            UUID categoryId,
-            ProductStatus status,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            String sortBy,
-            String sortDir,
-            Boolean randomEnabled,
-            int pageNumber,
-            int pageSize);
+        /**
+         * Get all product items for list display with full info:
+         * - Product, Brand, Category info
+         * - Primary image
+         * - Rating stats (average, count)
+         * - Discount percentage
+         */
+        ApiResponse<PagingResponse<ProductItemListResponse>> findAllForList(
+                        String searchText,
+                        UUID productId,
+                        UUID brandId,
+                        UUID categoryId,
+                        ProductStatus status,
+                        BigDecimal minPrice,
+                        BigDecimal maxPrice,
+                        String sortBy,
+                        String sortDir,
+                        Boolean randomEnabled,
+                        int pageNumber,
+                        int pageSize);
 
-    ProductItemResponse findById(UUID id);
+        ProductItemResponse findById(UUID id);
 
-    ProductItemDetailResponse findByIdWithDetails(UUID id);
+        ProductItemDetailResponse findByIdWithDetails(UUID id);
 
-    ProductItemResponse create(ProductItemRequest request);
+        ProductItemResponse create(ProductItemRequest request);
 
-    ProductItemResponse update(UUID id, ProductItemRequest request);
+        ProductItemResponse update(UUID id, ProductItemRequest request);
 
-    void delete(UUID id);
+        ProductItemResponse updateStatus(UUID id, ProductStatus status);
+
+        void delete(UUID id);
 }

@@ -34,7 +34,7 @@ public class CheckoutController {
                 "Order created successfully",
                 true,
                 response);
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
     /**

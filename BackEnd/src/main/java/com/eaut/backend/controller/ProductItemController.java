@@ -2,6 +2,7 @@ package com.eaut.backend.controller;
 
 import com.eaut.backend.constant.ProductStatus;
 import com.eaut.backend.model.request.ProductItemRequest;
+import com.eaut.backend.model.request.UpdateStatusRequest;
 import com.eaut.backend.model.response.ApiResponse;
 import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.model.response.ProductItemDetailResponse;
@@ -65,7 +66,8 @@ public class ProductItemController {
 
                 ApiResponse<PagingResponse<ProductItemListResponse>> response = productItemService
                                 .findAllForList(searchText, productId, brandId, categoryId, status,
-                                                minPrice, maxPrice, sortBy, sortDir, randomEnabled, pageNumber, pageSize);
+                                                minPrice, maxPrice, sortBy, sortDir, randomEnabled, pageNumber,
+                                                pageSize);
                 return ResponseEntity.ok(response);
         }
 
@@ -113,6 +115,19 @@ public class ProductItemController {
                 ApiResponse<ProductItemResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 "Product item updated successfully",
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
+
+        @PatchMapping("/{id}/status")
+        public ResponseEntity<ApiResponse<ProductItemResponse>> updateStatus(
+                        @PathVariable UUID id,
+                        @RequestBody UpdateStatusRequest request) {
+                ProductItemResponse response = productItemService.updateStatus(id, request.getStatus());
+                ApiResponse<ProductItemResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Product item status updated successfully",
                                 true,
                                 response);
                 return ResponseEntity.ok(apiResponse);

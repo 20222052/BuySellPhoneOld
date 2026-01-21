@@ -35,18 +35,37 @@ spring:
           starttls:
             enable: true
 
+#  datasource:
+#    driver-class-name: org.postgresql.Driver
+#    url: jdbc:postgresql://localhost:5432/buysellphoneold
+#    username: postgres
+#    password: 1234$
+#    hikari:
+#      maximum-pool-size: 10
+#      minimum-idle: 5
+#      idle-timeout: 30000
+#      connection-timeout: 30000
+#      max-lifetime: 1800000
+#      schema: public
+
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/buysellphoneold
-    username: postgres
-    password: 1234$
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      idle-timeout: 30000
-      connection-timeout: 30000
-      max-lifetime: 1800000
-      schema: public
+    url: jdbc:postgresql://localhost:5433/buysellphoneold
+    username: tungnt      # Lưu ý: docker-compose đang set là tungnt/tungnt
+    password: tungnt
+
+  ai:
+    deepseek:
+      url: "https://router.huggingface.co/v1/chat/completions"
+      api-key: "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"
+    
+    rag:
+      threshold: 0.48 # Ngưỡng tự tin để bot trả lời
+
+  # Cấu hình WebSocket (nếu cần config global)
+  websocket:
+    endpoint: "/ws"
+    allowed-origins: "*"
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -90,9 +109,19 @@ otp:
   dailyLimit: 5               # Số OTP tối đa được gửi cho cùng một số điện thoại trong 1 ngày (tính theo ngày calendar).
   maxAttempts: 3              # Số lần nhập OTP sai tối đa trước khi khoá tài nguyên/hủy OTP hoặc tăng throttle.
   lockoutDurationSeconds: 900 # khoá 15 phút nếu vượt maxAttempts
+
 #Cloudinary Configuration
 cloudinary:
   cloud-name: "dwfwcjshh"
   api-key: "419827593273897"
   api-secret: "ZJoEztPLCEKScIbBxtNosYaPvKs"
+
+# Cấu hình HuggingFace API (Custom - không dùng Spring AI)
+huggingface:
+  api:
+    key: "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"
+    base-url: "https://router.huggingface.co/hf-inference"
+    embedding-model: "BAAI/bge-base-en-v1.5"
+    embedding-endpoint: "https://router.huggingface.co/hf-inference/models/BAAI/bge-base-en-v1.5/pipeline/feature-extraction"
+    timeout: 30000  # 30 seconds
 

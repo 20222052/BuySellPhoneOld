@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
 
+@CrossOrigin(origins = "*")
 @Slf4j
 @RestController
 @RequestMapping("/auth")

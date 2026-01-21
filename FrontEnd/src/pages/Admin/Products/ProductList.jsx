@@ -106,12 +106,12 @@ export default function ProductList() {
         setSelectedProduct(product);
         if (product) {
             setFormData({
-                name: product.name || '',
-                description: product.description || '',
-                brandId: product.brandId || product.brand?.id || '',
-                categoryId: product.categoryId || product.category?.id || '',
-                status: product.status || 'active',
-                warrantyMonths: product.warrantyMonths || 12
+                name: product?.name || '',
+                description: product?.description || '',
+                brandId: product?.brandId ? String(product.brandId) : (product?.brand?.id ? String(product.brand.id) : ''),
+                categoryId: product?.categoryId ? String(product.categoryId) : (product?.category?.id ? String(product.category.id) : ''),
+                status: product?.status || 'active',
+                warrantyMonths: product?.warrantyMonths || 12
             });
         } else {
             setFormData({
@@ -495,8 +495,8 @@ export default function ProductList() {
                                         label="Hãng sản xuất"
                                         name="brandId"
                                         value={formData.brandId}
-                                        onChange={handleChange}
-                                        options={brands.map(b => ({ value: b.id, label: b.name }))}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, brandId: val }))}
+                                        options={brands.map(b => ({ value: String(b.id), label: b.name }))}
                                         placeholder="Chọn hãng sản xuất"
                                         required
                                         disabled={modalMode === 'view'}
@@ -505,8 +505,8 @@ export default function ProductList() {
                                         label="Danh mục"
                                         name="categoryId"
                                         value={formData.categoryId}
-                                        onChange={handleChange}
-                                        options={categories.map(c => ({ value: c.id, label: c.name }))}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, categoryId: val }))}
+                                        options={categories.map(c => ({ value: String(c.id), label: c.name }))}
                                         placeholder="Chọn danh mục"
                                         required
                                         disabled={modalMode === 'view'}
@@ -518,7 +518,7 @@ export default function ProductList() {
                                         label="Trạng thái"
                                         name="status"
                                         value={formData.status}
-                                        onChange={handleChange}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
                                         options={statusOptions}
                                         disabled={modalMode === 'view'}
                                     />

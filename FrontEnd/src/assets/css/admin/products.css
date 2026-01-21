@@ -1584,4 +1584,93 @@
     }
 }
 
-   
+/* // style thông số kĩ thuật productDetail */
+/* ===== Container ===== */
+.specs-display-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fafafa;
+}
+
+/* ===== Main title ===== */
+.specs-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* ===== Group Card ===== */
+.specs-display-group {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  border: 1px solid #eaeaea;
+}
+
+/* ===== Group title ===== */
+.specs-display-group h6 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* ===== Grid 2 cột ===== */
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 32px;
+  row-gap: 6px;
+}
+
+/* ===== Item ===== */
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed #eee;
+}
+
+.spec-item:last-child {
+  border-bottom: none;
+}
+
+/* ===== Wide item ===== */
+.spec-wide {
+  grid-column: 1 / -1;
+}
+
+/* ===== Label & Value ===== */
+.spec-label {
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.spec-value {
+  font-weight: 500;
+  color: #212529;
+  text-align: right;
+  max-width: 65%;
+  word-break: break-word;
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .specs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spec-value {
+    max-width: 100%;
+  }
+}

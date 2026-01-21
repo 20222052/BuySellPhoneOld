@@ -49,6 +49,38 @@
     color: white;
 }
 
+/* Status badges - positioned in top-right */
+.product-badge-status {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 3;
+    padding: 7px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: 1.5px solid #fff3;
+    backdrop-filter: blur(2px);
+}
+
+.badge-out-of-stock {
+    background: linear-gradient(135deg, #f8d7da, #f5c2c7);
+    color: #721c24;
+}
+
+.badge-inactive {
+    background: linear-gradient(135deg, #fff3cd, #ffe69c);
+    color: #856404;
+}
+
+.badge-discontinued {
+    background: linear-gradient(135deg, #e2e3e5, #d3d3d4);
+    color: #383d41;
+}
+
 
 .product-image {
     position: relative;

@@ -21,7 +21,7 @@ export default function HeroSection({ stats }) {
                             lượng, giá tốt, bảo hành chu đáo.
                         </p>
                         <div className="hero-buttons">
-                            <Button as={Link} to="/products" className="btn-primary-custom">
+                            <Button as={Link} to="/products" className="btn-primary-custom" style={{ border: "1px solid #fff" }}>
                                 <i className="bi bi-grid me-2"></i>
                                 Xem Sản Phẩm
                             </Button>

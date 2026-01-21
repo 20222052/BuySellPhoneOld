@@ -195,6 +195,20 @@ const ProductItemService = {
     },
 
     /**
+     * Cập nhật trạng thái ProductItem
+     * @param {UUID} id - ID của ProductItem
+     * @param {string} status - Trạng thái mới (active, inactive, discontinued)
+     */
+    updateStatus: async (id, status) => {
+        try {
+            const response = await api.patch(`/product-items/${id}/status`, { status });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể cập nhật trạng thái" };
+        }
+    },
+
+    /**
      * Xóa ProductItem
      */
     delete: async (id) => {

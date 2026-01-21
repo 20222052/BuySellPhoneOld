@@ -33,6 +33,50 @@ public class ProductItemDetailResponse {
     private BigDecimal comparePrice;
     private Integer qtyAvailable;
 
+    // ================= SCREEN =================
+    private Double screenSize;
+    private String screenTechnology;
+    private String screenResolution;
+    private Integer refreshRate;
+    private String screenType;
+    private String screenFeatures;
+
+    // ================= CAMERA =================
+    private String rearCamera;
+    private String rearVideo;
+    private String rearCameraFeatures;
+    private String frontCamera;
+    private String frontVideo;
+
+    // ================= CHIP – RAM =================
+    private String chipset;
+    private String cpu;
+    private String gpu;
+    private String operatingSystem;
+
+    // ================= KẾT NỐI =================
+    private String nfc;
+    private String simType;
+    private String network;
+    private String gps;
+    private String wifi;
+    private String bluetooth;
+    private String chargingPort;
+
+    // ================= PIN & SẠC =================
+    private Integer batteryCapacity;
+    private Integer chargingPower;
+    private String chargingTechnology;
+
+    // ================= KÍCH THƯỚC =================
+    private String dimensions;
+    private Integer weight;
+
+    // ================= KHÁC =================
+    private String waterResistance;
+    private String sensors;
+    private String releaseTime;
+
     // Related data
     private List<ProductModelDetailResponse> models;
     private List<ProductMediaResponse> media;

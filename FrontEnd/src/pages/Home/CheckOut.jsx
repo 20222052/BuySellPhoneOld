@@ -181,11 +181,14 @@ export default function CheckOut() {
                 paymentMethod: form.paymentMethod,
                 note: form.note
             });
-
-            if (res.success) {
+            console.log(res);
+            if (res.code === 200 || res.code === 201) {
                 setOrderResult(res.data);
                 setSubmitted(true);
-                toast.success("Đặt hàng thành công!");
+                toast.success(res.message || "Đặt hàng thành công!");
+                setTimeout(() => {
+                    navigate("/");
+                }, 2000);
             } else {
                 toast.error(res.message || "Đặt hàng thất bại");
             }

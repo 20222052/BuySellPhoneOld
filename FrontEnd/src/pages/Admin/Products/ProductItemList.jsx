@@ -68,6 +68,10 @@ export default function ProductItemList() {
     // Media upload state
     const [uploadingMedia, setUploadingMedia] = useState(false);
 
+    // Status update state
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [currentStatus, setCurrentStatus] = useState('active');
+
     // Form data
     const [formData, setFormData] = useState({
         productId: '',
@@ -76,6 +80,44 @@ export default function ProductItemList() {
         basePrice: '',
         sellPrice: '',
         comparePrice: '',
+        // Screen specs
+        screenSize: '',
+        screenTechnology: '',
+        screenResolution: '',
+        refreshRate: '',
+        screenType: '',
+        screenFeatures: '',
+        // Camera specs
+        rearCamera: '',
+        rearVideo: '',
+        rearCameraFeatures: '',
+        frontCamera: '',
+        frontVideo: '',
+        // Chip specs
+        chipset: '',
+        cpu: '',
+        gpu: '',
+        operatingSystem: '',
+        // Connectivity specs
+        nfc: '',
+        simType: '',
+        network: '',
+        gps: '',
+        wifi: '',
+        bluetooth: '',
+        chargingPort: '',
+        // Battery specs
+        batteryCapacity: '',
+        chargingPower: '',
+        chargingTechnology: '',
+        // Dimensions
+        dimensions: '',
+        weight: '',
+        // Other specs
+        waterResistance: '',
+        sensors: '',
+        releaseTime: '',
+        // Related data
         models: [],
         mediaList: []
     });
@@ -186,9 +228,51 @@ export default function ProductItemList() {
                     basePrice: details.basePrice || '',
                     sellPrice: details.sellPrice || '',
                     comparePrice: details.comparePrice || '',
+                    // Screen specs
+                    screenSize: details.screenSize || '',
+                    screenTechnology: details.screenTechnology || '',
+                    screenResolution: details.screenResolution || '',
+                    refreshRate: details.refreshRate || '',
+                    screenType: details.screenType || '',
+                    screenFeatures: details.screenFeatures || '',
+                    // Camera specs
+                    rearCamera: details.rearCamera || '',
+                    rearVideo: details.rearVideo || '',
+                    rearCameraFeatures: details.rearCameraFeatures || '',
+                    frontCamera: details.frontCamera || '',
+                    frontVideo: details.frontVideo || '',
+                    // Chip specs
+                    chipset: details.chipset || '',
+                    cpu: details.cpu || '',
+                    gpu: details.gpu || '',
+                    operatingSystem: details.operatingSystem || '',
+                    // Connectivity specs
+                    nfc: details.nfc || '',
+                    simType: details.simType || '',
+                    network: details.network || '',
+                    gps: details.gps || '',
+                    wifi: details.wifi || '',
+                    bluetooth: details.bluetooth || '',
+                    chargingPort: details.chargingPort || '',
+                    // Battery specs
+                    batteryCapacity: details.batteryCapacity || '',
+                    chargingPower: details.chargingPower || '',
+                    chargingTechnology: details.chargingTechnology || '',
+                    // Dimensions
+                    dimensions: details.dimensions || '',
+                    weight: details.weight || '',
+                    // Other specs
+                    waterResistance: details.waterResistance || '',
+                    sensors: details.sensors || '',
+                    releaseTime: details.releaseTime || '',
+                    // Related data
                     models: details.models || [],
                     mediaList: details.media || []
                 });
+
+                // Map status integer to enum string
+                const statusMap = { 0: 'inactive', 1: 'active', 2: 'discontinued' };
+                setCurrentStatus(statusMap[details.status] || 'active');
             } catch (error) {
                 console.error('Load details error:', error);
                 setFormData({
@@ -198,9 +282,19 @@ export default function ProductItemList() {
                     basePrice: product.basePrice || '',
                     sellPrice: product.sellPrice || '',
                     comparePrice: product.comparePrice || '',
+                    screenSize: '', screenTechnology: '', screenResolution: '', refreshRate: '', screenType: '', screenFeatures: '',
+                    rearCamera: '', rearVideo: '', rearCameraFeatures: '', frontCamera: '', frontVideo: '',
+                    chipset: '', cpu: '', gpu: '', operatingSystem: '',
+                    nfc: '', simType: '', network: '', gps: '', wifi: '', bluetooth: '', chargingPort: '',
+                    batteryCapacity: '', chargingPower: '', chargingTechnology: '',
+                    dimensions: '', weight: '',
+                    waterResistance: '', sensors: '', releaseTime: '',
                     models: [],
                     mediaList: []
                 });
+                // Fallback status mapping from list data
+                const statusMap = { 0: 'inactive', 1: 'active', 2: 'discontinued' };
+                setCurrentStatus(statusMap[product.status] || 'active');
             }
         } else {
             setFormData({
@@ -210,6 +304,13 @@ export default function ProductItemList() {
                 basePrice: '',
                 sellPrice: '',
                 comparePrice: '',
+                screenSize: '', screenTechnology: '', screenResolution: '', refreshRate: '', screenType: '', screenFeatures: '',
+                rearCamera: '', rearVideo: '', rearCameraFeatures: '', frontCamera: '', frontVideo: '',
+                chipset: '', cpu: '', gpu: '', operatingSystem: '',
+                nfc: '', simType: '', network: '', gps: '', wifi: '', bluetooth: '', chargingPort: '',
+                batteryCapacity: '', chargingPower: '', chargingTechnology: '',
+                dimensions: '', weight: '',
+                waterResistance: '', sensors: '', releaseTime: '',
                 models: [],
                 mediaList: []
             });
@@ -232,6 +333,13 @@ export default function ProductItemList() {
             basePrice: '',
             sellPrice: '',
             comparePrice: '',
+            screenSize: '', screenTechnology: '', screenResolution: '', refreshRate: '', screenType: '', screenFeatures: '',
+            rearCamera: '', rearVideo: '', rearCameraFeatures: '', frontCamera: '', frontVideo: '',
+            chipset: '', cpu: '', gpu: '', operatingSystem: '',
+            nfc: '', simType: '', network: '', gps: '', wifi: '', bluetooth: '', chargingPort: '',
+            batteryCapacity: '', chargingPower: '', chargingTechnology: '',
+            dimensions: '', weight: '',
+            waterResistance: '', sensors: '', releaseTime: '',
             models: [],
             mediaList: []
         });
@@ -241,6 +349,25 @@ export default function ProductItemList() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Handle status change
+    const handleStatusChange = async (newStatus) => {
+        if (!selectedProduct || updatingStatus) return;
+
+        try {
+            setUpdatingStatus(true);
+            await ProductItemService.updateStatus(selectedProduct.id, newStatus);
+            toast.success('Cập nhật trạng thái thành công!');
+            setCurrentStatus(newStatus);
+            // Refresh the product list to show updated status
+            fetchProducts();
+        } catch (error) {
+            console.error('Update status error:', error);
+            toast.error(error.message || 'Không thể cập nhật trạng thái');
+        } finally {
+            setUpdatingStatus(false);
+        }
     };
 
     // ==================== PRODUCT SEARCH HANDLERS ====================
@@ -293,6 +420,44 @@ export default function ProductItemList() {
                 basePrice: details.basePrice || '',
                 sellPrice: details.sellPrice || '',
                 comparePrice: details.comparePrice || '',
+                // Screen specs
+                screenSize: details.screenSize || '',
+                screenTechnology: details.screenTechnology || '',
+                screenResolution: details.screenResolution || '',
+                refreshRate: details.refreshRate || '',
+                screenType: details.screenType || '',
+                screenFeatures: details.screenFeatures || '',
+                // Camera specs
+                rearCamera: details.rearCamera || '',
+                rearVideo: details.rearVideo || '',
+                rearCameraFeatures: details.rearCameraFeatures || '',
+                frontCamera: details.frontCamera || '',
+                frontVideo: details.frontVideo || '',
+                // Chip specs
+                chipset: details.chipset || '',
+                cpu: details.cpu || '',
+                gpu: details.gpu || '',
+                operatingSystem: details.operatingSystem || '',
+                // Connectivity specs
+                nfc: details.nfc || '',
+                simType: details.simType || '',
+                network: details.network || '',
+                gps: details.gps || '',
+                wifi: details.wifi || '',
+                bluetooth: details.bluetooth || '',
+                chargingPort: details.chargingPort || '',
+                // Battery specs
+                batteryCapacity: details.batteryCapacity || '',
+                chargingPower: details.chargingPower || '',
+                chargingTechnology: details.chargingTechnology || '',
+                // Dimensions
+                dimensions: details.dimensions || '',
+                weight: details.weight || '',
+                // Other specs
+                waterResistance: details.waterResistance || '',
+                sensors: details.sensors || '',
+                releaseTime: details.releaseTime || '',
+                // Related data
                 models: details.models || [],
                 mediaList: details.media || []
             }));
@@ -306,6 +471,13 @@ export default function ProductItemList() {
                 basePrice: item.basePrice || '',
                 sellPrice: item.sellPrice || '',
                 comparePrice: item.comparePrice || '',
+                screenSize: '', screenTechnology: '', screenResolution: '', refreshRate: '', screenType: '', screenFeatures: '',
+                rearCamera: '', rearVideo: '', rearCameraFeatures: '', frontCamera: '', frontVideo: '',
+                chipset: '', cpu: '', gpu: '', operatingSystem: '',
+                nfc: '', simType: '', network: '', gps: '', wifi: '', bluetooth: '', chargingPort: '',
+                batteryCapacity: '', chargingPower: '', chargingTechnology: '',
+                dimensions: '', weight: '',
+                waterResistance: '', sensors: '', releaseTime: '',
                 models: [],
                 mediaList: []
             }));
@@ -321,6 +493,13 @@ export default function ProductItemList() {
             basePrice: '',
             sellPrice: '',
             comparePrice: '',
+            screenSize: '', screenTechnology: '', screenResolution: '', refreshRate: '', screenType: '', screenFeatures: '',
+            rearCamera: '', rearVideo: '', rearCameraFeatures: '', frontCamera: '', frontVideo: '',
+            chipset: '', cpu: '', gpu: '', operatingSystem: '',
+            nfc: '', simType: '', network: '', gps: '', wifi: '', bluetooth: '', chargingPort: '',
+            batteryCapacity: '', chargingPower: '', chargingTechnology: '',
+            dimensions: '', weight: '',
+            waterResistance: '', sensors: '', releaseTime: '',
             models: [],
             mediaList: []
         }));
@@ -649,8 +828,58 @@ export default function ProductItemList() {
                 basePrice: parseFloat(formData.basePrice),
                 sellPrice: parseFloat(formData.sellPrice),
                 comparePrice: formData.comparePrice ? parseFloat(formData.comparePrice) : null,
+                // Screen specs
+                screenSize: formData.screenSize ? parseFloat(formData.screenSize) : null,
+                screenTechnology: formData.screenTechnology || null,
+                screenResolution: formData.screenResolution || null,
+                refreshRate: formData.refreshRate ? parseInt(formData.refreshRate) : null,
+                screenType: formData.screenType || null,
+                screenFeatures: formData.screenFeatures || null,
+                // Camera specs
+                rearCamera: formData.rearCamera || null,
+                rearVideo: formData.rearVideo || null,
+                rearCameraFeatures: formData.rearCameraFeatures || null,
+                frontCamera: formData.frontCamera || null,
+                frontVideo: formData.frontVideo || null,
+                // Chip specs
+                chipset: formData.chipset || null,
+                cpu: formData.cpu || null,
+                gpu: formData.gpu || null,
+                operatingSystem: formData.operatingSystem || null,
+                // Connectivity specs
+                nfc: formData.nfc || null,
+                simType: formData.simType || null,
+                network: formData.network || null,
+                gps: formData.gps || null,
+                wifi: formData.wifi || null,
+                bluetooth: formData.bluetooth || null,
+                chargingPort: formData.chargingPort || null,
+                // Battery specs
+                batteryCapacity: formData.batteryCapacity ? parseInt(formData.batteryCapacity) : null,
+                chargingPower: formData.chargingPower ? parseInt(formData.chargingPower) : null,
+                chargingTechnology: formData.chargingTechnology || null,
+                // Dimensions
+                dimensions: formData.dimensions || null,
+                weight: formData.weight ? parseInt(formData.weight) : null,
+                // Other specs
+                waterResistance: formData.waterResistance || null,
+                sensors: formData.sensors || null,
+                releaseTime: formData.releaseTime || null,
+                // Related data
                 models: formData.models,
                 mediaList: formData.mediaList
+            };
+
+            const defaultSpecsReset = {
+                name: '', description: '', basePrice: '', sellPrice: '', comparePrice: '',
+                screenSize: '', screenTechnology: '', screenResolution: '', refreshRate: '', screenType: '', screenFeatures: '',
+                rearCamera: '', rearVideo: '', rearCameraFeatures: '', frontCamera: '', frontVideo: '',
+                chipset: '', cpu: '', gpu: '', operatingSystem: '',
+                nfc: '', simType: '', network: '', gps: '', wifi: '', bluetooth: '', chargingPort: '',
+                batteryCapacity: '', chargingPower: '', chargingTechnology: '',
+                dimensions: '', weight: '',
+                waterResistance: '', sensors: '', releaseTime: '',
+                models: [], mediaList: []
             };
 
             if (modalMode === 'create') {
@@ -666,16 +895,7 @@ export default function ProductItemList() {
                     setExistingProductItems(response?.data?.items || []);
                     setEditingProductItemId(null);
                     // Reset form for next create
-                    setFormData(prev => ({
-                        ...prev,
-                        name: '',
-                        description: '',
-                        basePrice: '',
-                        sellPrice: '',
-                        comparePrice: '',
-                        models: [],
-                        mediaList: []
-                    }));
+                    setFormData(prev => ({ ...prev, ...defaultSpecsReset }));
                 } else {
                     await ProductItemService.create(submitData);
                     toast.success('Tạo biến thể thành công!');
@@ -686,16 +906,7 @@ export default function ProductItemList() {
                     });
                     setExistingProductItems(response?.data?.items || []);
                     // Reset form for next create
-                    setFormData(prev => ({
-                        ...prev,
-                        name: '',
-                        description: '',
-                        basePrice: '',
-                        sellPrice: '',
-                        comparePrice: '',
-                        models: [],
-                        mediaList: []
-                    }));
+                    setFormData(prev => ({ ...prev, ...defaultSpecsReset }));
                 }
             } else if (modalMode === 'edit') {
                 await ProductItemService.update(selectedProduct.id, submitData);
@@ -737,6 +948,7 @@ export default function ProductItemList() {
         const statusMap = {
             'active': { label: 'Đang bán', class: 'status-active' },
             'inactive': { label: 'Ngừng bán', class: 'status-inactive' },
+            'discontinued': { label: 'Ngừng bán', class: 'status-inactive' },
             'draft': { label: 'Nháp', class: 'status-draft' },
             'out_of_stock': { label: 'Hết hàng', class: 'status-out-of-stock' }
         };
@@ -1145,6 +1357,42 @@ export default function ProductItemList() {
                                                     </div>
                                                 </div>
                                             )}
+
+                                            {/* Status Update Section - View Mode */}
+                                            {modalMode === 'view' && (
+                                                <div className="status-section" style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                        <label style={{ fontWeight: '500', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <i className="bi bi-toggle-on"></i>
+                                                            Trạng thái:
+                                                        </label>
+                                                        <select
+                                                            value={currentStatus}
+                                                            onChange={(e) => handleStatusChange(e.target.value)}
+                                                            disabled={updatingStatus}
+                                                            style={{
+                                                                padding: '8px 12px',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #dee2e6',
+                                                                background: 'white',
+                                                                cursor: updatingStatus ? 'not-allowed' : 'pointer',
+                                                                opacity: updatingStatus ? 0.6 : 1,
+                                                                fontSize: '0.95rem'
+                                                            }}
+                                                        >
+                                                            <option value="active">Đang bán</option>
+                                                            <option value="draft">Nháp</option>
+                                                            <option value="discontinued">Ngừng sản xuất</option>
+                                                        </select>
+                                                        {updatingStatus && (
+                                                            <span style={{ fontSize: '0.85rem', color: '#6c757d', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                                <i className="bi bi-hourglass-split"></i>
+                                                                Đang cập nhật...
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                             {/* {getStatusBadge(selectedProduct.productStatus)} */}
                                         </div>
                                     </div>
@@ -1405,6 +1653,353 @@ export default function ProductItemList() {
                                             </div>
                                         </div>
 
+                                        {/* ================= THÔNG SỐ KỸ THUẬT ================= */}
+                                        <div className="specs-section editable">
+                                            <div className="section-header">
+                                                <h5><i className="bi bi-cpu me-2"></i>Thông số kỹ thuật</h5>
+                                            </div>
+
+                                            {/* Screen Specs */}
+                                            <div className="specs-group">
+                                                <h6><i className="bi bi-phone me-2"></i>Màn hình</h6>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Kích thước (inch)"
+                                                            name="screenSize"
+                                                            type="number"
+                                                            step="0.1"
+                                                            value={formData.screenSize}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 6.7"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Công nghệ màn hình"
+                                                            name="screenTechnology"
+                                                            value={formData.screenTechnology}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Super Retina XDR"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Độ phân giải"
+                                                            name="screenResolution"
+                                                            value={formData.screenResolution}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 2868 x 1320"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Tần số quét (Hz)"
+                                                            name="refreshRate"
+                                                            type="number"
+                                                            value={formData.refreshRate}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 120"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Kiểu màn hình"
+                                                            name="screenType"
+                                                            value={formData.screenType}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Dynamic Island"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Tính năng màn hình"
+                                                            name="screenFeatures"
+                                                            value={formData.screenFeatures}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Always On, HDR, True Tone"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Camera Specs */}
+                                            <div className="specs-group">
+                                                <h6><i className="bi bi-camera me-2"></i>Camera</h6>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Camera sau"
+                                                            name="rearCamera"
+                                                            value={formData.rearCamera}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 48MP + 12MP + 12MP"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Quay video (sau)"
+                                                            name="rearVideo"
+                                                            value={formData.rearVideo}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 4K@60fps, HDR"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Tính năng camera sau"
+                                                            name="rearCameraFeatures"
+                                                            value={formData.rearCameraFeatures}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Night mode, HDR, Zoom 5x"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Camera trước"
+                                                            name="frontCamera"
+                                                            value={formData.frontCamera}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 12MP TrueDepth"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Quay video (trước)"
+                                                            name="frontVideo"
+                                                            value={formData.frontVideo}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 4K@30fps"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Chip Specs */}
+                                            <div className="specs-group">
+                                                <h6><i className="bi bi-cpu me-2"></i>Chip & RAM</h6>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Chipset"
+                                                            name="chipset"
+                                                            value={formData.chipset}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Apple A19 Pro"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="CPU"
+                                                            name="cpu"
+                                                            value={formData.cpu}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 6 lõi (2 hiệu năng + 4 tiết kiệm)"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="GPU"
+                                                            name="gpu"
+                                                            value={formData.gpu}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: GPU 6 lõi"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Hệ điều hành"
+                                                            name="operatingSystem"
+                                                            value={formData.operatingSystem}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: iOS 26, Android 15"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Connectivity Specs */}
+                                            <div className="specs-group">
+                                                <h6><i className="bi bi-wifi me-2"></i>Kết nối</h6>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Mạng"
+                                                            name="network"
+                                                            value={formData.network}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 5G, 4G LTE"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Loại SIM"
+                                                            name="simType"
+                                                            value={formData.simType}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Dual SIM, eSIM"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Wi-Fi"
+                                                            name="wifi"
+                                                            value={formData.wifi}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Wi-Fi 7"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Bluetooth"
+                                                            name="bluetooth"
+                                                            value={formData.bluetooth}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Bluetooth 6.0"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="NFC"
+                                                            name="nfc"
+                                                            value={formData.nfc}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Có"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="GPS"
+                                                            name="gps"
+                                                            value={formData.gps}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: GPS, GLONASS, Galileo"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Cổng sạc"
+                                                            name="chargingPort"
+                                                            value={formData.chargingPort}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: USB Type-C"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Battery Specs */}
+                                            <div className="specs-group">
+                                                <h6><i className="bi bi-battery-charging me-2"></i>Pin & Sạc</h6>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Dung lượng pin (mAh)"
+                                                            name="batteryCapacity"
+                                                            type="number"
+                                                            value={formData.batteryCapacity}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 4500"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Công suất sạc (W)"
+                                                            name="chargingPower"
+                                                            type="number"
+                                                            value={formData.chargingPower}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 45"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Công nghệ sạc"
+                                                            name="chargingTechnology"
+                                                            value={formData.chargingTechnology}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: MagSafe, Qi2, Sạc nhanh"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Dimensions & Other */}
+                                            <div className="specs-group">
+                                                <h6><i className="bi bi-rulers me-2"></i>Kích thước & Khác</h6>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Kích thước"
+                                                            name="dimensions"
+                                                            value={formData.dimensions}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 163.4 x 78 x 8.75 mm"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Trọng lượng (gram)"
+                                                            name="weight"
+                                                            type="number"
+                                                            value={formData.weight}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 227"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Kháng nước/bụi"
+                                                            name="waterResistance"
+                                                            value={formData.waterResistance}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: IP68"
+                                                        />
+                                                    </div>
+                                                    <div className="form-col">
+                                                        <FormInput
+                                                            label="Thời điểm ra mắt"
+                                                            name="releaseTime"
+                                                            value={formData.releaseTime}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: 09/2025"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-row">
+                                                    <div className="form-col" style={{ flex: '1 1 100%' }}>
+                                                        <FormInput
+                                                            label="Cảm biến"
+                                                            name="sensors"
+                                                            value={formData.sensors}
+                                                            onChange={handleChange}
+                                                            placeholder="VD: Face ID, Vân tay, Gia tốc kế, Con quay hồi chuyển"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Mô tả biến thể (ProductItem Description) */}
                                         <div className="editable">
                                             <label className="form-label">
@@ -1468,8 +2063,99 @@ export default function ProductItemList() {
                                         </div>
                                     </div>
                                 )}
-                                <h5>Mô tả chi tiết</h5>
+                                <br />
 
+                                {/* Specifications Display - View Mode */}
+                                <div className="specs-display-section">
+                                    <h5><i className="bi bi-cpu me-2"></i>Thông số kỹ thuật</h5>
+
+                                    {/* Screen */}
+                                    {(formData.screenSize || formData.screenTechnology || formData.screenResolution || formData.refreshRate || formData.screenType || formData.screenFeatures) && (
+                                        <div className="specs-display-group">
+                                            <h6><i className="bi bi-phone me-2"></i>Màn hình</h6>
+                                            <div className="specs-grid">
+                                                {formData.screenSize && <div className="spec-item"><span className="spec-label">Kích thước:</span> <span className="spec-value">{formData.screenSize}"</span></div>}
+                                                {formData.screenTechnology && <div className="spec-item"><span className="spec-label">Công nghệ:</span> <span className="spec-value">{formData.screenTechnology}</span></div>}
+                                                {formData.screenResolution && <div className="spec-item"><span className="spec-label">Độ phân giải:</span> <span className="spec-value">{formData.screenResolution}</span></div>}
+                                                {formData.refreshRate && <div className="spec-item"><span className="spec-label">Tần số quét:</span> <span className="spec-value">{formData.refreshRate}Hz</span></div>}
+                                                {formData.screenType && <div className="spec-item"><span className="spec-label">Kiểu màn hình:</span> <span className="spec-value">{formData.screenType}</span></div>}
+                                                {formData.screenFeatures && <div className="spec-item"><span className="spec-label">Tính năng:</span> <span className="spec-value">{formData.screenFeatures}</span></div>}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Camera */}
+                                    {(formData.rearCamera || formData.rearVideo || formData.rearCameraFeatures || formData.frontCamera || formData.frontVideo) && (
+                                        <div className="specs-display-group">
+                                            <h6><i className="bi bi-camera me-2"></i>Camera</h6>
+                                            <div className="specs-grid">
+                                                {formData.rearCamera && <div className="spec-item"><span className="spec-label">Camera sau:</span> <span className="spec-value">{formData.rearCamera}</span></div>}
+                                                {formData.rearVideo && <div className="spec-item"><span className="spec-label">Quay video (sau):</span> <span className="spec-value">{formData.rearVideo}</span></div>}
+                                                {formData.rearCameraFeatures && <div className="spec-item"><span className="spec-label">Tính năng:</span> <span className="spec-value">{formData.rearCameraFeatures}</span></div>}
+                                                {formData.frontCamera && <div className="spec-item"><span className="spec-label">Camera trước:</span> <span className="spec-value">{formData.frontCamera}</span></div>}
+                                                {formData.frontVideo && <div className="spec-item"><span className="spec-label">Quay video (trước):</span> <span className="spec-value">{formData.frontVideo}</span></div>}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Chip */}
+                                    {(formData.chipset || formData.cpu || formData.gpu || formData.operatingSystem) && (
+                                        <div className="specs-display-group">
+                                            <h6><i className="bi bi-cpu me-2"></i>Chip & RAM</h6>
+                                            <div className="specs-grid">
+                                                {formData.chipset && <div className="spec-item"><span className="spec-label">Chipset:</span> <span className="spec-value">{formData.chipset}</span></div>}
+                                                {formData.cpu && <div className="spec-item"><span className="spec-label">CPU:</span> <span className="spec-value">{formData.cpu}</span></div>}
+                                                {formData.gpu && <div className="spec-item"><span className="spec-label">GPU:</span> <span className="spec-value">{formData.gpu}</span></div>}
+                                                {formData.operatingSystem && <div className="spec-item"><span className="spec-label">Hệ điều hành:</span> <span className="spec-value">{formData.operatingSystem}</span></div>}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Connectivity */}
+                                    {(formData.network || formData.simType || formData.wifi || formData.bluetooth || formData.nfc || formData.gps || formData.chargingPort) && (
+                                        <div className="specs-display-group">
+                                            <h6><i className="bi bi-wifi me-2"></i>Kết nối</h6>
+                                            <div className="specs-grid">
+                                                {formData.network && <div className="spec-item"><span className="spec-label">Mạng:</span> <span className="spec-value">{formData.network}</span></div>}
+                                                {formData.simType && <div className="spec-item"><span className="spec-label">Loại SIM:</span> <span className="spec-value">{formData.simType}</span></div>}
+                                                {formData.wifi && <div className="spec-item"><span className="spec-label">Wi-Fi:</span> <span className="spec-value">{formData.wifi}</span></div>}
+                                                {formData.bluetooth && <div className="spec-item"><span className="spec-label">Bluetooth:</span> <span className="spec-value">{formData.bluetooth}</span></div>}
+                                                {formData.nfc && <div className="spec-item"><span className="spec-label">NFC:</span> <span className="spec-value">{formData.nfc}</span></div>}
+                                                {formData.gps && <div className="spec-item"><span className="spec-label">GPS:</span> <span className="spec-value">{formData.gps}</span></div>}
+                                                {formData.chargingPort && <div className="spec-item"><span className="spec-label">Cổng sạc:</span> <span className="spec-value">{formData.chargingPort}</span></div>}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Battery */}
+                                    {(formData.batteryCapacity || formData.chargingPower || formData.chargingTechnology) && (
+                                        <div className="specs-display-group">
+                                            <h6><i className="bi bi-battery-charging me-2"></i>Pin & Sạc</h6>
+                                            <div className="specs-grid">
+                                                {formData.batteryCapacity && <div className="spec-item"><span className="spec-label">Dung lượng:</span> <span className="spec-value">{formData.batteryCapacity} mAh</span></div>}
+                                                {formData.chargingPower && <div className="spec-item"><span className="spec-label">Công suất sạc:</span> <span className="spec-value">{formData.chargingPower}W</span></div>}
+                                                {formData.chargingTechnology && <div className="spec-item"><span className="spec-label">Công nghệ sạc:</span> <span className="spec-value">{formData.chargingTechnology}</span></div>}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Dimensions & Other */}
+                                    {(formData.dimensions || formData.weight || formData.waterResistance || formData.sensors || formData.releaseTime) && (
+                                        <div className="specs-display-group">
+                                            <h6><i className="bi bi-rulers me-2"></i>Kích thước & Khác</h6>
+                                            <div className="specs-grid">
+                                                {formData.dimensions && <div className="spec-item"><span className="spec-label">Kích thước:</span> <span className="spec-value">{formData.dimensions}</span></div>}
+                                                {formData.weight && <div className="spec-item"><span className="spec-label">Trọng lượng:</span> <span className="spec-value">{formData.weight}g</span></div>}
+                                                {formData.waterResistance && <div className="spec-item"><span className="spec-label">Kháng nước:</span> <span className="spec-value">{formData.waterResistance}</span></div>}
+                                                {formData.releaseTime && <div className="spec-item"><span className="spec-label">Ra mắt:</span> <span className="spec-value">{formData.releaseTime}</span></div>}
+                                                {formData.sensors && <div className="spec-item spec-wide"><span className="spec-label">Cảm biến:</span> <span className="spec-value">{formData.sensors}</span></div>}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <br />
+                                <h5>Mô tả chi tiết</h5>
                                 {/* View Details */}
                                 {modalMode === 'view' && selectedProduct && (
                                     <div className="view-details">
@@ -1516,6 +2202,7 @@ export default function ProductItemList() {
                                                 <div className="detail-value description-content" dangerouslySetInnerHTML={{ __html: formData.description }}></div>
                                             </div>
                                         )}
+
                                     </div>
                                 )}
 

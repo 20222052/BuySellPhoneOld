@@ -24,12 +24,14 @@ public class ProductItemListResponse {
     // ProductItem name (variant name)
     private String name;
     private String description; // ProductItem description (variant description)
+    private String status;
 
     // Product info
     private UUID productId;
     private String productName;
     private String productDescription;
-    private ProductStatus productStatus;
+    private String productStatus;
+
 
     // Brand & Category
     private UUID brandId;

@@ -15,6 +15,7 @@ import com.eaut.backend.untils.Mapper;
 import com.eaut.backend.untils.PagingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -127,7 +128,12 @@ public class BrandServiceImpl implements BrandService {
             }
         }
 
-        brandRepository.delete(brand);
+        try {
+            brandRepository.delete(brand);
+        } catch (DataIntegrityViolationException e) {
+            throw new ApplicationException(ErrorCode.CONFLICT,
+                    "Cannot delete brand as it is referenced by other entities");
+        }
     }
 
     @Override

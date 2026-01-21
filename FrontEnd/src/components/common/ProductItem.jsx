@@ -10,16 +10,47 @@ export default function ProductItem({ product }) {
         return new Intl.NumberFormat('vi-VN').format(price);
     };
 
+    // Get product status with priority: stock first, then ProductItem status
+    const getProductStatus = () => {
+        // Priority 1: Check total stock quantity
+        const totalStock = product.qtyAvailable || 0;
+
+        if (totalStock === 0) {
+            return { label: 'Hết hàng', className: 'badge-out-of-stock' };
+        }
+
+        // Priority 2: Check ProductItem status (assuming status field exists)
+        // Status mapping: 0=inactive, 1=active, 2=discontinued
+        if (product.status === 0) {
+            return { label: 'Ngừng bán', className: 'badge-inactive' };
+        }
+        if (product.status === 2) {
+            return { label: 'Ngừng SX', className: 'badge-discontinued' };
+        }
+
+        // Default: Product is active and in stock
+        return null; // No badge needed for normal items
+    };
+
+    const statusBadge = getProductStatus();
+
     return (
         <Card className="product-card">
             <Link to={`/products/${product.id}`} className="text-decoration-none text-dark">
+                {/* Discount Badge */}
                 {product.discountPercent && product.discountPercent > 0 && (
-                    <Badge
-                        className={`product-badge badge-sale`}
-                    >
+                    <Badge className="product-badge badge-sale">
                         -{product.discountPercent}%
                     </Badge>
                 )}
+
+                {/* Status Badge (stock/inactive/discontinued) */}
+                {statusBadge && (
+                    <Badge className={`product-badge-status ${statusBadge.className}`}>
+                        {statusBadge.label}
+                    </Badge>
+                )}
+
                 <div className="product-image">
                     <img
                         src={product.primaryImageUrl || "https://via.placeholder.com/300x300?text=No+Image"}
