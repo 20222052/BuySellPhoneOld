@@ -43,11 +43,26 @@ public class ChatWebSocketController {
             return;
         }
 
-        // 2. Nếu đang chat bình thường (hoặc chat với Bot)
-        // Gọi AI Service xử lý
-        String aiResponse = aiChatService.processUserMessage(message, sessionId);
+        // 2. Kiểm tra nếu session đang chat với admin
+        if (chatQueueService.isHumanSession(sessionId)) {
+            // Forward tin nhắn tới admin
+            messagingTemplate.convertAndSend("/topic/admin/session/" + sessionId,
+                    "USER: " + message);
+            return;
+        }
 
-        // 3. Gửi câu trả lời về lại cho Client (Private Queue của Session đó)
+        // 3. Mặc định: Bot xử lý tin nhắn
+        String aiResponse = aiChatService.processUserMessage(message, sessionId);
         messagingTemplate.convertAndSend("/queue/chat/" + sessionId, aiResponse);
+    }
+
+    @MessageMapping("/chat.admin.send")
+    public void adminSendMessage(@Payload Map<String, String> payload) {
+        String sessionId = payload.get("sessionId");
+        String message = payload.get("content");
+
+        // Gửi tin nhắn admin tới user
+        messagingTemplate.convertAndSend("/queue/chat/" + sessionId,
+                "👨‍💼 ADMIN: " + message);
     }
 }

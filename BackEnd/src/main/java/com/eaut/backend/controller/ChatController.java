@@ -7,6 +7,7 @@ import com.eaut.backend.service.AI_ChatBot.ChatQueueService;
 import com.eaut.backend.service.AI_ChatBot.RagServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -22,6 +23,7 @@ public class ChatController {
     private final ChatQueueService chatQueueService;
     private final RagServiceImpl ragService;
     private final ConversationRepository conversationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // API Test Ingest thủ công
     @PostMapping("/ingest/{productItemId}")
@@ -43,7 +45,23 @@ public class ChatController {
         if (sessionId == null) {
             return ResponseEntity.ok("Hàng đợi rỗng.");
         }
+
+        // Mark session as human mode
+        chatQueueService.markAsHumanSession(sessionId);
+
         return ResponseEntity.ok(sessionId);
+    }
+
+    // API Admin kết thúc hỗ trợ, trả user về bot
+    @PostMapping("/queue/end/{sessionId}")
+    public ResponseEntity<String> endConversation(@PathVariable String sessionId) {
+        chatQueueService.endHumanSession(sessionId);
+
+        // Thông báo cho customer
+        messagingTemplate.convertAndSend("/queue/chat/" + sessionId,
+                "Nhân viên đã kết thúc hỗ trợ. Bạn có thể tiếp tục chat với bot hoặc yêu cầu gặp nhân viên lại.");
+
+        return ResponseEntity.ok("Đã kết thúc hỗ trợ cho session: " + sessionId);
     }
 
     // API Lấy lịch sử đoạn chat theo SessionID

@@ -125,3 +125,10 @@ huggingface:
     embedding-endpoint: "https://router.huggingface.co/hf-inference/models/BAAI/bge-base-en-v1.5/pipeline/feature-extraction"
     timeout: 30000  # 30 seconds
 
+# Cấu hình AI Diagnostic Service (Flask API)
+ai:
+  diagnostic:
+    api:
+      url: "http://localhost:5000"  # Flask API endpoint
+      timeout: 60000  # 60 seconds (AI analysis takes time)
+

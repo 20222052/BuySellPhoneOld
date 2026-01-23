@@ -5,12 +5,17 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ChatQueueService {
     // Sử dụng Queue in-memory đơn giản cho Demo.
     // Trong thực tế nến dùng Redis List để scale.
     private final Queue<String> customerQueue = new LinkedList<>();
+
+    // Track sessions currently being handled by human agents (admin)
+    private final Set<String> activeHumanSessions = ConcurrentHashMap.newKeySet();
 
     /**
      * Thêm user vào hàng đợi hỗ trợ
@@ -51,5 +56,26 @@ public class ChatQueueService {
 
     public List<String> getAllQueue() {
         return new ArrayList<>(customerQueue);
+    }
+
+    /**
+     * Mark a session as being handled by a human agent (admin)
+     */
+    public void markAsHumanSession(String sessionId) {
+        activeHumanSessions.add(sessionId);
+    }
+
+    /**
+     * Check if a session is currently being handled by a human agent
+     */
+    public boolean isHumanSession(String sessionId) {
+        return activeHumanSessions.contains(sessionId);
+    }
+
+    /**
+     * End human support for a session, return customer to bot mode
+     */
+    public void endHumanSession(String sessionId) {
+        activeHumanSessions.remove(sessionId);
     }
 }

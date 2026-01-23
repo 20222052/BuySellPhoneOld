@@ -181,10 +181,30 @@
                 <h3>3. POST /chat/queue/pick</h3>
                 <button onclick="testPickUser()">👤 Pick Next User</button>
                 <div id="pickResponse" class="response"></div>
+                <div id="pickedSessionInfo"
+                    style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 4px; display: none;">
+                    <strong>✅ Picked Session:</strong> <span id="pickedSessionId"
+                        style="font-family: monospace; color: #2e7d32;"></span>
+                </div>
             </div>
 
             <div class="api-group">
-                <h3>4. GET /chat/history/{sessionId}</h3>
+                <h3>4. Admin Chat with Picked User</h3>
+                <label>Admin Message to Send:</label><br>
+                <input type="text" id="adminMessage" style="width: 100%;" placeholder="Type admin message here..."><br>
+                <button onclick="sendAdminMessage()">👨‍💼 Send Admin Message</button>
+                <button onclick="endConversation()" style="background: #f44336;">🔚 End Conversation</button>
+                <div class="help-text" style="margin-top: 10px;">
+                    💡 <strong>How to use:</strong><br>
+                    1. Pick a user from queue (button above)<br>
+                    2. Connect WebSocket with the picked sessionId<br>
+                    3. Send admin messages here<br>
+                    4. Click "End Conversation" to return user to bot
+                </div>
+            </div>
+
+            <div class="api-group">
+                <h3>5. GET /chat/history/{sessionId}</h3>
                 <label>Session ID:</label><br>
                 <input type="text" id="historySessionId" style="width: 100%;" placeholder="e.g., test-session-123"><br>
                 <button onclick="testGetHistory()">📜 Get History</button>
@@ -408,8 +428,12 @@
 
         async function testPickUser() {
             const responseDiv = document.getElementById('pickResponse');
+            const pickedInfo = document.getElementById('pickedSessionInfo');
+            const pickedSessionSpan = document.getElementById('pickedSessionId');
+
             responseDiv.className = 'response loading';
             responseDiv.textContent = '⏳ Picking user...';
+            pickedInfo.style.display = 'none';
 
             try {
                 const response = await fetch(`${BASE_URL}/api/chat/queue/pick`, {
@@ -422,6 +446,20 @@
                 if (response.ok) {
                     responseDiv.className = 'response success';
                     responseDiv.textContent = `✅ Success (Status: ${response.status})\n\n${text}`;
+
+                    // If a session was picked (not empty queue)
+                    if (text !== "Hàng đợi rỗng.") {
+                        // Auto-fill the sessionId input fields
+                        document.getElementById('sessionId').value = text;
+                        document.getElementById('historySessionId').value = text;
+
+                        // Show picked session info
+                        pickedSessionSpan.textContent = text;
+                        pickedInfo.style.display = 'block';
+
+                        // Update global sessionId
+                        sessionId = text;
+                    }
                 } else {
                     responseDiv.className = 'response error';
                     responseDiv.textContent = `❌ Error (Status: ${response.status})\n\n${text}`;
@@ -516,6 +554,11 @@
                     showMessage('📢 ADMIN UPDATE: ' + message.body);
                 });
 
+                // Subscribe to admin session topic (receive customer messages when admin)
+                stompClient.subscribe('/topic/admin/session/' + sessionId, function (message) {
+                    showMessage('👤 CUSTOMER: ' + message.body);
+                });
+
                 updateConnectionStatus(true);
                 showMessage('✅ Connected to WebSocket!');
             }, function (error) {
@@ -549,6 +592,31 @@
             showMessage('📤 YOU: ' + message);
         }
 
+        function sendAdminMessage() {
+            if (stompClient === null || !stompClient.connected) {
+                alert('Please connect to WebSocket first!');
+                return;
+            }
+
+            const message = document.getElementById('adminMessage').value;
+
+            if (!message) {
+                alert('Please enter a message!');
+                return;
+            }
+
+            // Send to the new admin endpoint
+            stompClient.send("/app/chat.admin.send", {}, JSON.stringify({
+                'sessionId': sessionId,
+                'content': message
+            }));
+
+            showMessage('👨‍💼 ADMIN SENT: ' + message);
+
+            // Clear the input
+            document.getElementById('adminMessage').value = '';
+        }
+
         function sendHumanRequest() {
             if (stompClient === null || !stompClient.connected) {
                 alert('Please connect first!');
@@ -561,6 +629,30 @@
             }));
 
             showMessage('📤 YOU: Gặp nhân viên (Request Human Support)');
+        }
+
+        async function endConversation() {
+            if (!sessionId) {
+                alert('No active session!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/chat/queue/end/${sessionId}`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                const text = await response.text();
+
+                if (response.ok) {
+                    showMessage('✅ ' + text);
+                } else {
+                    showMessage('❌ Error ending conversation: ' + text);
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message);
+            }
         }
 
         function showMessage(message) {
