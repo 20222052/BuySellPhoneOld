@@ -30,15 +30,5 @@ export default function FeaturedProducts({ products }) {
 }
 
 FeaturedProducts.propTypes = {
-    products: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.number.isRequired,
-            name: PropTypes.string.isRequired,
-            price: PropTypes.string.isRequired,
-            oldPrice: PropTypes.string,
-            image: PropTypes.string.isRequired,
-            condition: PropTypes.string.isRequired,
-            badge: PropTypes.string,
-        })
-    ).isRequired,
+    products: PropTypes.arrayOf(PropTypes.object).isRequired,
 };

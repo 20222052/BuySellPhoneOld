@@ -38,8 +38,14 @@ public class SecurityConfig {
                         "/product-items/*/details",
                         "/api/ws/**",
                         "/chat/queue/pick",
-                        "/ws/**"
-                };
+                        "/ws/**",
+                        "/blogs/list",
+                        "/blogs/*",
+                        "/api/product-items/list",
+                        "/api/product-items/*/details",
+                        "/api/blogs/list",
+                        "/api/blogs/*"
+        };
         @Value("${app.jwt.secret}")
         @NonFinal
         private String jwtSecret;

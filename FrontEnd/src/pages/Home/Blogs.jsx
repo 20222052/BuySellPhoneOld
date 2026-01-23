@@ -21,7 +21,7 @@ export default function Blogs() {
         setLoading(true);
         setError(null);
         try {
-            const response = await BlogService.getAll({
+            const response = await BlogService.getPublicList({
                 page,
                 pageSize: DEFAULT_PAGE_SIZE,
                 search,

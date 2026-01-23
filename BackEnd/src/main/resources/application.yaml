@@ -56,6 +56,7 @@ spring:
 
   ai:
     deepseek:
+      model: "deepseek-ai/DeepSeek-V3-0324"
       url: "https://router.huggingface.co/v1/chat/completions"
       api-key: "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"
     

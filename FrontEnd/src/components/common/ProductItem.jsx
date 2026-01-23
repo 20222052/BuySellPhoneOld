@@ -38,7 +38,7 @@ export default function ProductItem({ product }) {
         <Card className="product-card">
             <Link to={`/products/${product.id}`} className="text-decoration-none text-dark">
                 {/* Discount Badge */}
-                {product.discountPercent && product.discountPercent > 0 && (
+                {product.discountPercent > 0 && (
                     <Badge className="product-badge badge-sale">
                         -{product.discountPercent}%
                     </Badge>
@@ -64,13 +64,13 @@ export default function ProductItem({ product }) {
                 </div>
             </Link>
             <Card.Body>
-                <div className="product-condition">
+                {/* <div className="product-condition">
                     <i className="bi bi-star-fill"></i>
                     <span>
                         {product.averageRating ? product.averageRating.toFixed(1) : "0.0"}
                         {product.totalRatings ? ` (${product.totalRatings})` : ""}
                     </span>
-                </div>
+                </div> */}
                 {/* <div className="product-brand">
                     <small className="text-muted">{product.brandName}</small>
                 </div> */}
@@ -80,16 +80,16 @@ export default function ProductItem({ product }) {
 
                 <div className="product-price">
                     <span className="current-price">{formatPrice(product.sellPrice)}₫</span>
-                    {product.comparePrice && product.comparePrice > product.sellPrice && (
+                    {Number(product.comparePrice) > Number(product.sellPrice) && (
                         <span className="old-price">{formatPrice(product.comparePrice)}₫</span>
                     )}
                 </div>
-                <div className="product-actions">
+                {/* <div className="product-actions">
                     <Button className="btn-add-cart">
                         <i className="bi bi-cart-plus me-2"></i>
                         Thêm vào giỏ
                     </Button>
-                </div>
+                </div> */}
             </Card.Body>
         </Card>
     );

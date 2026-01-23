@@ -38,6 +38,9 @@ public class AIChatService {
     @Value("${spring.ai.rag.threshold}")
     private double threshold;
 
+    @Value("${spring.ai.deepseek.model}")
+    private String model;
+
     private final RestClient restClient = RestClient.create();
 
     /**
@@ -142,7 +145,7 @@ public class AIChatService {
 
         // Payload gửi lên HuggingFace API
         Map<String, Object> requestBody = Map.of(
-                "model", "deepseek-ai/DeepSeek-V3-0324",
+                "model", model,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", query)),

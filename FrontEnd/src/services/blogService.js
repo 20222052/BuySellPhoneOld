@@ -37,6 +37,32 @@ const BlogService = {
     },
 
     /**
+     * Lấy danh sách blogs public (cho trang Home)
+     */
+    getPublicList: async (params = {}) => {
+        try {
+            const {
+                search = '',
+                sort = 'DESC',
+                page = 0,
+                pageSize = 10
+            } = params;
+
+            const response = await api.get("/blogs/list", {
+                params: {
+                    search,
+                    sort,
+                    page,
+                    page_size: pageSize
+                }
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể tải danh sách bài viết" };
+        }
+    },
+
+    /**
      * Lấy thông tin chi tiết blog theo ID (tự động tăng view count)
      * @param {string} id - ID blog (UUID)
      * @returns {Promise} - Thông tin blog

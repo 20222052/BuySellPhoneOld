@@ -1,78 +1,75 @@
-import { Container, Row, Col, Button, Badge } from "react-bootstrap";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import PropTypes from "prop-types";
+// Swiper Imports
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
-export default function HeroSection({ stats }) {
+// D:\DONGA\nam4\DATN\buysellphoneold\FrontEnd\src\assets\css\home\HeroSection.css
+import "../../../assets/css/home/HeroSection.css";
+
+export default function HeroSection() {
     return (
         <section className="hero-section">
-            <Container>
-                <Row className="align-items-center">
-                    <Col lg={6} className="hero-content">
-                        <Badge bg="danger" className="hero-badge mb-3">
-                            <i className="bi bi-lightning-fill me-2"></i>
-                            Ưu đãi đặc biệt
-                        </Badge>
-                        <h1 className="hero-title">
-                            Mua Bán Điện Thoại Cũ
-                            <span className="highlight"> Uy Tín</span>
-                        </h1>
-                        <p className="hero-description">
-                            Nền tảng mua bán điện thoại cũ hàng đầu Việt Nam. Sản phẩm chất
-                            lượng, giá tốt, bảo hành chu đáo.
-                        </p>
-                        <div className="hero-buttons">
-                            <Button as={Link} to="/products" className="btn-primary-custom" style={{ border: "1px solid #fff" }}>
-                                <i className="bi bi-grid me-2"></i>
-                                Xem Sản Phẩm
-                            </Button>
-                            <Button
-                                as={Link}
-                                to="/tradein"
-                                variant="outline-light"
-                                className="btn-outline-custom"
-                            >
-                                <i className="bi bi-arrow-repeat me-2"></i>
-                                Thu Cũ Đổi Mới
-                            </Button>
+            <Container fluid className="p-0">
+                <Swiper
+                    spaceBetween={0}
+                    centeredSlides={true}
+                    autoplay={{
+                        delay: 3500,
+                        disableOnInteraction: false,
+                    }}
+                    pagination={{
+                        clickable: true,
+                    }}
+                    navigation={true}
+                    modules={[Autoplay, Pagination, Navigation]}
+                    className="mySwiper"
+                    loop={true}
+                >
+                    {/* Slide 1 */}
+                    <SwiperSlide>
+                        <div className="w-100">
+                            <img
+                                src="https://shopdunk.com/images/uploaded/banner/banner%202026/tha%CC%81ng%201/home%20page/banner%20iP17pro-a_Danh%20m%E1%BB%A5c.png"
+                                alt="iPhone 17 Pro Banner"
+                                className="w-100 h-100 object-fit-cover"
+                                style={{ borderRadius: '20px' }}
+                            />
                         </div>
-                        <div className="hero-stats">
-                            {stats.map((stat, index) => (
-                                <div key={index} className="stat-item">
-                                    <h3>{stat.value}</h3>
-                                    <p>{stat.label}</p>
-                                </div>
-                            ))}
+                    </SwiperSlide>
+
+                    {/* Slide 2 */}
+                    <SwiperSlide>
+                        <div className="w-100">
+                            <img
+                                src="https://shopdunk.com/images/uploaded/banner/banner%202026/tha%CC%81ng%201/home%20page/banner%20iP17-a_Danh%20m%E1%BB%A5c.png"
+                                alt="iPhone 17 Banner"
+                                className="w-100 h-100 object-fit-cover"
+                                style={{ borderRadius: '20px' }}
+                            />
                         </div>
-                    </Col>
-                    <Col lg={6} className="hero-image">
-                        <div className="phone-showcase">
-                            <div className="phone-card">
-                                <img
-                                    src="https://cdn.tgdd.vn/Products/Images/42/342679/s16/iphone-17-pro-max-cam-thumb-650x650.png"
-                                    alt="Phone"
-                                />
-                                <div className="floating-badge badge-1">
-                                    <i className="bi bi-star-fill"></i>
-                                    <span>Chất lượng cao</span>
-                                </div>
-                                <div className="floating-badge badge-2">
-                                    <i className="bi bi-shield-check"></i>
-                                    <span>Bảo hành 12 tháng</span>
-                                </div>
-                            </div>
+                    </SwiperSlide>
+
+                    {/* Slide 3: Handling the potentially incorrect link */}
+                    <SwiperSlide>
+                        <div className="w-100">
+                            <img
+                                src="https://shopdunk.com/dien-thoai-iphone-17-pro-max-256gb"
+                                alt="iPhone 17 Pro Max 256GB"
+                                className="w-100 h-100 object-fit-cover"
+                                style={{ borderRadius: '20px' }}
+                                onError={(e) => {
+                                    // Fallback if the link is not an image (which it likely isn't)
+                                    e.target.src = "https://shopdunk.com/images/uploaded/banner/banner%202026/tha%CC%81ng%201/home%20page/banner%20iP17pro-a_Danh%20m%E1%BB%A5c.png";
+                                }}
+                            />
                         </div>
-                    </Col>
-                </Row>
+                    </SwiperSlide>
+                </Swiper>
             </Container>
         </section>
     );
 }
-
-HeroSection.propTypes = {
-    stats: PropTypes.arrayOf(
-        PropTypes.shape({
-            value: PropTypes.string.isRequired,
-            label: PropTypes.string.isRequired,
-        })
-    ).isRequired,
-};

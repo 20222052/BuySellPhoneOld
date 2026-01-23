@@ -1,26 +1,27 @@
+// Import Bootstrap CSS (pre-compiled) instead of SCSS to avoid unit incompatibility
+@import "bootstrap/dist/css/bootstrap.min.css";
+
 // Import custom styles first (variables & mixins)
 @import "./assets/styles/variables";
 @import "./assets/styles/mixins";
 @import "./assets/styles/reset";
 
-// Import Bootstrap CSS (pre-compiled) instead of SCSS to avoid unit incompatibility
-@import "bootstrap/dist/css/bootstrap.min.css";
-
 /* Root Color Variables */
 :root {
-  /* Primary Colors - Based on gradient #e45464 to #d70018 */
-  --primary-color: #d70018;
-  --primary-dark: #b50015;
-  --primary-light: #e45464;
-  --secondary-color: #e45464;
-  --secondary-dark: #c93a4a;
-  --secondary-light: #f06b7a;
+  /* Primary Colors - Monochrome/Black theme */
+  --primary-color: #000000;
+  --primary-dark: #000000;
+  --primary-light: #333333;
+
+  /* Secondary Colors - Red Accent (kept for badges/highlights) */
+  --secondary-color: #d70018;
+  --secondary-dark: #b50015;
+  --secondary-light: #e45464;
 
   /* Gradient */
-  --gradient-primary: linear-gradient(180deg, #e45464 -13%, #d70018);
-  // --gradient-primary: linear-gradient(to right, #337ae5 0, #408fe5 34%, #d4734a 71%, #ea6b2e 100%);
-  // --gradient-primary: linear-gradient(135deg, #ff0000 0%, #ff6105 100%);
-  --gradient-hover: linear-gradient(180deg, #c93a4a -13%, #b50015);
+  --gradient-primary: var(--gray-600);
+
+  --gradient-hover: var(--gray-900);
 
   /* Neutral Colors */
   --white: #ffffff;
@@ -31,6 +32,7 @@
   --gray-400: #ced4da;
   --gray-500: #adb5bd;
   --gray-600: #6c757d;
+  --gray-650: #515154;
   --gray-700: #495057;
   --gray-800: #343a40;
   --gray-900: #212529;
@@ -143,4 +145,9 @@ body {
   &:hover {
     background: var(--gradient-hover);
   }
+}
+
+
+main .container {
+  background-color: var(--gray-100) !important;
 }

@@ -23,114 +23,129 @@ import java.util.UUID;
 @RequestMapping("/blogs")
 public class BlogController {
 
-    private final BlogService blogService;
-    private final UserService userService;
+        private final BlogService blogService;
+        private final UserService userService;
 
-    /**
-     * Lấy danh sách tất cả blogs với phân trang và tìm kiếm (public)
-     */
-    @GetMapping
-    public ResponseEntity<ApiResponse<PagingResponse<BlogResponse>>> getAll(
-            @RequestParam(name = "search", required = false, defaultValue = "") String searchText,
-            @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
-            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
-            @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
+        /**
+         * Lấy danh sách tất cả blogs với phân trang và tìm kiếm (public)
+         */
+        @GetMapping
+        public ResponseEntity<ApiResponse<PagingResponse<BlogResponse>>> getAll(
+                        @RequestParam(name = "search", required = false, defaultValue = "") String searchText,
+                        @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
+                        @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+                        @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
 
-        ApiResponse<PagingResponse<BlogResponse>> response = blogService
-                .findAll(searchText, sort, pageNumber, pageSize);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Lấy chi tiết blog theo ID (public, tăng view count)
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BlogResponse>> getBlogById(@PathVariable UUID id) {
-        BlogResponse response = blogService.findByIdAndIncrementView(id);
-        ApiResponse<BlogResponse> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "Blog retrieved successfully",
-                true,
-                response);
-        return ResponseEntity.ok(apiResponse);
-    }
-
-    /**
-     * Tạo blog mới (requires authentication)
-     */
-    @PostMapping
-    public ResponseEntity<ApiResponse<BlogResponse>> create(
-            @RequestBody BlogRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
-
-        UserResponse user = userService.getMyInfo();
-        log.info("Create blog by user: {}", user.getId());
-        if (request.getAuthor() == null || request.getAuthor().isEmpty()) {
-            request.setAuthor(user.getFullName());
+                ApiResponse<PagingResponse<BlogResponse>> response = blogService
+                                .findAll(searchText, sort, pageNumber, pageSize);
+                return ResponseEntity.ok(response);
         }
-        BlogResponse response = blogService.create(request, user.getId());
-        ApiResponse<BlogResponse> apiResponse = new ApiResponse<>(
-                HttpStatus.CREATED.value(),
-                "Blog created successfully",
-                true,
-                response);
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
-    }
 
-    /**
-     * Cập nhật blog (requires authentication)
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<BlogResponse>> update(
-            @PathVariable UUID id,
-            @RequestBody BlogRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
+        /**
+         * Lấy danh sách blogs public cho trang home
+         */
+        @GetMapping("/list")
+        public ResponseEntity<ApiResponse<PagingResponse<BlogResponse>>> getList(
+                        @RequestParam(name = "search", required = false, defaultValue = "") String searchText,
+                        @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
+                        @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+                        @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
 
-        UserResponse user = userService.getMyInfo();
-        log.info("Updating blog: {} by user: {}", id, user.getId());
+                ApiResponse<PagingResponse<BlogResponse>> response = blogService
+                                .findAll(searchText, sort, pageNumber, pageSize);
+                return ResponseEntity.ok(response);
+        }
 
-        BlogResponse response = blogService.update(id, request, user.getId());
-        ApiResponse<BlogResponse> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "Blog updated successfully",
-                true,
-                response);
-        return ResponseEntity.ok(apiResponse);
-    }
+        /**
+         * Lấy chi tiết blog theo ID (public, tăng view count)
+         */
+        @GetMapping("/{id}")
+        public ResponseEntity<ApiResponse<BlogResponse>> getBlogById(@PathVariable UUID id) {
+                BlogResponse response = blogService.findByIdAndIncrementView(id);
+                ApiResponse<BlogResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Blog retrieved successfully",
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
 
-    /**
-     * Xóa blog (requires authentication)
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt) {
+        /**
+         * Tạo blog mới (requires authentication)
+         */
+        @PostMapping
+        public ResponseEntity<ApiResponse<BlogResponse>> create(
+                        @RequestBody BlogRequest request,
+                        @AuthenticationPrincipal Jwt jwt) {
 
-        UserResponse user = userService.getMyInfo();
-        log.info("Deleting blog: {} by user: {}", id, user.getId());
+                UserResponse user = userService.getMyInfo();
+                log.info("Create blog by user: {}", user.getId());
+                if (request.getAuthor() == null || request.getAuthor().isEmpty()) {
+                        request.setAuthor(user.getFullName());
+                }
+                BlogResponse response = blogService.create(request, user.getId());
+                ApiResponse<BlogResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.CREATED.value(),
+                                "Blog created successfully",
+                                true,
+                                response);
+                return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        }
 
-        blogService.delete(id);
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "Blog deleted successfully",
-                true,
-                null);
-        return ResponseEntity.ok(apiResponse);
-    }
+        /**
+         * Cập nhật blog (requires authentication)
+         */
+        @PutMapping("/{id}")
+        public ResponseEntity<ApiResponse<BlogResponse>> update(
+                        @PathVariable UUID id,
+                        @RequestBody BlogRequest request,
+                        @AuthenticationPrincipal Jwt jwt) {
 
-    /**
-     * Lấy danh sách blogs của user đang đăng nhập
-     */
-    @GetMapping("/my-blogs")
-    public ResponseEntity<ApiResponse<PagingResponse<BlogResponse>>> getMyBlogs(
-            @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
-            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
-            @RequestParam(name = "page_size", defaultValue = "10") int pageSize,
-            @AuthenticationPrincipal Jwt jwt) {
+                UserResponse user = userService.getMyInfo();
+                log.info("Updating blog: {} by user: {}", id, user.getId());
 
-        UUID userId = UUID.fromString(jwt.getClaimAsString("id"));
-        ApiResponse<PagingResponse<BlogResponse>> response = blogService
-                .findByUserId(userId, sort, pageNumber, pageSize);
-        return ResponseEntity.ok(response);
-    }
+                BlogResponse response = blogService.update(id, request, user.getId());
+                ApiResponse<BlogResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Blog updated successfully",
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
+
+        /**
+         * Xóa blog (requires authentication)
+         */
+        @DeleteMapping("/{id}")
+        public ResponseEntity<ApiResponse<Void>> delete(
+                        @PathVariable UUID id,
+                        @AuthenticationPrincipal Jwt jwt) {
+
+                UserResponse user = userService.getMyInfo();
+                log.info("Deleting blog: {} by user: {}", id, user.getId());
+
+                blogService.delete(id);
+                ApiResponse<Void> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Blog deleted successfully",
+                                true,
+                                null);
+                return ResponseEntity.ok(apiResponse);
+        }
+
+        /**
+         * Lấy danh sách blogs của user đang đăng nhập
+         */
+        @GetMapping("/my-blogs")
+        public ResponseEntity<ApiResponse<PagingResponse<BlogResponse>>> getMyBlogs(
+                        @RequestParam(name = "sort", required = false, defaultValue = "DESC") String sort,
+                        @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+                        @RequestParam(name = "page_size", defaultValue = "10") int pageSize,
+                        @AuthenticationPrincipal Jwt jwt) {
+
+                UUID userId = UUID.fromString(jwt.getClaimAsString("id"));
+                ApiResponse<PagingResponse<BlogResponse>> response = blogService
+                                .findByUserId(userId, sort, pageNumber, pageSize);
+                return ResponseEntity.ok(response);
+        }
 }
