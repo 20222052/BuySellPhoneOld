@@ -10,6 +10,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,25 +31,50 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     @Override
     @Async("taskExecutor")
     public CompletableFuture<CloudinaryResponse> uploadImages(MultipartFile file) throws Exception {
-//        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        // Compress image before uploading to reduce upload time
+        byte[] compressedBytes = compressImage(file, 0.6f);
 
         Map<String, Object> options = ObjectUtils.asMap(
-                "folder", "products",           // 👈 folder Cloudinary
-                "resource_type", "auto",
-                "quality", "auto",              // tối ưu dung lượng
-                "fetch_format", "auto"           // auto webp / jpg
+                "folder", "products", // 👈 folder Cloudinary
+                "resource_type", "image",
+                "quality", "auto", // tối ưu dung lượng
+                "fetch_format", "auto" // auto webp / jpg
         );
 
         Map uploadResult = cloudinary.uploader()
-                .upload(file.getBytes(), options);
+                .upload(compressedBytes, options);
 
         return CompletableFuture.completedFuture(
                 CloudinaryResponse.builder()
                         .publicId((String) uploadResult.get("public_id"))
                         .secureUrl((String) uploadResult.get("secure_url"))
-                        .build()
-        );
+                        .build());
+    }
 
+    /**
+     * Compress image before uploading to cloud
+     * 
+     * @param file    MultipartFile to compress
+     * @param quality Compression quality (0.0f to 1.0f, where 1.0f is highest
+     *                quality)
+     * @return Compressed image as byte array
+     * @throws IOException if image reading/writing fails
+     */
+    private byte[] compressImage(MultipartFile file, float quality) throws IOException {
+        BufferedImage image = ImageIO.read(file.getInputStream());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
+
+        ImageWriteParam param = jpgWriter.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality); // 0.6f = 60% quality
+
+        jpgWriter.setOutput(ImageIO.createImageOutputStream(baos));
+        jpgWriter.write(null, new IIOImage(image, null, null), param);
+        jpgWriter.dispose();
+
+        return baos.toByteArray();
     }
 
     @Override
@@ -60,32 +92,27 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         try {
             Map result = cloudinary.uploader().destroy(
                     publicId,
-                    ObjectUtils.asMap("resource_type", "auto")
-            );
+                    ObjectUtils.asMap("resource_type", "auto"));
 
             String status = (String) result.get("result");
 
             if (!"ok".equals(status) && !"not found".equals(status)) {
                 throw new IllegalStateException(
-                        "Cloudinary delete failed, status=" + status
-                );
+                        "Cloudinary delete failed, status=" + status);
             }
         } catch (Exception e) {
             throw new RuntimeException("Delete image failed: " + publicId, e);
         }
     }
 
-
     public void deleteProductItemImages(UUID productItemId) {
         try {
             cloudinary.api().deleteResourcesByPrefix(
                     "products/" + productItemId,
-                    ObjectUtils.emptyMap()
-            );
+                    ObjectUtils.emptyMap());
         } catch (Exception e) {
             log.error("Failed to delete images of productItem={}", productItemId, e);
         }
     }
-
 
 }

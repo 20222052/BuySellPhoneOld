@@ -31,101 +31,120 @@ import java.util.UUID;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final String[] PUBLIC_ENDPOINTS = {
-            "/auth/**",
-            "/users/register",
-            "/product-items/list",
-            "/product-items/**/details"
-    };
-    @Value("${app.jwt.secret}")
-    @NonFinal
-    private String jwtSecret;
+        private final String[] PUBLIC_ENDPOINTS = {
+                        "/auth/**",
+                        "/users/register",
+                        "/product-items/list",
+                        "/product-items/*/details",
+                        "/api/ws/**",
+                        "/chat/queue/pick",
+                        "/ws/**",
+                        "/blogs/list",
+                        "/blogs/*",
+                        "/api/product-items/list",
+                        "/api/product-items/*/details",
+                        "/api/blogs/list",
+                        "/api/blogs/*"
+        };
+        @Value("${app.jwt.secret}")
+        @NonFinal
+        private String jwtSecret;
 
-    @Autowired
-    private CustomJwtDecoder customJwtDecoder;
+        @Autowired
+        private CustomJwtDecoder customJwtDecoder;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+        private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
-                        .decoder(customJwtDecoder)
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            log.warn("⚠️ Authentication failed for request {}: {}",
-                                    request.getRequestURI(), authException.getMessage());
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
+                                                .decoder(customJwtDecoder)
+                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        log.warn("⚠️ Authentication failed for request {}: {}",
+                                                                        request.getRequestURI(),
+                                                                        authException.getMessage());
 
-                            // LOG THÊM: Kiểm tra xem có token không
-                            String authHeader = request.getHeader("Authorization");
-                            log.warn("Authorization Header: {}", authHeader != null ? "Present" : "Missing");
+                                                        // LOG THÊM: Kiểm tra xem có token không
+                                                        String authHeader = request.getHeader("Authorization");
+                                                        log.warn("Authorization Header: {}",
+                                                                        authHeader != null ? "Present" : "Missing");
 
-                            response.setStatus(ErrorCode.UNAUTHORIZED.getHttpStatus().value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                                        response.setStatus(
+                                                                        ErrorCode.UNAUTHORIZED.getHttpStatus().value());
+                                                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-                            BadRequestResponse errorResponse = new BadRequestResponse();
-                            errorResponse.setTitle("Authentication Error");
-                            errorResponse.setErrorCode(ErrorCode.UNAUTHORIZED.getCode());
-                            errorResponse.setMessage("Authentication required. Please provide valid credentials.");
-                            errorResponse.setData(null);
-                            errorResponse.setUri(request.getRequestURI());
-                            errorResponse.setTime(LocalDateTime.parse(LocalDateTime.now()
-                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
-                            errorResponse.setRequestId(UUID.randomUUID().toString());
+                                                        BadRequestResponse errorResponse = new BadRequestResponse();
+                                                        errorResponse.setTitle("Authentication Error");
+                                                        errorResponse.setErrorCode(ErrorCode.UNAUTHORIZED.getCode());
+                                                        errorResponse.setMessage(
+                                                                        "Authentication required. Please provide valid credentials.");
+                                                        errorResponse.setData(null);
+                                                        errorResponse.setUri(request.getRequestURI());
+                                                        errorResponse.setTime(LocalDateTime.parse(LocalDateTime.now()
+                                                                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
+                                                        errorResponse.setRequestId(UUID.randomUUID().toString());
 
-                            response.setStatus(ErrorCode.UNAUTHORIZED.getHttpStatus().value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
+                                                        response.setStatus(
+                                                                        ErrorCode.UNAUTHORIZED.getHttpStatus().value());
+                                                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                                        response.setCharacterEncoding("UTF-8");
 
-                            objectMapper.writeValue(response.getOutputStream(), errorResponse);
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            log.warn("Access denied for request {}: {}",
-                                    request.getRequestURI(), accessDeniedException.getMessage());
+                                                        objectMapper.writeValue(response.getOutputStream(),
+                                                                        errorResponse);
+                                                })
+                                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                                        log.warn("Access denied for request {}: {}",
+                                                                        request.getRequestURI(),
+                                                                        accessDeniedException.getMessage());
 
-                            response.setStatus(ErrorCode.FORBIDDEN.getHttpStatus().value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
+                                                        response.setStatus(ErrorCode.FORBIDDEN.getHttpStatus().value());
+                                                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                                        response.setCharacterEncoding("UTF-8");
 
-                            BadRequestResponse errorResponse = new BadRequestResponse();
-                            errorResponse.setTitle("Authorization Error");
-                            errorResponse.setErrorCode(ErrorCode.FORBIDDEN.getCode());
-                            errorResponse.setMessage("Access denied. You don't have permission to access this resource.");
-                            errorResponse.setData(null);
-                            errorResponse.setUri(request.getRequestURI());
-                            errorResponse.setTime(LocalDateTime.parse(LocalDateTime.now()
-                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
-                            errorResponse.setRequestId(UUID.randomUUID().toString());
+                                                        BadRequestResponse errorResponse = new BadRequestResponse();
+                                                        errorResponse.setTitle("Authorization Error");
+                                                        errorResponse.setErrorCode(ErrorCode.FORBIDDEN.getCode());
+                                                        errorResponse.setMessage(
+                                                                        "Access denied. You don't have permission to access this resource.");
+                                                        errorResponse.setData(null);
+                                                        errorResponse.setUri(request.getRequestURI());
+                                                        errorResponse.setTime(LocalDateTime.parse(LocalDateTime.now()
+                                                                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
+                                                        errorResponse.setRequestId(UUID.randomUUID().toString());
 
-                            response.setStatus(ErrorCode.FORBIDDEN.getHttpStatus().value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
+                                                        response.setStatus(ErrorCode.FORBIDDEN.getHttpStatus().value());
+                                                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                                        response.setCharacterEncoding("UTF-8");
 
-                            objectMapper.writeValue(response.getOutputStream(), errorResponse);
+                                                        objectMapper.writeValue(response.getOutputStream(),
+                                                                        errorResponse);
 
-                        }))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated());
+                                                }))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(request -> request
+                                                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                                                .anyRequest().authenticated());
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
-        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
+        @Bean
+        JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+                jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+                jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
 
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
-        return jwtAuthenticationConverter;
-    }
+                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+                return jwtAuthenticationConverter;
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }

@@ -39,7 +39,7 @@ export default function BlogSection({ blogs, viewMode = "grid", showHeader = tru
                                     </div>
                                     <h5 className="blog-title">{blog.title}</h5>
                                     <p className="blog-excerpt">{blog.excerpt}</p>
-                                    <Link to={`/blog/${blogs.id}`} className="blog-link">
+                                    <Link to={`/blog/${blog.id}`} className="blog-link">
                                         Đọc thêm <i className="bi bi-arrow-right"></i>
                                     </Link>
                                 </Card.Body>
@@ -55,7 +55,7 @@ export default function BlogSection({ blogs, viewMode = "grid", showHeader = tru
 BlogSection.propTypes = {
     blogs: PropTypes.arrayOf(
         PropTypes.shape({
-            id: PropTypes.number.isRequired,
+            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
             title: PropTypes.string.isRequired,
             excerpt: PropTypes.string.isRequired,
             image: PropTypes.string.isRequired,

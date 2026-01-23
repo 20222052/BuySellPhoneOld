@@ -1,100 +1,11 @@
-import api from "./apiClient";
+import api, { publicApiClient } from "./apiClient";
 import axios from "axios";
 
 /**
  * ProductItem Service - Quản lý sản phẩm chi tiết
  */
 const ProductItemService = {
-    /**
-     * Upload ảnh lên Cloudinary thông qua backend
-     * @param {File} file - File ảnh cần upload
-     * @param {UUID} productItemId - ID của ProductItem
-     * @param {boolean} isPrimary - Có phải ảnh chính không
-     * @returns {Promise} - Kết quả upload
-     */
-    uploadMedia: async (file, productItemId, isPrimary = false) => {
-        try {
-            const formData = new FormData();
-            formData.append('files', file);
-            formData.append('productItemId', productItemId);
-            formData.append('hexCode', '#000000');
-            formData.append('isPrimary', isPrimary);
-
-            const token = localStorage.getItem("accessToken");
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL || "/api"}/product-medias/upload`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    }
-                }
-            );
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { message: "Không thể upload ảnh" };
-        }
-    },
-
-    /**
-     * Upload nhiều ảnh cùng lúc (trước khi tạo ProductItem)
-     * Trả về danh sách URL sau khi upload lên Cloudinary
-     */
-    uploadMultipleMedia: async (files) => {
-        try {
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('files', file);
-            });
-
-            const token = localStorage.getItem("accessToken");
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL || "/api"}/upload/images`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    }
-                }
-            );
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { message: "Không thể upload ảnh" };
-        }
-    },
-    /**
-     * Lấy danh sách ProductItems (cơ bản)
-     */
-    getAll: async (params = {}) => {
-        try {
-            const {
-                search = '',
-                productId = '',
-                minPrice = '',
-                maxPrice = '',
-                sort = 'DESC',
-                page = 0,
-                pageSize = 10
-            } = params;
-
-            const response = await api.get("/product-items", {
-                params: {
-                    search,
-                    product_id: productId || undefined,
-                    min_price: minPrice || undefined,
-                    max_price: maxPrice || undefined,
-                    sort,
-                    page,
-                    page_size: pageSize
-                }
-            });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { message: "Không thể tải danh sách sản phẩm" };
-        }
-    },
+    // ... (rest of file)
 
     /**
      * Lấy danh sách ProductItems với đầy đủ thông tin hiển thị
@@ -117,7 +28,7 @@ const ProductItemService = {
                 pageSize = 10
             } = params;
 
-            const response = await api.get("/product-items/list", {
+            const response = await publicApiClient.get("/product-items/list", {
                 params: {
                     search,
                     product_id: productId || undefined,
@@ -191,6 +102,20 @@ const ProductItemService = {
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Không thể cập nhật sản phẩm" };
+        }
+    },
+
+    /**
+     * Cập nhật trạng thái ProductItem
+     * @param {UUID} id - ID của ProductItem
+     * @param {string} status - Trạng thái mới (active, inactive, discontinued)
+     */
+    updateStatus: async (id, status) => {
+        try {
+            const response = await api.patch(`/product-items/${id}/status`, { status });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể cập nhật trạng thái" };
         }
     },
 

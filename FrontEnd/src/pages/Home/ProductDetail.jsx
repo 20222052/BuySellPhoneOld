@@ -335,6 +335,9 @@ export default function ProductDetail() {
                             <Nav.Link eventKey="desc">Mô tả</Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
+                            <Nav.Link eventKey="specs">Thông số kỹ thuật</Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
                             <Nav.Link eventKey="review">Đánh giá</Nav.Link>
                         </Nav.Item>
                     </Nav>
@@ -349,6 +352,125 @@ export default function ProductDetail() {
                             ) : (
                                 "Chưa có mô tả"
                             )}
+                        </Tab.Pane>
+                        <Tab.Pane eventKey="specs">
+                            <div className="product-specs">
+                                {/* Màn hình */}
+                                {(product.screenSize || product.screenTechnology || product.screenResolution || product.refreshRate || product.screenType || product.screenFeatures) && (
+                                    <div className="specs-group mb-4">
+                                        <h5 className="specs-group-title">
+                                            <i className="bi bi-phone me-2"></i>Màn hình
+                                        </h5>
+                                        <table className="table table-striped specs-table">
+                                            <tbody>
+                                                {product.screenSize && <tr><td>Kích thước màn hình</td><td>{product.screenSize}"</td></tr>}
+                                                {product.screenTechnology && <tr><td>Công nghệ màn hình</td><td>{product.screenTechnology}</td></tr>}
+                                                {product.screenResolution && <tr><td>Độ phân giải</td><td>{product.screenResolution}</td></tr>}
+                                                {product.refreshRate && <tr><td>Tần số quét</td><td>{product.refreshRate}Hz</td></tr>}
+                                                {product.screenType && <tr><td>Kiểu màn hình</td><td>{product.screenType}</td></tr>}
+                                                {product.screenFeatures && <tr><td>Tính năng màn hình</td><td>{product.screenFeatures}</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Camera */}
+                                {(product.rearCamera || product.rearVideo || product.rearCameraFeatures || product.frontCamera || product.frontVideo) && (
+                                    <div className="specs-group mb-4">
+                                        <h5 className="specs-group-title">
+                                            <i className="bi bi-camera me-2"></i>Camera
+                                        </h5>
+                                        <table className="table table-striped specs-table">
+                                            <tbody>
+                                                {product.rearCamera && <tr><td>Camera sau</td><td>{product.rearCamera}</td></tr>}
+                                                {product.rearVideo && <tr><td>Quay video (sau)</td><td>{product.rearVideo}</td></tr>}
+                                                {product.rearCameraFeatures && <tr><td>Tính năng camera sau</td><td>{product.rearCameraFeatures}</td></tr>}
+                                                {product.frontCamera && <tr><td>Camera trước</td><td>{product.frontCamera}</td></tr>}
+                                                {product.frontVideo && <tr><td>Quay video (trước)</td><td>{product.frontVideo}</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Chip & RAM */}
+                                {(product.chipset || product.cpu || product.gpu || product.operatingSystem) && (
+                                    <div className="specs-group mb-4">
+                                        <h5 className="specs-group-title">
+                                            <i className="bi bi-cpu me-2"></i>Chip & RAM
+                                        </h5>
+                                        <table className="table table-striped specs-table">
+                                            <tbody>
+                                                {product.chipset && <tr><td>Chipset</td><td>{product.chipset}</td></tr>}
+                                                {product.cpu && <tr><td>CPU</td><td>{product.cpu}</td></tr>}
+                                                {product.gpu && <tr><td>GPU</td><td>{product.gpu}</td></tr>}
+                                                {product.operatingSystem && <tr><td>Hệ điều hành</td><td>{product.operatingSystem}</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Kết nối */}
+                                {(product.network || product.simType || product.wifi || product.bluetooth || product.nfc || product.gps || product.chargingPort) && (
+                                    <div className="specs-group mb-4">
+                                        <h5 className="specs-group-title">
+                                            <i className="bi bi-wifi me-2"></i>Kết nối
+                                        </h5>
+                                        <table className="table table-striped specs-table">
+                                            <tbody>
+                                                {product.network && <tr><td>Mạng</td><td>{product.network}</td></tr>}
+                                                {product.simType && <tr><td>Loại SIM</td><td>{product.simType}</td></tr>}
+                                                {product.wifi && <tr><td>Wi-Fi</td><td>{product.wifi}</td></tr>}
+                                                {product.bluetooth && <tr><td>Bluetooth</td><td>{product.bluetooth}</td></tr>}
+                                                {product.nfc && <tr><td>NFC</td><td>{product.nfc}</td></tr>}
+                                                {product.gps && <tr><td>GPS</td><td>{product.gps}</td></tr>}
+                                                {product.chargingPort && <tr><td>Cổng sạc</td><td>{product.chargingPort}</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Pin & Sạc */}
+                                {(product.batteryCapacity || product.chargingPower || product.chargingTechnology) && (
+                                    <div className="specs-group mb-4">
+                                        <h5 className="specs-group-title">
+                                            <i className="bi bi-battery-charging me-2"></i>Pin & Sạc
+                                        </h5>
+                                        <table className="table table-striped specs-table">
+                                            <tbody>
+                                                {product.batteryCapacity && <tr><td>Dung lượng pin</td><td>{product.batteryCapacity} mAh</td></tr>}
+                                                {product.chargingPower && <tr><td>Công suất sạc</td><td>{product.chargingPower}W</td></tr>}
+                                                {product.chargingTechnology && <tr><td>Công nghệ sạc</td><td>{product.chargingTechnology}</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Kích thước & Khác */}
+                                {(product.dimensions || product.weight || product.waterResistance || product.sensors || product.releaseTime) && (
+                                    <div className="specs-group mb-4">
+                                        <h5 className="specs-group-title">
+                                            <i className="bi bi-rulers me-2"></i>Kích thước & Khác
+                                        </h5>
+                                        <table className="table table-striped specs-table">
+                                            <tbody>
+                                                {product.dimensions && <tr><td>Kích thước</td><td>{product.dimensions}</td></tr>}
+                                                {product.weight && <tr><td>Trọng lượng</td><td>{product.weight}g</td></tr>}
+                                                {product.waterResistance && <tr><td>Kháng nước/bụi</td><td>{product.waterResistance}</td></tr>}
+                                                {product.releaseTime && <tr><td>Thời điểm ra mắt</td><td>{product.releaseTime}</td></tr>}
+                                                {product.sensors && <tr><td>Cảm biến</td><td>{product.sensors}</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Hiển thị khi không có thông số */}
+                                {!product.screenSize && !product.screenTechnology && !product.rearCamera && !product.chipset && !product.network && !product.batteryCapacity && !product.dimensions && (
+                                    <div className="text-muted text-center py-4">
+                                        <i className="bi bi-info-circle me-2"></i>
+                                        Chưa có thông số kỹ thuật
+                                    </div>
+                                )}
+                            </div>
                         </Tab.Pane>
                         <Tab.Pane eventKey="review">
                             Chưa có đánh giá

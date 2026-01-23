@@ -1,7 +1,7 @@
 /* Header Base Styles */
 
 .header-navbar {
-    background: var(--gradient-primary);
+    background: var(--gray-650);
     box-shadow: var(--shadow-header);
     transition: var(--transition-base), transform 0.4s cubic-bezier(.4, 2, .6, 1);
     padding: 0.5rem 0;
@@ -22,7 +22,7 @@
 }
 
 .header-navbar.scrolled {
-    background: var(--gradient-primary);
+    background: var(--gray-650);
     box-shadow: var(--shadow-xl);
     padding: 0.3rem 0;
 }

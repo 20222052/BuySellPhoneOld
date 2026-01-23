@@ -38,6 +38,7 @@ import BrandList from "@/pages/Admin/Brands/BrandList";
 import UserList from "@/pages/Admin/Users/UserList";
 import ProductItemList from "@/pages/Admin/Products/ProductItemList";
 import ProductList from "@/pages/Admin/Products/ProductList";
+import BlogList from "@/pages/Admin/Blogs/BlogList";
 
 export default function AppRouter() {
   return (
@@ -111,6 +112,7 @@ export default function AppRouter() {
           <Route path="users" element={<UserList />} />
           <Route path="products" element={<ProductList />} />
           <Route path="variants" element={<ProductItemList />} />
+          <Route path="blogs" element={<BlogList />} />
           <Route path="orders" element={<div>Admin Orders</div>} />
         </Route>
 

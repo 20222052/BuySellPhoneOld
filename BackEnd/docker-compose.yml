@@ -32,3 +32,18 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: docker_postgres_pgvector
+    ports:
+      - "5433:5432"     # port datasource
+    environment:
+      POSTGRES_USER: tungnt         # thay bằng user bạn muốn
+      POSTGRES_PASSWORD: tungnt # thay bằng password bạn muốn
+      POSTGRES_DB: buysellphoneold             # optional: setting default DB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:

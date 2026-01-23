@@ -1,0 +1,133 @@
+.hero-section {
+    /* Light grey background */
+    overflow: hidden;
+}
+
+.hero-banner {
+    background: transparent;
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Left Content */
+.hero-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: #d70018;
+    /* Primary red */
+    font-size: 2rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 2.5rem;
+    color: #333;
+}
+
+/* Center Image */
+.hero-image-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-main-img {
+    max-width: 100%;
+    height: auto;
+    max-height: 350px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.hero-main-img:hover {
+    transform: scale(1.05);
+}
+
+/* Right Content */
+.hero-right {
+    text-align: right;
+}
+
+.price-tag {
+    background: #d70018;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 50px 0 0 50px;
+    /* Stylized shape */
+    display: inline-block;
+    align-self: flex-end;
+    position: relative;
+    margin-right: -20px;
+    /* Pull to right edge if desired, or just align */
+}
+
+.price-tag .label {
+    font-size: 1rem;
+    display: block;
+    font-weight: 500;
+}
+
+.price-tag .price {
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.promo-box {
+    text-align: right;
+    width: 100%;
+}
+
+.promo-item {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+.promo-item strong {
+    color: #d70018;
+    font-size: 1.1rem;
+}
+
+.badge-0-percent {
+    background: #fff;
+    border: 1px solid #d70018;
+    color: #d70018;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.date-range {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .hero-banner {
+        text-align: center;
+    }
+
+    .hero-left,
+    .hero-right {
+        align-items: center !important;
+        text-align: center !important;
+        padding: 20px 0;
+    }
+
+    .price-tag {
+        border-radius: 50px;
+        margin-right: 0;
+        align-self: center;
+    }
+
+    .promo-box {
+        text-align: center;
+    }
+}

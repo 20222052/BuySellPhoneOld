@@ -131,7 +131,7 @@ public class ProductItemServiceImpl implements ProductItemService {
             pageable = PageRequest.of(pageNumber, pageSize, Sort.by(direction, sortField));
         }
 
-        // Query 1: Get paginated ProductItems with Product, Brand, Category
+        // Query 1: Lấy danh sách productItem, Product, Brand, Category
         Page<ProductItem> result = productItemRepository.findAllWithFilters(
                 pattern,
                 productId,
@@ -142,7 +142,7 @@ public class ProductItemServiceImpl implements ProductItemService {
                 maxPrice,
                 pageable);
 
-        // If random enabled, shuffle the results
+        // Nếu random enable thì shuffle kết quả
         List<ProductItem> productItems;
         if (Boolean.TRUE.equals(randomEnabled)) {
             productItems = new ArrayList<>(result.getContent());
@@ -277,11 +277,12 @@ public class ProductItemServiceImpl implements ProductItemService {
                 // ProductItem name (variant)
                 .name(pi.getName())
                 .description(pi.getDescription())
+                .status(String.valueOf(pi.getStatus() == 0 ? ProductStatus.draft : pi.getStatus() == 1 ? ProductStatus.active : ProductStatus.discontinued))
                 // Product info
                 .productId(product.getId())
                 .productName(product.getName())
                 .productDescription(product.getDescription())
-                .productStatus(product.getStatus())
+                .productStatus(String.valueOf(pi.getStatus() == 0 ? ProductStatus.draft : pi.getStatus() == 1 ? ProductStatus.active : ProductStatus.discontinued))
                 // Brand
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
                 .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
@@ -429,6 +430,110 @@ public class ProductItemServiceImpl implements ProductItemService {
             productItem.setComparePrice(request.getComparePrice());
         }
 
+        // ================= SCREEN =================
+        if (request.getScreenSize() != null) {
+            productItem.setScreenSize(request.getScreenSize());
+        }
+        if (request.getScreenTechnology() != null) {
+            productItem.setScreenTechnology(request.getScreenTechnology());
+        }
+        if (request.getScreenResolution() != null) {
+            productItem.setScreenResolution(request.getScreenResolution());
+        }
+        if (request.getRefreshRate() != null) {
+            productItem.setRefreshRate(request.getRefreshRate());
+        }
+        if (request.getScreenType() != null) {
+            productItem.setScreenType(request.getScreenType());
+        }
+        if (request.getScreenFeatures() != null) {
+            productItem.setScreenFeatures(request.getScreenFeatures());
+        }
+
+        // ================= CAMERA =================
+        if (request.getRearCamera() != null) {
+            productItem.setRearCamera(request.getRearCamera());
+        }
+        if (request.getRearVideo() != null) {
+            productItem.setRearVideo(request.getRearVideo());
+        }
+        if (request.getRearCameraFeatures() != null) {
+            productItem.setRearCameraFeatures(request.getRearCameraFeatures());
+        }
+        if (request.getFrontCamera() != null) {
+            productItem.setFrontCamera(request.getFrontCamera());
+        }
+        if (request.getFrontVideo() != null) {
+            productItem.setFrontVideo(request.getFrontVideo());
+        }
+
+        // ================= CHIP – RAM =================
+        if (request.getChipset() != null) {
+            productItem.setChipset(request.getChipset());
+        }
+        if (request.getCpu() != null) {
+            productItem.setCpu(request.getCpu());
+        }
+        if (request.getGpu() != null) {
+            productItem.setGpu(request.getGpu());
+        }
+        if (request.getOperatingSystem() != null) {
+            productItem.setOperating_system(request.getOperatingSystem());
+        }
+
+        // ================= KẾT NỐI =================
+        if (request.getNfc() != null) {
+            productItem.setNfc(request.getNfc());
+        }
+        if (request.getSimType() != null) {
+            productItem.setSimType(request.getSimType());
+        }
+        if (request.getNetwork() != null) {
+            productItem.setNetwork(request.getNetwork());
+        }
+        if (request.getGps() != null) {
+            productItem.setGps(request.getGps());
+        }
+        if (request.getWifi() != null) {
+            productItem.setWifi(request.getWifi());
+        }
+        if (request.getBluetooth() != null) {
+            productItem.setBluetooth(request.getBluetooth());
+        }
+        if (request.getChargingPort() != null) {
+            productItem.setChargingPort(request.getChargingPort());
+        }
+
+        // ================= PIN & SẠC =================
+        if (request.getBatteryCapacity() != null) {
+            productItem.setBatteryCapacity(request.getBatteryCapacity());
+        }
+        if (request.getChargingPower() != null) {
+            productItem.setChargingPower(request.getChargingPower());
+        }
+        if (request.getChargingTechnology() != null) {
+            productItem.setChargingTechnology(request.getChargingTechnology());
+        }
+
+        // ================= KÍCH THƯỚC =================
+        if (request.getDimensions() != null) {
+            productItem.setDimensions(request.getDimensions());
+        }
+        if (request.getWeight() != null) {
+            productItem.setWeight(request.getWeight());
+        }
+
+        // ================= KHÁC =================
+        if (request.getWaterResistance() != null) {
+            productItem.setWaterResistance(request.getWaterResistance());
+        }
+        if (request.getSensors() != null) {
+            productItem.setSensors(request.getSensors());
+        }
+        if (request.getReleaseTime() != null) {
+            productItem.setReleaseTime(request.getReleaseTime());
+        }
+
         ProductItem updatedProductItem = productItemRepository.save(productItem);
         log.info("ProductItem basic info updated: {}", updatedProductItem.getId());
 
@@ -485,7 +590,7 @@ public class ProductItemServiceImpl implements ProductItemService {
             // Validate color name
             if (colorRequest.getName() == null || colorRequest.getName().trim().isEmpty()) {
                 log.warn("Skipping color without name");
-                continue;
+                throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Color name is required");
             }
 
             ProductColor productColor = ProductColor.builder()
@@ -759,6 +864,30 @@ public class ProductItemServiceImpl implements ProductItemService {
                 log.info("ProductMedia deleted: {}", existingItem.getId());
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public ProductItemResponse updateStatus(UUID id, ProductStatus status) {
+        log.info("Updating status for ProductItem {} to {}", id, status);
+
+        if (id == null) {
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product item ID is required");
+        }
+
+        if (status == null) {
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Status is required");
+        }
+
+        ProductItem productItem = productItemRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND, "Product item not found"));
+
+        // Update status using the enum code
+        productItem.setStatus(status.getCode());
+        ProductItem updatedProductItem = productItemRepository.save(productItem);
+
+        log.info("ProductItem status updated: {} -> status={}", id, status);
+        return Mapper.toProductItemResponse(updatedProductItem);
     }
 
     @Override

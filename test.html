@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat API Test Suite</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 10px;
+        }
+
+        input,
+        button {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background: #0066cc;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background: #0052a3;
+        }
+
+        .api-group {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .response {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+
+        #messages p {
+            padding: 8px;
+            margin: 5px 0;
+            background: #e3f2fd;
+            border-radius: 4px;
+        }
+
+        .response.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .response.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .response.loading {
+            background: #fff3e0;
+            color: #e65100;
+            border-left: 4px solid #ff9800;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Chat API Test Suite</h1>
+
+    <!-- Authentication Section -->
+    <div class="section" style="margin-bottom: 20px;">
+        <h2>🔐 Authentication</h2>
+        <div class="api-group">
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <label>Email:</label><br>
+                    <input type="email" id="loginEmail" value="admin@gmail.com" style="width: 100%;"
+                        placeholder="admin@gmail.com"><br>
+                    <label>Password:</label><br>
+                    <input type="password" id="loginPassword" value="admin" style="width: 100%;"
+                        placeholder="password"><br>
+                    <button onclick="login()">🔓 Login</button>
+                    <button onclick="logout()">🔒 Logout</button>
+                </div>
+                <div style="flex: 1;">
+                    <strong>Status:</strong> <span id="authStatus" class="status disconnected">NOT LOGGED IN</span><br>
+                    <small id="authInfo" style="color: #666;"></small>
+                </div>
+            </div>
+            <div id="authResponse" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- REST API Testing Section -->
+        <div class="section">
+            <h2>📡 REST APIs (ChatController)</h2>
+
+            <div class="api-group">
+                <h3>1. POST /chat/ingest/{productItemId}</h3>
+                <label>Product Item ID (UUID):</label><br>
+                <input type="text" value="9d4d4b33-6d85-44bd-9e03-8cc661da2622" id="productItemId" style="width: 100%;"
+                    placeholder="e.g., 123e4567-e89b-12d3-a456-426614174000"><br>
+                <button onclick="testIngest()">🚀 Test Ingest</button>
+                <div id="ingestResponse" class="response"></div>
+            </div>
+
+            <div class="api-group">
+                <h3>2. GET /chat/queue</h3>
+                <button onclick="testGetQueue()">📋 Get Queue</button>
+                <div id="queueResponse" class="response"></div>
+            </div>
+
+            <div class="api-group">
+                <h3>3. POST /chat/queue/pick</h3>
+                <button onclick="testPickUser()">👤 Pick Next User</button>
+                <div id="pickResponse" class="response"></div>
+                <div id="pickedSessionInfo"
+                    style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 4px; display: none;">
+                    <strong>✅ Picked Session:</strong> <span id="pickedSessionId"
+                        style="font-family: monospace; color: #2e7d32;"></span>
+                </div>
+            </div>
+
+            <div class="api-group">
+                <h3>4. Admin Chat with Picked User</h3>
+                <label>Admin Message to Send:</label><br>
+                <input type="text" id="adminMessage" style="width: 100%;" placeholder="Type admin message here..."><br>
+                <button onclick="sendAdminMessage()">👨‍💼 Send Admin Message</button>
+                <button onclick="endConversation()" style="background: #f44336;">🔚 End Conversation</button>
+                <div class="help-text" style="margin-top: 10px;">
+                    💡 <strong>How to use:</strong><br>
+                    1. Pick a user from queue (button above)<br>
+                    2. Connect WebSocket with the picked sessionId<br>
+                    3. Send admin messages here<br>
+                    4. Click "End Conversation" to return user to bot
+                </div>
+            </div>
+
+            <div class="api-group">
+                <h3>5. GET /chat/history/{sessionId}</h3>
+                <label>Session ID:</label><br>
+                <input type="text" id="historySessionId" style="width: 100%;" placeholder="e.g., test-session-123"><br>
+                <button onclick="testGetHistory()">📜 Get History</button>
+                <div id="historyResponse" class="response"></div>
+            </div>
+
+            <div class="help-text">
+                <strong>💡 Troubleshooting:</strong><br>
+                • If you see "Failed to fetch" errors, ensure backend is running on
+                <code>http://localhost:8080</code><br>
+                • CORS errors? See <code>BackEnd/CORS_FIX_GUIDE.md</code> for solutions<br>
+                • Press F12 to open browser console for detailed error messages
+            </div>
+        </div>
+
+        <!-- WebSocket Testing Section -->
+        <div class="section">
+            <h2>🔌 WebSocket (ChatWebSocketController)</h2>
+
+            <div class="api-group">
+                <h3>Connection Status: <span id="wsStatus" class="status disconnected">DISCONNECTED</span></h3>
+                <label>Session ID:</label><br>
+                <input type="text" id="sessionId" value="test-session-123" style="width: 100%;"><br>
+                <button onclick="connect()">🔗 Connect</button>
+                <button onclick="disconnect()">❌ Disconnect</button>
+            </div>
+
+            <div class="api-group">
+                <h3>Send Message</h3>
+                <label>Message:</label><br>
+                <input type="text" id="message" value="Hello" style="width: 100%;"><br>
+                <button onclick="sendMessage()">📤 Send</button>
+                <button onclick="sendHumanRequest()">👨‍💼 Request Human</button>
+            </div>
+
+            <h3>💬 Received Messages:</h3>
+            <div id="messages" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080';
+        let stompClient = null;
+        let sessionId = 'test-session-123';
+        let jwtToken = localStorage.getItem('jwtToken') || null;
+
+        // Initialize auth status on page load
+        window.onload = function () {
+            updateAuthStatus();
+        };
+
+        // ========== Authentication Functions ==========
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const responseDiv = document.getElementById('authResponse');
+
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+
+            responseDiv.style.display = 'block';
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '⏳ Logging in...';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.data && result.data.token) {
+                    jwtToken = result.data.token;
+                    localStorage.setItem('jwtToken', jwtToken);
+
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `✅ Login successful!\n\nToken: ${jwtToken.substring(0, 50)}...`;
+
+                    updateAuthStatus(result.data.account);
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `❌ Login failed\n\n${JSON.stringify(result, null, 2)}`;
+                    updateAuthStatus();
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = formatError(error, 'POST /api/auth/login');
+                updateAuthStatus();
+            }
+        }
+
+        async function logout() {
+            const responseDiv = document.getElementById('authResponse');
+            responseDiv.style.display = 'block';
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '⏳ Logging out...';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/logout`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+
+                jwtToken = null;
+                localStorage.removeItem('jwtToken');
+
+                responseDiv.className = 'response success';
+                responseDiv.textContent = '✅ Logged out successfully';
+                updateAuthStatus();
+            } catch (error) {
+                // Even if backend fails, clear local token
+                jwtToken = null;
+                localStorage.removeItem('jwtToken');
+
+                responseDiv.className = 'response success';
+                responseDiv.textContent = '✅ Logged out (local token cleared)';
+                updateAuthStatus();
+            }
+        }
+
+        function updateAuthStatus(account = null) {
+            const statusSpan = document.getElementById('authStatus');
+            const infoSpan = document.getElementById('authInfo');
+
+            if (jwtToken && account) {
+                statusSpan.textContent = 'LOGGED IN';
+                statusSpan.className = 'status connected';
+                infoSpan.textContent = `User: ${account.fullname || account.email || 'Unknown'}\nRole: ${account.role || 'N/A'}`;
+            } else if (jwtToken) {
+                statusSpan.textContent = 'LOGGED IN';
+                statusSpan.className = 'status connected';
+                infoSpan.textContent = 'Token available';
+            } else {
+                statusSpan.textContent = 'NOT LOGGED IN';
+                statusSpan.className = 'status disconnected';
+                infoSpan.textContent = 'Please login to test secured endpoints';
+            }
+        }
+
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (jwtToken) {
+                headers['Authorization'] = `Bearer ${jwtToken}`;
+            }
+            return headers;
+        }
+
+        // ========== REST API Functions ==========
+
+        async function testIngest() {
+            const productItemId = document.getElementById('productItemId').value;
+            const responseDiv = document.getElementById('ingestResponse');
+
+            if (!productItemId) {
+                alert('Please enter Product Item ID');
+                return;
+            }
+
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '⏳ Sending request...';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/chat/ingest/${productItemId}`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                const text = await response.text();
+
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `✅ Success (Status: ${response.status})\n\n${text}`;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `❌ Error (Status: ${response.status})\n\n${text}`;
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = formatError(error, 'POST /api/chat/ingest');
+            }
+        }
+
+        async function testGetQueue() {
+            const responseDiv = document.getElementById('queueResponse');
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '⏳ Fetching queue...';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/chat/queue`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `✅ Success (Status: ${response.status})\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `❌ Error (Status: ${response.status})`;
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = formatError(error, 'GET /api/chat/queue');
+            }
+        }
+
+        async function testPickUser() {
+            const responseDiv = document.getElementById('pickResponse');
+            const pickedInfo = document.getElementById('pickedSessionInfo');
+            const pickedSessionSpan = document.getElementById('pickedSessionId');
+
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '⏳ Picking user...';
+            pickedInfo.style.display = 'none';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/chat/queue/pick`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                const text = await response.text();
+
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `✅ Success (Status: ${response.status})\n\n${text}`;
+
+                    // If a session was picked (not empty queue)
+                    if (text !== "Hàng đợi rỗng.") {
+                        // Auto-fill the sessionId input fields
+                        document.getElementById('sessionId').value = text;
+                        document.getElementById('historySessionId').value = text;
+
+                        // Show picked session info
+                        pickedSessionSpan.textContent = text;
+                        pickedInfo.style.display = 'block';
+
+                        // Update global sessionId
+                        sessionId = text;
+                    }
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `❌ Error (Status: ${response.status})\n\n${text}`;
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = formatError(error, 'POST /api/chat/queue/pick');
+            }
+        }
+
+        async function testGetHistory() {
+            const sessionId = document.getElementById('historySessionId').value;
+            const responseDiv = document.getElementById('historyResponse');
+
+            if (!sessionId) {
+                alert('Please enter Session ID');
+                return;
+            }
+
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = '⏳ Loading history...';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/chat/history/${sessionId}`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = `✅ Success (Status: ${response.status})\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `❌ Error (Status: ${response.status})`;
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = formatError(error, 'GET /api/chat/history');
+            }
+        }
+
+        // Error formatter
+        function formatError(error, endpoint) {
+            let msg = `❌ REQUEST FAILED\n\n`;
+            msg += `Endpoint: ${endpoint}\n`;
+            msg += `Error: ${error.message}\n\n`;
+
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                msg += `🔧 POSSIBLE CAUSES:\n`;
+                msg += `1. Backend server not running on ${BASE_URL}\n`;
+                msg += `2. CORS policy blocking the request\n`;
+                msg += `3. Network connection issue\n\n`;
+                msg += `💡 SOLUTIONS:\n`;
+                msg += `• Start backend: Run Spring Boot app on port 8080\n`;
+                msg += `• Fix CORS: See BackEnd/CORS_FIX_GUIDE.md\n`;
+                msg += `• Check browser console (F12) for details\n`;
+            }
+
+            return msg;
+        }
+
+        // ========== WebSocket Functions ==========
+
+        function connect() {
+            sessionId = document.getElementById('sessionId').value;
+
+            // Check if logged in
+            if (!jwtToken) {
+                alert('⚠️ Please login first before connecting to WebSocket!');
+                showMessage('❌ Connection failed: Not logged in');
+                return;
+            }
+
+            const socket = new SockJS(`${BASE_URL}/api/ws`);
+            stompClient = Stomp.over(socket);
+
+            // STOMP headers with JWT token
+            const stompHeaders = {
+                'Authorization': `Bearer ${jwtToken}`
+            };
+
+            stompClient.connect(stompHeaders, function (frame) {
+                console.log('Connected: ' + frame);
+
+                // Subscribe to personal queue
+                stompClient.subscribe('/queue/chat/' + sessionId, function (message) {
+                    showMessage('🤖 BOT: ' + message.body);
+                });
+
+                // Subscribe to admin queue updates
+                stompClient.subscribe('/topic/admin/queue', function (message) {
+                    showMessage('📢 ADMIN UPDATE: ' + message.body);
+                });
+
+                // Subscribe to admin session topic (receive customer messages when admin)
+                stompClient.subscribe('/topic/admin/session/' + sessionId, function (message) {
+                    showMessage('👤 CUSTOMER: ' + message.body);
+                });
+
+                updateConnectionStatus(true);
+                showMessage('✅ Connected to WebSocket!');
+            }, function (error) {
+                updateConnectionStatus(false);
+                showMessage('❌ Connection error: ' + error);
+                console.error('WebSocket error:', error);
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            updateConnectionStatus(false);
+            showMessage('❌ Disconnected');
+        }
+
+        function sendMessage() {
+            if (stompClient === null || !stompClient.connected) {
+                alert('Please connect first!');
+                return;
+            }
+
+            const message = document.getElementById('message').value;
+
+            stompClient.send("/app/chat.send", {}, JSON.stringify({
+                'sessionId': sessionId,
+                'content': message
+            }));
+
+            showMessage('📤 YOU: ' + message);
+        }
+
+        function sendAdminMessage() {
+            if (stompClient === null || !stompClient.connected) {
+                alert('Please connect to WebSocket first!');
+                return;
+            }
+
+            const message = document.getElementById('adminMessage').value;
+
+            if (!message) {
+                alert('Please enter a message!');
+                return;
+            }
+
+            // Send to the new admin endpoint
+            stompClient.send("/app/chat.admin.send", {}, JSON.stringify({
+                'sessionId': sessionId,
+                'content': message
+            }));
+
+            showMessage('👨‍💼 ADMIN SENT: ' + message);
+
+            // Clear the input
+            document.getElementById('adminMessage').value = '';
+        }
+
+        function sendHumanRequest() {
+            if (stompClient === null || !stompClient.connected) {
+                alert('Please connect first!');
+                return;
+            }
+
+            stompClient.send("/app/chat.send", {}, JSON.stringify({
+                'sessionId': sessionId,
+                'content': 'Gặp nhân viên'
+            }));
+
+            showMessage('📤 YOU: Gặp nhân viên (Request Human Support)');
+        }
+
+        async function endConversation() {
+            if (!sessionId) {
+                alert('No active session!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/chat/queue/end/${sessionId}`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                const text = await response.text();
+
+                if (response.ok) {
+                    showMessage('✅ ' + text);
+                } else {
+                    showMessage('❌ Error ending conversation: ' + text);
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message);
+            }
+        }
+
+        function showMessage(message) {
+            const messagesDiv = document.getElementById('messages');
+            const p = document.createElement('p');
+            p.appendChild(document.createTextNode(new Date().toLocaleTimeString() + ' - ' + message));
+            messagesDiv.appendChild(p);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusSpan = document.getElementById('wsStatus');
+            if (connected) {
+                statusSpan.textContent = 'CONNECTED';
+                statusSpan.className = 'status connected';
+            } else {
+                statusSpan.textContent = 'DISCONNECTED';
+                statusSpan.className = 'status disconnected';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -26,7 +26,10 @@ export default function DataTable({
                     <thead>
                         <tr>
                             {columns.map((col) => (
-                                <th key={col.key} style={col.width ? { width: col.width } : {}}>
+                                <th
+                                    key={col.key}
+                                    style={{ ...(col.width ? { width: col.width } : {}), ...(col.key === 'title' ? { textAlign: 'left' } : {}) }}
+                                >
                                     {col.label}
                                 </th>
                             ))}
@@ -55,7 +58,10 @@ export default function DataTable({
                                     style={{ cursor: onRowClick ? 'pointer' : 'default' }}
                                 >
                                     {columns.map((col) => (
-                                        <td key={col.key}>
+                                        <td
+                                            key={col.key}
+                                            style={col.key === 'title' ? { textAlign: 'left' } : {}}
+                                        >
                                             {col.render ? col.render(row[col.key], row) : row[col.key]}
                                         </td>
                                     ))}

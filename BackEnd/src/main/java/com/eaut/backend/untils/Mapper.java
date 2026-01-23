@@ -9,6 +9,7 @@ import com.eaut.backend.model.request.ProductItemRequest;
 import com.eaut.backend.model.request.ProductRequest;
 import com.eaut.backend.model.request.RegisterRequest;
 import com.eaut.backend.model.response.BrandResponse;
+import com.eaut.backend.model.response.BlogResponse;
 import com.eaut.backend.model.response.CategoryResponse;
 import com.eaut.backend.model.response.ProductColorResponse;
 import com.eaut.backend.model.response.ProductItemDetailResponse;
@@ -91,6 +92,22 @@ public class Mapper {
                                 .build();
         }
 
+        public static BlogResponse toBlogResponse(Blog blog) {
+                BlogResponse response = BlogResponse.builder()
+                                                .id(blog.getId())
+                                                .title(blog.getTitle())
+                                                .content(blog.getContent())
+                                                .imageUrl(blog.getImageUrl())
+                                                .author(blog.getAuthor())
+                                                .viewCount(blog.getViewCount())
+                                                .build();
+                response.setCreatedAt(blog.getCreatedAt());
+                response.setModifiedAt(blog.getModifiedAt());
+                response.setCreatedBy(blog.getCreatedBy());
+                response.setCreatedBy(blog.getModifiedBy());
+                return response;
+        }
+
         public static ProductColorResponse toProductColorResponse(ProductColor productColor) {
                 new ProductColorResponse();
                 return ProductColorResponse.builder()
@@ -160,9 +177,47 @@ public class Mapper {
                                 .product(product)
                                 .name(request.getName())
                                 .description(request.getDescription())
+                                .status(ProductStatus.draft.getCode())
                                 .basePrice(request.getBasePrice())
                                 .sellPrice(request.getSellPrice())
                                 .comparePrice(request.getComparePrice())
+                                // Screen
+                                .screenSize(request.getScreenSize())
+                                .screenTechnology(request.getScreenTechnology())
+                                .screenResolution(request.getScreenResolution())
+                                .refreshRate(request.getRefreshRate())
+                                .screenType(request.getScreenType())
+                                .screenFeatures(request.getScreenFeatures())
+                                // Camera
+                                .rearCamera(request.getRearCamera())
+                                .rearVideo(request.getRearVideo())
+                                .rearCameraFeatures(request.getRearCameraFeatures())
+                                .frontCamera(request.getFrontCamera())
+                                .frontVideo(request.getFrontVideo())
+                                // Chip
+                                .chipset(request.getChipset())
+                                .cpu(request.getCpu())
+                                .gpu(request.getGpu())
+                                .operating_system(request.getOperatingSystem())
+                                // Connectivity
+                                .nfc(request.getNfc())
+                                .simType(request.getSimType())
+                                .network(request.getNetwork())
+                                .gps(request.getGps())
+                                .wifi(request.getWifi())
+                                .bluetooth(request.getBluetooth())
+                                .chargingPort(request.getChargingPort())
+                                // Battery
+                                .batteryCapacity(request.getBatteryCapacity())
+                                .chargingPower(request.getChargingPower())
+                                .chargingTechnology(request.getChargingTechnology())
+                                // Dimensions
+                                .dimensions(request.getDimensions())
+                                .weight(request.getWeight())
+                                // Other
+                                .waterResistance(request.getWaterResistance())
+                                .sensors(request.getSensors())
+                                .releaseTime(request.getReleaseTime())
                                 .build();
         }
 
@@ -253,6 +308,43 @@ public class Mapper {
                                 .sellPrice(productItem.getSellPrice())
                                 .comparePrice(productItem.getComparePrice())
                                 .qtyAvailable(totalQtyAvailable)
+                                // Screen specs
+                                .screenSize(productItem.getScreenSize())
+                                .screenTechnology(productItem.getScreenTechnology())
+                                .screenResolution(productItem.getScreenResolution())
+                                .refreshRate(productItem.getRefreshRate())
+                                .screenType(productItem.getScreenType())
+                                .screenFeatures(productItem.getScreenFeatures())
+                                // Camera specs
+                                .rearCamera(productItem.getRearCamera())
+                                .rearVideo(productItem.getRearVideo())
+                                .rearCameraFeatures(productItem.getRearCameraFeatures())
+                                .frontCamera(productItem.getFrontCamera())
+                                .frontVideo(productItem.getFrontVideo())
+                                // Chip specs
+                                .chipset(productItem.getChipset())
+                                .cpu(productItem.getCpu())
+                                .gpu(productItem.getGpu())
+                                .operatingSystem(productItem.getOperating_system())
+                                // Connectivity specs
+                                .nfc(productItem.getNfc())
+                                .simType(productItem.getSimType())
+                                .network(productItem.getNetwork())
+                                .gps(productItem.getGps())
+                                .wifi(productItem.getWifi())
+                                .bluetooth(productItem.getBluetooth())
+                                .chargingPort(productItem.getChargingPort())
+                                // Battery specs
+                                .batteryCapacity(productItem.getBatteryCapacity())
+                                .chargingPower(productItem.getChargingPower())
+                                .chargingTechnology(productItem.getChargingTechnology())
+                                // Dimensions
+                                .dimensions(productItem.getDimensions())
+                                .weight(productItem.getWeight())
+                                // Other specs
+                                .waterResistance(productItem.getWaterResistance())
+                                .sensors(productItem.getSensors())
+                                .releaseTime(productItem.getReleaseTime())
                                 // Related data (from separate queries)
                                 .models(models != null
                                                 ? models.stream().map(Mapper::toProductModelDetailResponse).toList()
