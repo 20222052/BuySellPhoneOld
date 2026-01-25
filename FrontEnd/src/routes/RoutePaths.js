@@ -6,6 +6,8 @@ export const RoutePaths = {
   BLOG: "/blogs",
   BLOG_DETAIL: "/blogs/:id",
   TRADEIN: "/tradein",
+  TRADEIN_DETAIL: "/trade-in/request",
+  TRADEIN_RESULT: "/trade-in/result",
   CART: "/cart",
   CHECKOUT: "/checkout",
   ABOUT: "/about",

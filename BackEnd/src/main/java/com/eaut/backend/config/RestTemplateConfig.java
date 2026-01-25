@@ -13,7 +13,7 @@ import java.time.Duration;
 @Configuration
 public class RestTemplateConfig {
 
-    @Value("${ai.diagnostic.api.timeout:60000}")
+    @Value("${ai.diagnostic.api.timeout:300000}")
     private int aiDiagnosticTimeout;
 
     /**

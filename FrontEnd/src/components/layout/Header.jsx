@@ -276,19 +276,19 @@ export default function Header() {
                     <i className="bi bi-person me-2"></i>
                     Thông Tin Cá Nhân
                   </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/orders">
+                  {/* <Dropdown.Item as={Link} to="/orders">
                     <i className="bi bi-bag-check me-2"></i>
                     Đơn Hàng
-                  </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/wishlist">
+                  </Dropdown.Item> */}
+                  {/* <Dropdown.Item as={Link} to="/wishlist">
                     <i className="bi bi-heart me-2"></i>
                     Yêu Thích
-                  </Dropdown.Item>
+                  </Dropdown.Item> */}
                   <Dropdown.Divider />
-                  <Dropdown.Item as={Link} to="/settings">
+                  {/* <Dropdown.Item as={Link} to="/settings">
                     <i className="bi bi-gear me-2"></i>
                     Cài Đặt
-                  </Dropdown.Item>
+                  </Dropdown.Item> */}
                   <Dropdown.Item onClick={handleLogout} className="text-danger">
                     <i className="bi bi-box-arrow-right me-2"></i>
                     Đăng Xuất

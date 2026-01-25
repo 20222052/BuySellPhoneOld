@@ -124,7 +124,48 @@
 
 
 .product-overlay {
-    display: none !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.btn-quick-view {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #fff;
+    color: #333;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-size: 18px;
+}
+
+.product-card:hover .btn-quick-view {
+    transform: scale(1);
+}
+
+.btn-quick-view:hover {
+    background: #d70018;
+    color: #fff;
+    transform: scale(1.1);
 }
 
 
@@ -192,6 +233,28 @@ a:hover .product-name {
 
 
 .product-actions {
-    display: none;
-    /* Hide actions */
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 15px;
+    width: 100%;
+}
+
+.btn-add-cart {
+    background-color: #d70018 !important;
+    border-color: #d70018 !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 6px 15px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s;
+}
+
+.btn-add-cart:hover {
+    background-color: #a30012 !important;
+    border-color: #a30012 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(215, 0, 24, 0.2);
 }

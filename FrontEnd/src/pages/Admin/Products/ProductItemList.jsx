@@ -71,6 +71,7 @@ export default function ProductItemList() {
     // Status update state
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [currentStatus, setCurrentStatus] = useState('active');
+    const [isTradeIn, setIsTradeIn] = useState(0);
 
     // Form data
     const [formData, setFormData] = useState({
@@ -273,6 +274,7 @@ export default function ProductItemList() {
                 // Map status integer to enum string
                 const statusMap = { 0: 'inactive', 1: 'active', 2: 'discontinued' };
                 setCurrentStatus(statusMap[details.status] || 'active');
+                setIsTradeIn(details.isTradeIn || 0);
             } catch (error) {
                 console.error('Load details error:', error);
                 setFormData({
@@ -295,6 +297,7 @@ export default function ProductItemList() {
                 // Fallback status mapping from list data
                 const statusMap = { 0: 'inactive', 1: 'active', 2: 'discontinued' };
                 setCurrentStatus(statusMap[product.status] || 'active');
+                setIsTradeIn(product.isTradeIn || 0);
             }
         } else {
             setFormData({
@@ -341,8 +344,11 @@ export default function ProductItemList() {
             dimensions: '', weight: '',
             waterResistance: '', sensors: '', releaseTime: '',
             models: [],
+            models: [],
             mediaList: []
         });
+        setCurrentStatus('active');
+        setIsTradeIn(0);
     };
 
     // Handle form change
@@ -365,6 +371,27 @@ export default function ProductItemList() {
         } catch (error) {
             console.error('Update status error:', error);
             toast.error(error.message || 'Không thể cập nhật trạng thái');
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
+    // Handle Trade-in change
+    const handleTradeInChange = async () => {
+        if (!selectedProduct || updatingStatus) return;
+
+        const newStatus = isTradeIn === 1 ? 0 : 1;
+
+        try {
+            setUpdatingStatus(true);
+            await ProductItemService.updateTradeIn(selectedProduct.id, newStatus);
+            toast.success(`Đã ${newStatus === 1 ? 'bật' : 'tắt'} Trade-in thành công!`);
+            setIsTradeIn(newStatus);
+            // Refresh the product list to show updated status
+            fetchProducts();
+        } catch (error) {
+            console.error('Update updateTradeIn error:', error);
+            toast.error(error.message || 'Không thể cập nhật trạng thái Trade-in');
         } finally {
             setUpdatingStatus(false);
         }
@@ -1024,19 +1051,15 @@ export default function ProductItemList() {
             render: (value) => getStatusBadge(value)
         },
         {
-            key: 'averageRating',
-            label: 'Đánh giá',
+            key: 'isTradeIn',
+            label: 'Trade-in',
             width: '100px',
-            render: (value, row) => (
-                <div className="rating-cell">
-                    {value ? (
-                        <>
-                            <i className="bi bi-star-fill text-warning"></i>
-                            <span>{value.toFixed(1)}</span>
-                            <small>({row.totalRatings})</small>
-                        </>
+            render: (value) => (
+                <div className="trade-in-cell">
+                    {value === 1 ? (
+                        <span className="badge bg-success">Có</span>
                     ) : (
-                        <span className="text-muted">Chưa có</span>
+                        <span className="badge bg-secondary">Không</span>
                     )}
                 </div>
             )
@@ -1358,32 +1381,62 @@ export default function ProductItemList() {
                                                 </div>
                                             )}
 
-                                            {/* Status Update Section - View Mode */}
                                             {modalMode === 'view' && (
                                                 <div className="status-section" style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                        <label style={{ fontWeight: '500', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            <i className="bi bi-toggle-on"></i>
-                                                            Trạng thái:
-                                                        </label>
-                                                        <select
-                                                            value={currentStatus}
-                                                            onChange={(e) => handleStatusChange(e.target.value)}
-                                                            disabled={updatingStatus}
-                                                            style={{
-                                                                padding: '8px 12px',
-                                                                borderRadius: '6px',
-                                                                border: '1px solid #dee2e6',
-                                                                background: 'white',
-                                                                cursor: updatingStatus ? 'not-allowed' : 'pointer',
-                                                                opacity: updatingStatus ? 0.6 : 1,
-                                                                fontSize: '0.95rem'
-                                                            }}
-                                                        >
-                                                            <option value="active">Đang bán</option>
-                                                            <option value="draft">Nháp</option>
-                                                            <option value="discontinued">Ngừng sản xuất</option>
-                                                        </select>
+                                                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '30px' }}>
+                                                        {/* Status Dropdown */}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                            <label style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <i className="bi bi-toggle-on"></i>
+                                                                Trạng thái:
+                                                            </label>
+                                                            <select
+                                                                value={currentStatus}
+                                                                onChange={(e) => handleStatusChange(e.target.value)}
+                                                                disabled={updatingStatus}
+                                                                style={{
+                                                                    padding: '8px 12px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #dee2e6',
+                                                                    background: 'white',
+                                                                    cursor: updatingStatus ? 'not-allowed' : 'pointer',
+                                                                    opacity: updatingStatus ? 0.6 : 1,
+                                                                    fontSize: '0.95rem'
+                                                                }}
+                                                            >
+                                                                <option value="active">Đang bán</option>
+                                                                <option value="draft">Nháp</option>
+                                                                <option value="discontinued">Ngừng sản xuất</option>
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Trade-in Toggle Switch */}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                            <label style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <i className="bi bi-arrow-repeat"></i>
+                                                                Trade-in:
+                                                            </label>
+                                                            <div className="form-check form-switch" style={{ margin: 0, paddingLeft: '2.5em' }}>
+                                                                <input
+                                                                    className="form-check-input"
+                                                                    type="checkbox"
+                                                                    role="switch"
+                                                                    id="tradeInSwitch"
+                                                                    checked={isTradeIn === 1}
+                                                                    onChange={handleTradeInChange}
+                                                                    disabled={updatingStatus}
+                                                                    style={{ cursor: 'pointer', width: '3em', height: '1.5em' }}
+                                                                />
+                                                                <label className="form-check-label" htmlFor="tradeInSwitch">
+                                                                    {isTradeIn === 1 ? (
+                                                                        <span className="text-success fw-bold">Đang bật</span>
+                                                                    ) : (
+                                                                        <span className="text-secondary">Đang tắt</span>
+                                                                    )}
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
                                                         {updatingStatus && (
                                                             <span style={{ fontSize: '0.85rem', color: '#6c757d', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                                 <i className="bi bi-hourglass-split"></i>

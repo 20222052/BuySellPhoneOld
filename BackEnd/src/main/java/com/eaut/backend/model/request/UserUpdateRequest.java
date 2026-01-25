@@ -15,13 +15,14 @@ import java.util.List;
 public class UserUpdateRequest {
     private String fullName;
     private Gender gender;
-    
-    @JsonFormat(pattern = "dd/MM/yyyy")  // Thêm annotation này
+
+    @JsonFormat(pattern = "dd/MM/yyyy") // Thêm annotation này
     private LocalDate birthDate;
-    
+
     private String email;
     private String phone;
     private String password;
+    private String avatarUrl;
 
     List<String> roles;
 }

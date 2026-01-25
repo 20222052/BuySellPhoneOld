@@ -48,6 +48,9 @@ public class User extends AuditBase {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @ManyToMany(fetch = FetchType.EAGER)
     Set<Role> roles;
 

@@ -29,7 +29,7 @@ export default function Products() {
     // State lọc
     const [selectedBrand, setSelectedBrand] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
-    const [selectedStatus, setSelectedStatus] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState("active");
     const [selectedPrice, setSelectedPrice] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState("createdAt-DESC");
@@ -99,7 +99,7 @@ export default function Products() {
                     search: searchQuery,
                     brandId: selectedBrand || "",
                     categoryId: selectedCategory || "",
-                    status: selectedStatus || "",
+                    status: "active",
                     minPrice,
                     maxPrice,
                     sortBy,
@@ -112,7 +112,7 @@ export default function Products() {
                     search: searchQuery,
                     brandId: selectedBrand || "",
                     categoryId: selectedCategory || "",
-                    status: selectedStatus || "",
+                    status: "active",
                     minPrice,
                     maxPrice,
                     sortBy: sortBy,
@@ -214,14 +214,6 @@ export default function Products() {
                     </Form.Select>
                 </Col>
                 <Col lg={2} md={4} sm={6} className="mb-2">
-                    <Form.Select value={selectedStatus} onChange={handleFilterChange(setSelectedStatus)}>
-                        <option value="">Trạng thái</option>
-                        {productStatuses.map((s) => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
-                        ))}
-                    </Form.Select>
-                </Col>
-                <Col lg={2} md={4} sm={6} className="mb-2">
                     <Form.Select value={selectedPrice} onChange={handleFilterChange(setSelectedPrice)}>
                         <option value="">Mức giá</option>
                         {priceRanges.map((r) => (
@@ -261,11 +253,7 @@ export default function Products() {
                     >
                         Xóa bộ lọc
                     </Button>
-                    {(selectedBrand || selectedCategory || selectedStatus || selectedPrice || searchQuery) && (
-                        <Badge bg="primary" className="d-flex align-items-center px-3">
-                            {[selectedBrand, selectedCategory, selectedStatus, selectedPrice, searchQuery].filter(Boolean).length} bộ lọc
-                        </Badge>
-                    )}
+
                 </Col>
             </Row>
 

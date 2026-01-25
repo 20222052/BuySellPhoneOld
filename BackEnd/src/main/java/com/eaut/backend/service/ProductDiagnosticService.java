@@ -1,12 +1,15 @@
 package com.eaut.backend.service;
 
 import com.eaut.backend.constant.DiagnosticStatus;
+import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.entities.ProductDiagnostic;
 import com.eaut.backend.entities.ProductItem;
 import com.eaut.backend.entities.User;
+import com.eaut.backend.exception.ApplicationException;
 import com.eaut.backend.model.request.DiagnosticRequest;
 import com.eaut.backend.model.response.DiagnosticResponse;
 import com.eaut.backend.model.response.ProductDiagnosticDTO;
+import com.eaut.backend.model.response.UserResponse;
 import com.eaut.backend.repository.ProductDiagnosticRepository;
 import com.eaut.backend.repository.ProductItemRepository;
 import com.eaut.backend.repository.UserRepository;
@@ -39,6 +42,7 @@ public class ProductDiagnosticService {
     private final ProductDiagnosticRepository diagnosticRepository;
     private final ProductItemRepository productItemRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -122,11 +126,7 @@ public class ProductDiagnosticService {
     /**
      * Tạo diagnostic mới từ kết quả AI
      */
-    /**
-     * Tạo diagnostic mới từ kết quả AI
-     */
-    @Transactional
-    public ProductDiagnosticDTO createDiagnosticFromAI(DiagnosticRequest request, MultipartFile imageFile) {
+    public ProductDiagnosticDTO createDiagnosticFromAI(DiagnosticRequest request, List<MultipartFile> files) {
         // 1. Validate product item exists
         ProductItem productItem = productItemRepository.findById(request.getProductItemId())
                 .orElseThrow(() -> new RuntimeException("Product item not found: " + request.getProductItemId()));
@@ -139,14 +139,17 @@ public class ProductDiagnosticService {
         if (images == null)
             images = new ArrayList<>();
 
-        // Support legacy single image field or file upload (if needed, convert file to
-        // base64)
-        if (imageFile != null && !imageFile.isEmpty()) {
-            try {
-                String base64 = Base64.getEncoder().encodeToString(imageFile.getBytes());
-                images.add(base64);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to process image file", e);
+        // Process uploaded files if any
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    try {
+                        String base64 = Base64.getEncoder().encodeToString(file.getBytes());
+                        images.add(base64);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to process image file: " + file.getOriginalFilename(), e);
+                    }
+                }
             }
         }
 
@@ -237,8 +240,19 @@ public class ProductDiagnosticService {
         }
 
         // 5. Save to database
-        diagnostic = diagnosticRepository.save(diagnostic);
-        log.info("Diagnostic saved successfully: {}", diagnostic.getId());
+        try {
+            UserResponse userResponse = userService.getMyInfo();
+            if (userResponse != null) {
+                User user = userRepository.findById(userResponse.getId()).orElse(null);
+                if (user != null) {
+                    diagnostic.setCreatedBy(user); // Set creator for history
+                }
+            }
+            diagnostic = diagnosticRepository.save(diagnostic);
+            log.info("Diagnostic saved successfully: {}", diagnostic.getId());
+        } catch (Exception e) {
+            throw new ApplicationException(ErrorCode.BAD_REQUEST, "Failed to save diagnostic: " + e.getMessage());
+        }
 
         // 6. Convert to DTO and return
         return convertToDTO(diagnostic);
@@ -251,6 +265,17 @@ public class ProductDiagnosticService {
         List<ProductDiagnostic> diagnostics = diagnosticRepository.findByProductItemId(productItemId);
         return diagnostics.stream()
                 .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy lịch sử diagnostic của user
+     */
+    public List<ProductDiagnosticDTO> getDiagnosticsByUserId(UUID userId) {
+        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByCreatedBy_Id(userId);
+        return diagnostics.stream()
+                .map(this::convertToDTO)
+                .sorted(Comparator.comparing(ProductDiagnosticDTO::getTestDate).reversed())
                 .collect(Collectors.toList());
     }
 

@@ -31,10 +31,10 @@ public class UserController {
          * Đăng ký user mới
          */
         @PostMapping("/register")
-        public ApiResponse<User> register(@RequestBody RegisterRequest registerRequest) {
+        public ApiResponse<RegisterReponse> register(@RequestBody RegisterRequest registerRequest) {
                 log.info("UserController: Received register request for email: {}", registerRequest.getEmail());
                 RegisterReponse registerReponse = userService.registerUser(registerRequest);
-                ApiResponse<User> apiResponse = new ApiResponse(
+                ApiResponse<RegisterReponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 registerReponse);
                 return apiResponse;
@@ -49,7 +49,7 @@ public class UserController {
                 log.info("UserController: Get user by ID: {}", userId);
                 UserResponse user = userService.getUserById(userId);
 
-                ApiResponse<UserResponse> apiResponse = new ApiResponse(
+                ApiResponse<UserResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 user);
 
@@ -61,7 +61,7 @@ public class UserController {
         public ApiResponse<UserResponse> getMyInfo() {
                 UserResponse user = userService.getMyInfo();
 
-                ApiResponse<UserResponse> apiResponse = new ApiResponse(
+                ApiResponse<UserResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 user);
                 return apiResponse;
@@ -99,7 +99,7 @@ public class UserController {
                 log.info("UserController: Update user with ID: {}", userId);
                 UserResponse updatedUser = userService.updateUser(userId, registerRequest);
 
-                ApiResponse<UserResponse> apiResponse = new ApiResponse(
+                ApiResponse<UserResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 updatedUser);
 

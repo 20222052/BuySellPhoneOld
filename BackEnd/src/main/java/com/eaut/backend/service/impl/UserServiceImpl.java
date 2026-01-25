@@ -139,6 +139,10 @@ public class UserServiceImpl implements UserService {
             log.info("UserService: Password updated for user: {}", userId);
         }
 
+        if (request.getAvatarUrl() != null && !request.getAvatarUrl().isBlank()) {
+            existingUser.setAvatarUrl(request.getAvatarUrl());
+        }
+
         // Only update roles if provided (admin feature)
         if (request.getRoles() != null && !request.getRoles().isEmpty()) {
             var roles = roleRepository.findAllById(request.getRoles());

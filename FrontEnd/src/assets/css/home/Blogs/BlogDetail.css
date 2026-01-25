@@ -1,0 +1,129 @@
+.blog-detail-page {
+    background-color: #fff;
+    min-height: 100vh;
+}
+
+.blog-header-image {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.blog-category-badge {
+    display: inline-block;
+    background-color: #dc0021;
+    color: white;
+    padding: 6px 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.blog-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+}
+
+.blog-author-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1.5rem;
+}
+
+.author-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+    border: 2px solid #ddd;
+}
+
+.author-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.author-name {
+    color: #dc0021;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.blog-date {
+    color: #888;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.blog-intro {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.blog-content {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #444;
+}
+
+.blog-content p {
+    margin-bottom: 1.5rem;
+}
+
+.blog-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
+
+/* Related posts sidebar */
+.related-posts-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    border-left: 4px solid #dc0021;
+    padding-left: 10px;
+}
+
+.related-post-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+}
+
+.related-post-img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.related-post-info h6 {
+    font-size: 0.95rem;
+    line-height: 1.3;
+    margin-bottom: 4px;
+}
+
+.related-post-info span {
+    font-size: 0.8rem;
+    color: #888;
+}

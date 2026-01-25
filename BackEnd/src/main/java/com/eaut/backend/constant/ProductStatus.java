@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum ProductStatus {
     draft(0, "draft"),
     active(1, "active"),
-    discontinued(2, "inactive");
+    inactive(2, "inactive");
 
     private final Integer code;
     private final String value;
