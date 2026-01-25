@@ -24,6 +24,7 @@ const ProductItemService = {
                 sortBy = 'createdAt',
                 sortDir = 'DESC',
                 randomEnabled = true,
+                isTradeIn = null,
                 page = 0,
                 pageSize = 10
             } = params;
@@ -37,6 +38,7 @@ const ProductItemService = {
                     status: status || undefined,
                     min_price: minPrice || undefined,
                     max_price: maxPrice || undefined,
+                    is_trade_in: isTradeIn,
                     sort_by: sortBy,
                     sort_dir: sortDir,
                     random_enabled: randomEnabled,
@@ -116,6 +118,20 @@ const ProductItemService = {
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Không thể cập nhật trạng thái" };
+        }
+    },
+
+    /**
+     * Cập nhật trạng thái Trade-in
+     * @param {UUID} id - ID của ProductItem
+     * @param {number} isTradeIn - 1 (Có) hoặc 0 (Không)
+     */
+    updateTradeIn: async (id, isTradeIn) => {
+        try {
+            const response = await api.patch(`/product-items/${id}/trade-in`, { isTradeIn });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể cập nhật trạng thái trade-in" };
         }
     },
 

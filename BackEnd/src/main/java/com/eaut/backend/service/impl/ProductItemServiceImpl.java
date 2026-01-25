@@ -109,6 +109,7 @@ public class ProductItemServiceImpl implements ProductItemService {
             ProductStatus status,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Integer isTradeIn,
             String sortBy,
             String sortDir,
             Boolean randomEnabled,
@@ -140,6 +141,7 @@ public class ProductItemServiceImpl implements ProductItemService {
                 status,
                 minPrice,
                 maxPrice,
+                isTradeIn,
                 pageable);
 
         // Nếu random enable thì shuffle kết quả
@@ -277,12 +279,14 @@ public class ProductItemServiceImpl implements ProductItemService {
                 // ProductItem name (variant)
                 .name(pi.getName())
                 .description(pi.getDescription())
-                .status(String.valueOf(pi.getStatus() == 0 ? ProductStatus.draft : pi.getStatus() == 1 ? ProductStatus.active : ProductStatus.discontinued))
+                .status(String.valueOf(pi.getStatus() == 0 ? ProductStatus.draft
+                        : pi.getStatus() == 1 ? ProductStatus.active : ProductStatus.inactive))
                 // Product info
                 .productId(product.getId())
                 .productName(product.getName())
                 .productDescription(product.getDescription())
-                .productStatus(String.valueOf(pi.getStatus() == 0 ? ProductStatus.draft : pi.getStatus() == 1 ? ProductStatus.active : ProductStatus.discontinued))
+                .productStatus(String.valueOf(pi.getStatus() == 0 ? ProductStatus.draft
+                        : pi.getStatus() == 1 ? ProductStatus.active : ProductStatus.inactive))
                 // Brand
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
                 .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
@@ -305,6 +309,7 @@ public class ProductItemServiceImpl implements ProductItemService {
                 .modelCount(modelCount)
                 .colorCount(colorCount)
                 .qtyAvailable(totalQtyAvailable)
+                .isTradeIn(pi.getIsTradeIn())
                 // Warranty
                 .warrantyMonths(product.getWarrantyMonths())
                 // Timestamps
@@ -887,6 +892,23 @@ public class ProductItemServiceImpl implements ProductItemService {
         ProductItem updatedProductItem = productItemRepository.save(productItem);
 
         log.info("ProductItem status updated: {} -> status={}", id, status);
+        return Mapper.toProductItemResponse(updatedProductItem);
+    }
+
+    @Override
+    @Transactional
+    public ProductItemResponse updateTradeIn(UUID id, Integer isTradeIn) {
+        if (id == null) {
+            throw new ApplicationException(ErrorCode.INVALID_PARAMETER, "Product item ID is required");
+        }
+
+        ProductItem productItem = productItemRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND, "Product item not found"));
+
+        productItem.setIsTradeIn(isTradeIn);
+        ProductItem updatedProductItem = productItemRepository.save(productItem);
+
+        log.info("ProductItem trade-in status updated: {} -> isTradeIn={}", id, isTradeIn);
         return Mapper.toProductItemResponse(updatedProductItem);
     }
 

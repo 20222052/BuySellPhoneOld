@@ -4,6 +4,8 @@ import com.eaut.backend.entities.ProductDiagnostic;
 import com.eaut.backend.model.request.DiagnosticRequest;
 import com.eaut.backend.model.response.ProductDiagnosticDTO;
 import com.eaut.backend.service.ProductDiagnosticService;
+import com.eaut.backend.service.UserService;
+import com.eaut.backend.model.response.UserResponse;
 //import io.swagger.v3.oas.annotations.Operation;
 //import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,24 +19,28 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/diagnostics")
+@RequestMapping("/diagnostics")
 @RequiredArgsConstructor
 // @Tag(name = "Product Diagnostic", description = "API quản lý chẩn đoán tình
 // trạng điện thoại")
 public class ProductDiagnosticController {
 
     private final ProductDiagnosticService diagnosticService;
+    private final UserService userService;
 
     /**
      * Tạo diagnostic từ thông tin người dùng gửi lên (Ảnh + Check list chức năng)
-     * Request Body: JSON chứa danh sách ảnh (base64/url) và kết quả kiểm tra chức
-     * năng
+     * Request Body: Multipart/form-data
+     * - data: JSON chứa thông tin check list chức năng, etc.
+     * - files: Danh sách ảnh (tối đa 5 file)
      */
     // @Operation(summary = "Tạo diagnostic (AI + Functional Checks)", description =
     // "Gửi danh sách ảnh và kết quả kiểm tra chức năng để AI phân tích và tổng
     // hợp")
-    @PostMapping("/analyze")
-    public ResponseEntity<?> analyzeDiagnostic(@RequestBody DiagnosticRequest request) {
+    @PostMapping(value = "/analyze", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> analyzeDiagnostic(
+            @RequestPart("data") DiagnosticRequest request,
+            @RequestPart(value = "files", required = false) List<org.springframework.web.multipart.MultipartFile> files) {
         try {
             log.info("Received diagnostic request for product item: {}", request.getProductItemId());
 
@@ -43,13 +49,18 @@ public class ProductDiagnosticController {
                 return ResponseEntity.badRequest().body("Product Item ID is required");
             }
 
-            if (request.getImagePhoneOlds() == null || request.getImagePhoneOlds().isEmpty()) {
-                return ResponseEntity.badRequest().body("At least one image (imagePhoneOlds) is required");
+            // Validate images
+            if (files != null && files.size() > 5) {
+                return ResponseEntity.badRequest().body("You can only upload a maximum of 5 images.");
+            }
+
+            if ((files == null || files.isEmpty())
+                    && (request.getImagePhoneOlds() == null || request.getImagePhoneOlds().isEmpty())) {
+                return ResponseEntity.badRequest().body("At least one image is required (files or imagePhoneOlds)");
             }
 
             // Process diagnostic using the unified service method
-            // Pass null for MultipartFile since we differ to JSON list
-            ProductDiagnosticDTO result = diagnosticService.createDiagnosticFromAI(request, null);
+            ProductDiagnosticDTO result = diagnosticService.createDiagnosticFromAI(request, files);
 
             return ResponseEntity.ok(result);
 
@@ -57,6 +68,22 @@ public class ProductDiagnosticController {
             log.error("Failed to create diagnostic", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to create diagnostic: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lấy lịch sử diagnostic của user đang đăng nhập
+     */
+    @GetMapping("/user/my-history")
+    public ResponseEntity<?> getMyHistory() {
+        try {
+            UserResponse user = userService.getMyInfo();
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            }
+            return ResponseEntity.ok(diagnosticService.getDiagnosticsByUserId(user.getId()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 

@@ -35,4 +35,9 @@ public interface ProductDiagnosticRepository extends JpaRepository<ProductDiagno
      */
     @Query("SELECT pd FROM ProductDiagnostic pd WHERE pd.status = :status")
     List<ProductDiagnostic> findByStatus(@Param("status") String status);
+
+    /**
+     * Tìm tất cả diagnostic của một user (người tạo)
+     */
+    List<ProductDiagnostic> findByCreatedBy_Id(UUID userId);
 }

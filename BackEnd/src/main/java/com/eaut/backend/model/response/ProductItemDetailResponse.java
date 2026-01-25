@@ -26,6 +26,7 @@ public class ProductItemDetailResponse {
     private String brandName;
     private String categoryName;
     private Integer warrantyMonths;
+    private Integer isTradeIn;
 
     // Price info
     private BigDecimal basePrice;

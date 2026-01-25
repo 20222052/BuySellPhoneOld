@@ -181,7 +181,7 @@ export default function Blogs() {
                                             {getExcerpt(featuredBlog.content, 200)}
                                         </p>
                                         <Link
-                                            to={`/blog/${featuredBlog.id}`}
+                                            to={`/blogs/${featuredBlog.id}`}
                                             className="btn btn-outline-danger"
                                         >
                                             Đọc thêm <i className="bi bi-arrow-right"></i>
@@ -235,7 +235,7 @@ export default function Blogs() {
                                                     {getExcerpt(blog.content, 80)}
                                                 </p>
                                                 <Link
-                                                    to={`/blog/${blog.id}`}
+                                                    to={`/blogs/${blog.id}`}
                                                     className="blog-link"
                                                     style={{ color: "#1976d2", fontWeight: 500, fontSize: "0.9rem" }}
                                                 >

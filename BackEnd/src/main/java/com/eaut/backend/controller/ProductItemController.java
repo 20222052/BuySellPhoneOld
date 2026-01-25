@@ -3,6 +3,7 @@ package com.eaut.backend.controller;
 import com.eaut.backend.constant.ProductStatus;
 import com.eaut.backend.model.request.ProductItemRequest;
 import com.eaut.backend.model.request.UpdateStatusRequest;
+import com.eaut.backend.model.request.UpdateTradeInRequest;
 import com.eaut.backend.model.response.ApiResponse;
 import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.model.response.ProductItemDetailResponse;
@@ -55,18 +56,20 @@ public class ProductItemController {
                         @RequestParam(name = "status", required = false) ProductStatus status,
                         @RequestParam(name = "min_price", required = false) BigDecimal minPrice,
                         @RequestParam(name = "max_price", required = false) BigDecimal maxPrice,
+                        @RequestParam(name = "is_trade_in", required = false) Integer isTradeIn,
                         @RequestParam(name = "sort_by", required = false, defaultValue = "createdAt") String sortBy,
                         @RequestParam(name = "sort_dir", required = false, defaultValue = "DESC") String sortDir,
                         @RequestParam(name = "random_enabled", required = false, defaultValue = "false") Boolean randomEnabled,
                         @RequestParam(name = "page", defaultValue = "0") int pageNumber,
                         @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
 
-                log.info("Get all product items for list - search: {}, brandId: {}, categoryId: {}, status: {}, minPrice: {}, maxPrice: {}",
-                                searchText, brandId, categoryId, status, minPrice, maxPrice);
+                log.info("Get all product items for list - search: {}, brandId: {}, categoryId: {}, status: {}, minPrice: {}, maxPrice: {}, isTradeIn: {}",
+                                searchText, brandId, categoryId, status, minPrice, maxPrice, isTradeIn);
 
                 ApiResponse<PagingResponse<ProductItemListResponse>> response = productItemService
                                 .findAllForList(searchText, productId, brandId, categoryId, status,
-                                                minPrice, maxPrice, sortBy, sortDir, randomEnabled, pageNumber,
+                                                minPrice, maxPrice, isTradeIn, sortBy, sortDir, randomEnabled,
+                                                pageNumber,
                                                 pageSize);
                 return ResponseEntity.ok(response);
         }
@@ -128,6 +131,19 @@ public class ProductItemController {
                 ApiResponse<ProductItemResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 "Product item status updated successfully",
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
+
+        @PatchMapping("/{id}/trade-in")
+        public ResponseEntity<ApiResponse<ProductItemResponse>> updateTradeIn(
+                        @PathVariable UUID id,
+                        @RequestBody UpdateTradeInRequest request) {
+                ProductItemResponse response = productItemService.updateTradeIn(id, request.getIsTradeIn());
+                ApiResponse<ProductItemResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Product item trade-in status updated successfully",
                                 true,
                                 response);
                 return ResponseEntity.ok(apiResponse);

@@ -15,16 +15,19 @@ import {
     Toast,
     ToastContainer
 } from "react-bootstrap";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import LatestProducts from "@/components/common/LatestProducts";
 import ProductItemService from "../../services/productItemService";
 import { addToCart, clearCartError, clearCartSuccess } from "../../store/slices/cartSlice";
+import { RoutePaths } from "../../routes/RoutePaths";
 
 export default function ProductDetail() {
     const { id } = useParams();
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isTradeIn = location.state?.isTradeIn;
 
     // Redux state
     const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -301,28 +304,58 @@ export default function ProductDetail() {
                             {selectedColor?.qtyAvailable ?? 0} sản phẩm
                         </div>
 
-                        <Button
-                            size="lg"
-                            variant="danger"
-                            onClick={() => {
-                                handleAddToCart();
-                                if (isAuthenticated && selectedColor) {
-                                    setTimeout(() => navigate("/cart"), 500);
-                                }
-                            }}
-                            disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
-                        >
-                            {cartLoading ? <Spinner size="sm" /> : "Mua ngay"}
-                        </Button>
-                        <Button
-                            size="lg"
-                            variant="outline-danger"
-                            className="ms-2"
-                            onClick={handleAddToCart}
-                            disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
-                        >
-                            {cartLoading ? <Spinner size="sm" /> : "Thêm vào giỏ"}
-                        </Button>
+                        {isTradeIn ? (
+                            <Button
+                                size="lg"
+                                variant="danger"
+                                className="w-100"
+                                onClick={() => {
+                                    if (!isAuthenticated) {
+                                        setToastMessage("Vui lòng đăng nhập để thực hiện Trade-in!");
+                                        setToastVariant("warning");
+                                        setShowToast(true);
+                                        setTimeout(() => navigate("/login"), 1500);
+                                        return;
+                                    }
+                                    // Navigate to TradeInDetail page with context
+                                    navigate(RoutePaths.TRADEIN_DETAIL, {
+                                        state: {
+                                            product: product,
+                                            selectedModel: selectedModel,
+                                            selectedColor: selectedColor
+                                        }
+                                    });
+                                }}
+                                disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
+                            >
+                                {cartLoading ? <Spinner size="sm" /> : "Đổi ngay"}
+                            </Button>
+                        ) : (
+                            <>
+                                <Button
+                                    size="lg"
+                                    variant="danger"
+                                    onClick={() => {
+                                        handleAddToCart();
+                                        if (isAuthenticated && selectedColor) {
+                                            setTimeout(() => navigate("/cart"), 500);
+                                        }
+                                    }}
+                                    disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
+                                >
+                                    {cartLoading ? <Spinner size="sm" /> : "Mua ngay"}
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    variant="outline-danger"
+                                    className="ms-2"
+                                    onClick={handleAddToCart}
+                                    disabled={cartLoading || (selectedColor?.qtyAvailable ?? 0) <= 0}
+                                >
+                                    {cartLoading ? <Spinner size="sm" /> : "Thêm vào giỏ"}
+                                </Button>
+                            </>
+                        )}
                     </Col>
                 </Row>
             </Card>

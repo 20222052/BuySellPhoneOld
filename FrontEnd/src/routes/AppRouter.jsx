@@ -9,6 +9,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 // Public Pages
 import Home from "@/pages/Home/Home";
 import Trade_inPage from "@/pages/Home/Trade_inPage";
+import TradeInDetail from "@/pages/Home/TradeInDetail";
 import Blogs from "@/pages/Home/Blogs";
 import BlogDetail from "@/pages/Home/BlogDetail";
 import Products from "@/pages/Home/Products";
@@ -40,6 +41,8 @@ import ProductItemList from "@/pages/Admin/Products/ProductItemList";
 import ProductList from "@/pages/Admin/Products/ProductList";
 import BlogList from "@/pages/Admin/Blogs/BlogList";
 
+import TradeInResult from "@/pages/Home/TradeInResult";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -52,6 +55,8 @@ export default function AppRouter() {
           <Route path={RoutePaths.BLOG} element={<Blogs />} />
           <Route path={RoutePaths.BLOG_DETAIL} element={<BlogDetail />} />
           <Route path={RoutePaths.TRADEIN} element={<Trade_inPage />} />
+          <Route path={RoutePaths.TRADEIN_DETAIL} element={<TradeInDetail />} />
+          <Route path={RoutePaths.TRADEIN_RESULT} element={<TradeInResult />} />
           <Route path={RoutePaths.ABOUT} element={<About />} />
 
           {/* Protected User Routes */}

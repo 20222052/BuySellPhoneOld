@@ -36,6 +36,7 @@ public interface ProductItemService {
                         ProductStatus status,
                         BigDecimal minPrice,
                         BigDecimal maxPrice,
+                        Integer isTradeIn,
                         String sortBy,
                         String sortDir,
                         Boolean randomEnabled,
@@ -51,6 +52,8 @@ public interface ProductItemService {
         ProductItemResponse update(UUID id, ProductItemRequest request);
 
         ProductItemResponse updateStatus(UUID id, ProductStatus status);
+
+        ProductItemResponse updateTradeIn(UUID id, Integer isTradeIn);
 
         void delete(UUID id);
 }

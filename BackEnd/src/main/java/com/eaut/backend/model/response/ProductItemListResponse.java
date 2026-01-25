@@ -32,7 +32,6 @@ public class ProductItemListResponse {
     private String productDescription;
     private String productStatus;
 
-
     // Brand & Category
     private UUID brandId;
     private String brandName;
@@ -60,6 +59,9 @@ public class ProductItemListResponse {
     private Integer modelCount;
     private Integer colorCount;
     private Integer qtyAvailable;
+
+    // Trade-in status
+    private Integer isTradeIn;
 
     // Warranty
     private Integer warrantyMonths;

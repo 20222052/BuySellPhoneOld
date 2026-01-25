@@ -38,6 +38,9 @@ public class ProductItem extends AuditBase {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Column(name = "is_trade_in", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer isTradeIn;
+
     @OneToMany(mappedBy = "productItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductModel> models = new ArrayList<>();
@@ -56,19 +59,19 @@ public class ProductItem extends AuditBase {
     private BigDecimal comparePrice; // Giá so sánh
 
     @Column(name = "status", nullable = false, columnDefinition = "INT DEFAULT 0")
-    private Integer status; // Trạng thái: 0 - draft -  nháp, 1 - Active - đang bán, 2 discontinued - ngừng bán
+    private Integer status; // Trạng thái: 0 - draft - nháp, 1 - Active - đang bán, 2 inactive - ngừng bán
 
     // ================= SCREEN =================
     @Column(name = "screen_size")
-    private Double screenSize;              // Kích thước màn hình: 6.9 (inch)
+    private Double screenSize; // Kích thước màn hình: 6.9 (inch)
     @Column(name = "screen_technology")
-    private String screenTechnology;        // Công nghệ màn hình: Super Retina XDR
+    private String screenTechnology; // Công nghệ màn hình: Super Retina XDR
     @Column(name = "screen_resolution")
-    private String screenResolution;        // Độ phân giải màn hình: 2868 x 1320
+    private String screenResolution; // Độ phân giải màn hình: 2868 x 1320
     @Column(name = "refresh_rate")
-    private Integer refreshRate;            // Tần số quét màn hình: 120 (Hz)
+    private Integer refreshRate; // Tần số quét màn hình: 120 (Hz)
     @Column(name = "screen_type")
-    private String screenType;              // Kiểu màn hình: Dynamic Island
+    private String screenType; // Kiểu màn hình: Dynamic Island
 
     // Các tính năng màn hình (Always On, HDR, True Tone, ...)
     @Column(name = "screen_features")
@@ -190,11 +193,9 @@ public class ProductItem extends AuditBase {
     @Column(name = "sensors")
     private String sensors;
 
-
     // Thời điểm ra mắt – VD: 09/2025
     @Column(name = "release_time")
     private String releaseTime;
-
 
     @OneToMany(mappedBy = "productItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

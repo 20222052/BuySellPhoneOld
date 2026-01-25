@@ -94,13 +94,13 @@ public class Mapper {
 
         public static BlogResponse toBlogResponse(Blog blog) {
                 BlogResponse response = BlogResponse.builder()
-                                                .id(blog.getId())
-                                                .title(blog.getTitle())
-                                                .content(blog.getContent())
-                                                .imageUrl(blog.getImageUrl())
-                                                .author(blog.getAuthor())
-                                                .viewCount(blog.getViewCount())
-                                                .build();
+                                .id(blog.getId())
+                                .title(blog.getTitle())
+                                .content(blog.getContent())
+                                .imageUrl(blog.getImageUrl())
+                                .author(blog.getAuthor())
+                                .viewCount(blog.getViewCount())
+                                .build();
                 response.setCreatedAt(blog.getCreatedAt());
                 response.setModifiedAt(blog.getModifiedAt());
                 response.setCreatedBy(blog.getCreatedBy());
@@ -303,6 +303,7 @@ public class Mapper {
                                                 ? product.getCategory().getName()
                                                 : null)
                                 .warrantyMonths(product != null ? product.getWarrantyMonths() : null)
+                                .isTradeIn(productItem.getIsTradeIn())
                                 // Price info
                                 .basePrice(productItem.getBasePrice())
                                 .sellPrice(productItem.getSellPrice())
