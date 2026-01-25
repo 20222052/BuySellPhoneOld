@@ -5,6 +5,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum SenderType { USER("user"), BOT("bot"), AGENT("agent");
+public enum SenderType {
+    USER("user"), BOT("bot"), AGENT("agent");
+
     private final String value;
 }

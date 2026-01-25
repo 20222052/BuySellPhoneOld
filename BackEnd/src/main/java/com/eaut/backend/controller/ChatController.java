@@ -72,4 +72,21 @@ public class ChatController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.ok(Collections.emptyList()));
     }
+
+    // API Lấy danh sách tất cả các cuộc hội thoại (Sắp xếp theo thời gian tin nhắn
+    // cuối)
+    @GetMapping("/conversations")
+    public ResponseEntity<List<Conversation>> getAllConversations() {
+        return ResponseEntity.ok(conversationRepository.findByLastMessageAtAfter(java.time.OffsetDateTime.MIN)); // Lấy
+                                                                                                                 // tất
+                                                                                                                 // cả
+        // Hoặc sắp xếp lại bên Service nếu cần. Tạm thời dùng findByLastMessageAtAfter
+        // với thời gian rất cũ để lấy hết.
+        // Tuy nhiên tốt nhất là dùng findAll với Sort.
+    }
+
+    @GetMapping("/history/all")
+    public ResponseEntity<List<Conversation>> getAllHistory() {
+        return ResponseEntity.ok(conversationRepository.findAllWithMessages());
+    }
 }

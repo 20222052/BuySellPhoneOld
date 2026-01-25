@@ -1,0 +1,167 @@
+/* Order Page Styles */
+
+/* Status Badges */
+.status-pending {
+    color: #fd7e14;
+    background: #fff3cd;
+}
+
+.status-processing {
+    color: #0dcaf0;
+    background: #cff4fc;
+}
+
+.status-shipping {
+    color: #0d6efd;
+    background: #cfe2ff;
+}
+
+.status-completed {
+    color: #198754;
+    background: #d1e7dd;
+}
+
+.status-cancelled {
+    color: #dc3545;
+    background: #f8d7da;
+}
+
+/* Order Code */
+.order-code {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', monospace;
+    font-weight: 600;
+    color: #0d6efd;
+    font-size: 13px;
+    padding: 2px 6px;
+    background: #e7f1ff;
+    border-radius: 4px;
+}
+
+/* Payment Method */
+.payment-method {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6c757d;
+    letter-spacing: 0.5px;
+}
+
+/* Total Price */
+.total-price {
+    font-weight: 700;
+    color: #dc3545;
+}
+
+/* Order Date */
+.order-date {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+/* Modal Specifics */
+.modal-container.modal-xl {
+    max-width: 1000px;
+    width: 95%;
+}
+
+.order-items-table {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+}
+
+.order-items-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    padding: 12px;
+    border-bottom: 2px solid #e9ecef;
+    text-align: left;
+}
+
+.order-items-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.order-items-table tr:last-child td {
+    border-bottom: none;
+}
+
+.order-item-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+}
+
+.order-summary-box {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.summary-row.total {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #dee2e6;
+    font-size: 18px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.customer-info-box {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    height: 100%;
+}
+
+.customer-info-header {
+    font-size: 15px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Detail Info Rows in Modal */
+.info-row {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: flex-start;
+}
+
+.info-label {
+    width: 100px;
+    min-width: 100px;
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+    text-align: left;
+}
+
+.info-value {
+    flex: 1;
+    font-size: 14px;
+    color: #212529;
+    font-weight: 500;
+    text-align: left;
+    word-break: break-word;
+}

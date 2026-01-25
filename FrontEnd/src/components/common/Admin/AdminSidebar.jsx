@@ -41,6 +41,12 @@ const menuItems = [
                 path: RoutePaths.ADMIN_VARIANTS,
                 badge: null,
             },
+            {
+                title: 'Bài viết',
+                icon: 'bi-journal-text',
+                path: RoutePaths.ADMIN_BLOGS,
+                badge: null,
+            },
 
             {
                 title: 'Đơn hàng',
@@ -61,10 +67,14 @@ const menuItems = [
                 badge: null,
             },
             {
-                title: 'Tin nhắn',
+                title: 'Hỗ trợ chat',
                 icon: 'bi-chat-dots-fill',
-                path: '/admin/messages',
-                badge: '3',
+                path: RoutePaths.ADMIN_CHAT,
+                badge: null,
+                children: [
+                    { title: 'Chat trực tiếp', path: RoutePaths.ADMIN_CHAT },
+                    { title: 'Lịch sử chat', path: RoutePaths.ADMIN_CHAT_HISTORY },
+                ],
             },
         ],
     },

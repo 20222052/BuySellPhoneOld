@@ -16,4 +16,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
     // Tìm các hội thoại có tin nhắn mới sau khoảng thời gian nhất định (Dùng cho
     // AnalysisService)
     List<Conversation> findByLastMessageAtAfter(OffsetDateTime time);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM Conversation c LEFT JOIN FETCH c.messages ORDER BY c.lastMessageAt DESC")
+    List<Conversation> findAllWithMessages();
 }

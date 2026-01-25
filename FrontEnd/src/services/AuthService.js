@@ -28,6 +28,7 @@ const AuthService = {
                     phone: userData.phone,
                     roles: userRoles,
                     role: roleFromToken || userRoles[0] || 'user',
+                    avatarUrl: userData.avatarUrl,
                     createdAt: userData.createdAt,
                     modifiedAt: userData.modifiedAt
                 };
@@ -140,7 +141,7 @@ const AuthService = {
     // Lấy thông tin user hiện tại
     getCurrentUser: async () => {
         try {
-            const response = await api.get("/auth/me");
+            const response = await api.get("/users/myinfo");
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Lấy thông tin user thất bại" };

@@ -119,7 +119,7 @@ export default function AdminHeader({ onToggleSidebar, isSidebarCollapsed }) {
     const unreadCount = notifications.filter(n => n.unread).length;
 
     // Avatar URL with fallback
-    const avatarUrl = user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Admin')}&background=3b82f6&color=fff&bold=true`;
+    const avatarUrl = user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Admin')}&background=3b82f6&color=fff&bold=true`;
 
     return (
         <header className="admin-header">

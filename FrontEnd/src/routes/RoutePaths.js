@@ -36,6 +36,9 @@ export const RoutePaths = {
   ADMIN_USERS: "/admin/users",
   ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_BRANDS: "/admin/brands",
+  ADMIN_BLOGS: "/admin/blogs",
+  ADMIN_CHAT: "/admin/chat",
+  ADMIN_CHAT_HISTORY: "/admin/chat/history",
 
   // Other
   NOT_FOUND: "*"

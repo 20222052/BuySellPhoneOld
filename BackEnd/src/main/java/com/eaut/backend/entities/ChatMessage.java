@@ -21,10 +21,14 @@ public class ChatMessage {
     private UUID id;
 
     @PrePersist
-    public void prePersist() { if (id == null) id = UUID.randomUUID(); }
+    public void prePersist() {
+        if (id == null)
+            id = UUID.randomUUID();
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Conversation conversation;
 
     @Column(columnDefinition = "TEXT", nullable = false)
