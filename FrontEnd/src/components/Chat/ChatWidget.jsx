@@ -201,12 +201,6 @@ const ChatWidget = () => {
                             <button className="action-chip" onClick={handleRequestHuman}>
                                 <i className="bi bi-headset me-1"></i> Gặp nhân viên
                             </button>
-                            <button className="action-chip" onClick={() => {
-                                setInputValue('Chính sách bảo hành?');
-                                handleSendMessage();
-                            }}>
-                                <i className="bi bi-shield-check me-1"></i> Bảo hành
-                            </button>
                         </div>
                         <div className="chat-input-container">
                             <input

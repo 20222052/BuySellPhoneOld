@@ -351,10 +351,49 @@ export default function ProductItemList() {
         setIsTradeIn(0);
     };
 
+    // Format currency to VND
+    const formatCurrency = (value) => {
+        if (!value && value !== 0) return '';
+        const num = typeof value === 'string' ? parseFloat(value.replace(/[^0-9]/g, '')) : value;
+        if (isNaN(num)) return '';
+        return num.toLocaleString('vi-VN');
+    };
+
+    // Parse currency string to number
+    const parseCurrency = (value) => {
+        if (!value) return '';
+        const num = value.replace(/[^0-9]/g, '');
+        return num ? parseInt(num, 10) : '';
+    };
+
     // Handle form change
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Handle price change with currency formatting and auto-calculate comparePrice
+    const handlePriceChange = (e) => {
+        const { name, value } = e.target;
+        const numericValue = parseCurrency(value);
+
+        setFormData(prev => {
+            const newData = { ...prev, [name]: numericValue };
+
+            // Auto-calculate comparePrice = basePrice - sellPrice
+            const basePrice = name === 'basePrice' ? numericValue : prev.basePrice;
+            const sellPrice = name === 'sellPrice' ? numericValue : prev.sellPrice;
+
+            if (basePrice && sellPrice) {
+                const base = typeof basePrice === 'string' ? parseFloat(basePrice) : basePrice;
+                const sell = typeof sellPrice === 'string' ? parseFloat(sellPrice) : sellPrice;
+                if (!isNaN(base) && !isNaN(sell) && base >= sell) {
+                    newData.comparePrice = base - sell;
+                }
+            }
+
+            return newData;
+        });
     };
 
     // Handle status change
@@ -1044,12 +1083,12 @@ export default function ProductItemList() {
             label: 'Danh mục',
             width: '120px'
         },
-        {
-            key: 'productStatus',
-            label: 'Trạng thái',
-            width: '120px',
-            render: (value) => getStatusBadge(value)
-        },
+        // {
+        //     key: 'productStatus',
+        //     label: 'Trạng thái',
+        //     width: '120px',
+        //     render: (value) => getStatusBadge(value)
+        // },
         {
             key: 'isTradeIn',
             label: 'Trade-in',
@@ -1670,11 +1709,12 @@ export default function ProductItemList() {
                                                 <FormInput
                                                     label="Giá gốc"
                                                     name="basePrice"
-                                                    type="number"
-                                                    value={formData.basePrice}
-                                                    onChange={handleChange}
+                                                    type="text"
+                                                    value={formatCurrency(formData.basePrice)}
+                                                    onChange={handlePriceChange}
                                                     placeholder="Nhập giá gốc..."
                                                     leftIcon={<i className="bi bi-currency-dollar"></i>}
+                                                    rightIcon={<span className="currency-suffix">₫</span>}
                                                     required
                                                 />
                                             </div>
@@ -1683,26 +1723,30 @@ export default function ProductItemList() {
                                         <div className="form-row">
                                             <div className="form-col">
                                                 <FormInput
-                                                    label="Giá so sánh"
-                                                    name="comparePrice"
-                                                    type="number"
-                                                    value={formData.comparePrice}
-                                                    onChange={handleChange}
-                                                    placeholder="Nhập giá so sánh..."
-                                                    leftIcon={<i className="bi bi-arrow-left-right"></i>}
+                                                    label="Giá bán"
+                                                    name="sellPrice"
+                                                    type="text"
+                                                    value={formatCurrency(formData.sellPrice)}
+                                                    onChange={handlePriceChange}
+                                                    placeholder="Nhập giá bán..."
+                                                    leftIcon={<i className="bi bi-tag"></i>}
+                                                    rightIcon={<span className="currency-suffix">₫</span>}
+                                                    required
                                                 />
                                             </div>
                                             <div className="form-col">
                                                 <FormInput
-                                                    label="Giá bán"
-                                                    name="sellPrice"
-                                                    type="number"
-                                                    value={formData.sellPrice}
-                                                    onChange={handleChange}
-                                                    placeholder="Nhập giá bán..."
-                                                    leftIcon={<i className="bi bi-tag"></i>}
-                                                    required
+                                                    label="Giá so sánh (Giá gốc - Giá bán)"
+                                                    name="comparePrice"
+                                                    type="text"
+                                                    value={formatCurrency(formData.comparePrice)}
+                                                    onChange={() => { }} // Read-only, auto-calculated
+                                                    placeholder="Tự động tính..."
+                                                    leftIcon={<i className="bi bi-arrow-left-right"></i>}
+                                                    rightIcon={<span className="currency-suffix">₫</span>}
+                                                    disabled
                                                 />
+                                                {/* <small className="text-muted">Tự động tính = Giá gốc - Giá bán</small> */}
                                             </div>
                                         </div>
 

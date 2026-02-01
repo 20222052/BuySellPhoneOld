@@ -76,21 +76,22 @@ const menuItems = [
                     { title: 'Lịch sử chat', path: RoutePaths.ADMIN_CHAT_HISTORY },
                 ],
             },
+            {
+                title: 'Quản lý Trade-In',
+                icon: 'bi-arrow-left-right',
+                path: RoutePaths.ADMIN_TRADEIN,
+                badge: null,
+            },
         ],
     },
     {
         section: 'THỐNG KÊ',
         items: [
             {
-                title: 'Báo cáo',
-                icon: 'bi-bar-chart-fill',
-                path: '/admin/reports',
+                title: 'Báo cáo thống kê',
+                icon: 'bi-graph-up-arrow',
+                path: RoutePaths.ADMIN_REPORTS,
                 badge: null,
-                children: [
-                    { title: 'Doanh thu', path: '/admin/reports/revenue' },
-                    { title: 'Sản phẩm bán chạy', path: '/admin/reports/top-products' },
-                    { title: 'Khách hàng', path: '/admin/reports/customers' },
-                ],
             },
         ],
     },

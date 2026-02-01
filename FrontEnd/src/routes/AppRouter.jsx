@@ -44,6 +44,8 @@ import AdminChat from "@/pages/Admin/Chat/AdminChat";
 import ChatHistory from "@/pages/Admin/Chat/ChatHistory";
 import AdminProfile from "@/pages/Admin/Account/AdminProfile";
 import OrderList from "@/pages/Admin/Orders/OrderList";
+import Reports from "@/pages/Admin/Reports/Reports";
+import TradeInList from "@/pages/Admin/TradeIn/TradeInList";
 
 import TradeInResult from "@/pages/Home/TradeInResult";
 
@@ -124,6 +126,8 @@ export default function AppRouter() {
           <Route path="blogs" element={<BlogList />} />
           <Route path="orders" element={<OrderList />} />
           <Route path="chat" element={<AdminChat />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="tradein" element={<TradeInList />} />
           <Route path="chat/history" element={<ChatHistory />} />
           <Route path="account" element={<AdminProfile />} />
         </Route>

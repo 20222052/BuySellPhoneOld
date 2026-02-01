@@ -37,6 +37,8 @@ export const RoutePaths = {
   ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_BRANDS: "/admin/brands",
   ADMIN_BLOGS: "/admin/blogs",
+  ADMIN_REPORTS: "/admin/reports",
+  ADMIN_TRADEIN: "/admin/tradein",
   ADMIN_CHAT: "/admin/chat",
   ADMIN_CHAT_HISTORY: "/admin/chat/history",
 

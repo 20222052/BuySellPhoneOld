@@ -9,11 +9,13 @@ import NewsletterSection from "../../components/common/Home/NewsletterSection";
 import VideoShortsSection from "../../components/common/Home/VideoShortsSection";
 import ProductItemService from "../../services/productItemService";
 import BlogService from "../../services/blogService";
+import BrandService from "../../services/brandService";
 import "../../assets/css/home/Home.css";
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [blogs, setBlogs] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +27,7 @@ export default function Home() {
           pageSize: 8,
           sortDir: "DESC",
           sortBy: "createdAt",
+          status: "active", // Chỉ hiển thị sản phẩm đang bán
         });
         console.log(productsData);
 
@@ -71,18 +74,26 @@ export default function Home() {
       }
     };
 
+    const fetchBrands = async () => {
+      try {
+        const brandsData = await BrandService.getAll({ pageSize: 6 });
+        console.log('Brands data:', brandsData);
+
+        if (brandsData && brandsData.data && (brandsData.data.items || brandsData.data.content)) {
+          const items = brandsData.data.items || brandsData.data.content;
+          setBrands(items.slice(0, 6));
+        }
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+      }
+    };
+
     fetchProducts();
     fetchBlogs();
+    fetchBrands();
   }, []);
 
-  const categories = [
-    { name: "iPhone", icon: "bi-apple", count: 150, color: "#000000" },
-    { name: "Samsung", icon: "bi-phone", count: 200, color: "#1428A0" },
-    { name: "Xiaomi", icon: "bi-phone", count: 120, color: "#FF6900" },
-    { name: "OPPO", icon: "bi-phone", count: 90, color: "#00B050" },
-    { name: "Vivo", icon: "bi-phone", count: 80, color: "#0066FF" },
-    { name: "Realme", icon: "bi-phone", count: 60, color: "#FFD700" },
-  ];
+
 
   const features = [
     {
@@ -116,7 +127,7 @@ export default function Home() {
   return (
     <div className="home-page">
       <HeroSection stats={stats} />
-      <CategoriesSection categories={categories} />
+      <CategoriesSection brands={brands} />
       <FeaturedProducts products={featuredProducts} />
       <FeaturesSection features={features} />
       {/* <TradeInBanner /> */}

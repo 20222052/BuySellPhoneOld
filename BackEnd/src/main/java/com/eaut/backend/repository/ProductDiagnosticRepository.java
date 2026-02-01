@@ -1,7 +1,10 @@
 package com.eaut.backend.repository;
 
+import com.eaut.backend.constant.DiagnosticStatus;
 import com.eaut.backend.entities.ProductDiagnostic;
 import com.eaut.backend.entities.ProductItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,10 +34,9 @@ public interface ProductDiagnosticRepository extends JpaRepository<ProductDiagno
     List<ProductDiagnostic> findByStaffId(UUID staffId);
 
     /**
-     * Tìm diagnostic theo status
+     * Tìm diagnostic theo status (với pagination)
      */
-    @Query("SELECT pd FROM ProductDiagnostic pd WHERE pd.status = :status")
-    List<ProductDiagnostic> findByStatus(@Param("status") String status);
+    Page<ProductDiagnostic> findByStatus(DiagnosticStatus status, Pageable pageable);
 
     /**
      * Tìm tất cả diagnostic của một user (người tạo)

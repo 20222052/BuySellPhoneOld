@@ -128,7 +128,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderItemResponse mapToOrderItemResponse(OrderItem item) {
         return OrderItemResponse.builder()
                 .id(item.getId())
-                .productName(item.getSnapshotProductName())
+                .productName(item.getProductItem().getProduct().getName() + "-" + item.getSnapshotProductName())
                 .modelName(item.getSnapshotProductModel())
                 .colorName(item.getSnapshotProductColor())
                 .imageUrl(item.getSnapshotProductMediaUrl())

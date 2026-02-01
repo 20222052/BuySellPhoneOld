@@ -113,7 +113,7 @@
     margin-bottom: 24px;
 }
 
-.stat-card {
+.category-stats .stat-card {
     background: var(--admin-bg-secondary);
     border-radius: 16px;
     padding: 20px;
@@ -124,7 +124,7 @@
     transition: all 0.2s ease;
 }
 
-.stat-card:hover {
+.category-stats .stat-card:hover {
     border-color: var(--admin-primary);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }

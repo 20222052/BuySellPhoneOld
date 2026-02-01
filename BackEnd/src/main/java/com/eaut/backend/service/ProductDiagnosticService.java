@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -255,6 +257,32 @@ public class ProductDiagnosticService {
         }
 
         // 6. Convert to DTO and return
+        return convertToDTO(diagnostic);
+    }
+
+    /**
+     * Lấy tất cả diagnostic cho admin (với pagination)
+     */
+    @Transactional(readOnly = true)
+    public Page<ProductDiagnosticDTO> getAllDiagnosticsForAdmin(Pageable pageable, DiagnosticStatus status) {
+        Page<ProductDiagnostic> diagnostics;
+        if (status != null) {
+            diagnostics = diagnosticRepository.findByStatus(status, pageable);
+        } else {
+            diagnostics = diagnosticRepository.findAll(pageable);
+        }
+        return diagnostics.map(this::convertToDTO);
+    }
+
+    /**
+     * Cập nhật trạng thái diagnostic
+     */
+    @Transactional
+    public ProductDiagnosticDTO updateDiagnosticStatus(UUID diagnosticId, DiagnosticStatus status) {
+        ProductDiagnostic diagnostic = diagnosticRepository.findById(diagnosticId)
+                .orElseThrow(() -> new RuntimeException("Diagnostic not found: " + diagnosticId));
+        diagnostic.setStatus(status);
+        diagnostic = diagnosticRepository.save(diagnostic);
         return convertToDTO(diagnostic);
     }
 

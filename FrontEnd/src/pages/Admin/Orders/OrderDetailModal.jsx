@@ -58,9 +58,9 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
                             <div className="col-md-4">
                                 <span className="text-secondary small d-block mb-2">Trạng thái đơn hàng</span>
                                 <div className="d-flex align-items-center gap-2">
-                                    <span className={`status-badge status-${status?.toLowerCase()}`}>{status}</span>
+                                    {/* <span className={`status-badge status-${status?.toLowerCase()}`}>{status}</span> */}
                                     <select
-                                        className="form-select form-select-sm"
+                                        className="form-select form-select-sm "
                                         style={{ width: 'auto', minWidth: '140px' }}
                                         value={status}
                                         onChange={(e) => handleStatusChange(e.target.value)}

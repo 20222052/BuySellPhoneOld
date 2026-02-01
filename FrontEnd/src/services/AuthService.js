@@ -49,6 +49,46 @@ const AuthService = {
         }
     },
 
+    // Login with Google
+    loginWithGoogle: async (token) => {
+        try {
+            const response = await api.post("/auth/outbound/authentication", { token });
+            const result = response.data;
+
+            if (result.code === 200 && result.data?.authenticated) {
+                const { token, data: userData } = result.data;
+                localStorage.setItem("accessToken", token);
+
+                const roleFromToken = getRoleFromToken(token);
+                const userRoles = userData?.roles?.map(r => r.name) || [];
+
+                const user = {
+                    id: userData.id,
+                    fullName: userData.fullName,
+                    email: userData.email,
+                    phone: userData.phone,
+                    roles: userRoles,
+                    role: roleFromToken || userRoles[0] || 'user',
+                    avatarUrl: userData.avatarUrl,
+                    createdAt: userData.createdAt,
+                    modifiedAt: userData.modifiedAt
+                };
+
+                localStorage.setItem("user", JSON.stringify(user));
+
+                return {
+                    success: true,
+                    token,
+                    user,
+                    isAdmin: isAdmin(token)
+                };
+            }
+            throw { message: "Google Login failed" };
+        } catch (error) {
+            throw error.response?.data || error || { message: "Google Login failed" };
+        }
+    },
+
     // Đăng ký
     register: async (userData) => {
         try {

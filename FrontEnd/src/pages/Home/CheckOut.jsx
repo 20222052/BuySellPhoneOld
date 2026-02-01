@@ -374,21 +374,22 @@ export default function CheckOut() {
                                 ))}
 
                                 {/* Shipping Info */}
-                                <div className="mb-3 mt-4">
-                                    <div className="fw-bold mb-2">Thông tin nhận hàng</div>
+                                <div className="fw-bold mb-2">Thông tin nhận hàng</div>
+                                <div className="mb-3 mt-4 text-start">
                                     {selectedAddress && (
                                         <>
-                                            <div>Họ tên: <span className="fw-bold">{selectedAddress.fullName}</span></div>
-                                            <div>SĐT: <span className="fw-bold">{selectedAddress.phone}</span></div>
-                                            <div>Địa chỉ: <span className="fw-bold">{selectedAddress.fullAddress}</span></div>
+                                            <div className="fw-bold">Họ tên: <span className="fw-normal">{selectedAddress.fullName}</span></div>
+                                            <div className="fw-bold">SĐT: <span className="fw-normal">{selectedAddress.phone}</span></div>
+                                            <div className="fw-bold">Địa chỉ: <span className="fw-normal">{selectedAddress.fullAddress}</span></div>
                                         </>
                                     )}
-                                    {form.note && <div>Ghi chú: <span className="fw-bold">{form.note}</span></div>}
+                                    {form.note && <div className="fw-bold">Ghi chú: <span className="fw-normal">{form.note}</span></div>}
                                 </div>
 
                                 {/* Payment Method */}
+                                <hr />
+                                <div className="fw-bold mb-2">Chọn hình thức thanh toán</div>
                                 <div className="mb-3">
-                                    <div className="fw-bold mb-2">Chọn hình thức thanh toán</div>
                                     <div className="text-start">
                                         <Form.Check
                                             type="radio"

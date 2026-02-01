@@ -1,5 +1,6 @@
 package com.eaut.backend.controller;
 
+import com.eaut.backend.constant.DiagnosticStatus;
 import com.eaut.backend.entities.ProductDiagnostic;
 import com.eaut.backend.model.request.DiagnosticRequest;
 import com.eaut.backend.model.response.ProductDiagnosticDTO;
@@ -10,11 +11,15 @@ import com.eaut.backend.model.response.UserResponse;
 //import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -155,6 +160,71 @@ public class ProductDiagnosticController {
             log.error("Failed to delete diagnostic", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to delete diagnostic: " + e.getMessage());
+        }
+    }
+
+    // ===================== ADMIN ENDPOINTS =====================
+
+    /**
+     * Lấy tất cả diagnostic cho admin (có pagination)
+     */
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> getAllDiagnosticsForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "testDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("ASC")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            PageRequest pageable = PageRequest.of(page, size, sort);
+
+            DiagnosticStatus diagnosticStatus = null;
+            if (status != null && !status.isEmpty()) {
+                try {
+                    diagnosticStatus = DiagnosticStatus.valueOf(status.toLowerCase());
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid status filter: {}", status);
+                }
+            }
+
+            Page<ProductDiagnosticDTO> result = diagnosticService.getAllDiagnosticsForAdmin(pageable, diagnosticStatus);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Failed to get all diagnostics", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to get diagnostics: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái diagnostic
+     */
+    @PutMapping("/admin/{diagnosticId}/status")
+    public ResponseEntity<?> updateDiagnosticStatus(
+            @PathVariable UUID diagnosticId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String statusStr = request.get("status");
+            if (statusStr == null || statusStr.isEmpty()) {
+                return ResponseEntity.badRequest().body("Status is required");
+            }
+
+            DiagnosticStatus status;
+            try {
+                status = DiagnosticStatus.valueOf(statusStr.toLowerCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body("Invalid status: " + statusStr);
+            }
+
+            ProductDiagnosticDTO result = diagnosticService.updateDiagnosticStatus(diagnosticId, status);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Failed to update diagnostic status", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update status: " + e.getMessage());
         }
     }
 }
