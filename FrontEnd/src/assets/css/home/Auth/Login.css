@@ -140,6 +140,7 @@
 
 /* Form Styles */
 .auth-form {
+    text-align: left;
     width: 100%;
 }
 

@@ -70,8 +70,10 @@ public class AIChatService {
 
         // 3. Kiểm tra độ tin cậy
         if (relatedDocs.isEmpty()) {
-            // botResponse = "Xin lỗi, tôi không tìm thấy thông tin sản phẩm phù hợp trong hệ thống. " +
-            //         "Bạn có muốn trao đổi trực tiếp với nhân viên tư vấn không? (Gõ 'Gặp nhân viên')";
+            // botResponse = "Xin lỗi, tôi không tìm thấy thông tin sản phẩm phù hợp trong
+            // hệ thống. " +
+            // "Bạn có muốn trao đổi trực tiếp với nhân viên tư vấn không? (Gõ 'Gặp nhân
+            // viên')";
             botResponse = callDeepSeekAI(userMessage, "");
         } else {
             // 4. Build Context
@@ -121,27 +123,27 @@ public class AIChatService {
     @SuppressWarnings("unchecked")
     private String callDeepSeekAI(String query, String context) {
         String systemPrompt = """
-            Bạn là trợ lý AI tư vấn bán hàng điện thoại cực kỳ thân thiện, thuyết phục và chuyên nghiệp.
-            Mục tiêu: giúp khách chọn được máy phù hợp và tăng khả năng chốt đơn.
+                Bạn là trợ lý AI tư vấn bán hàng điện thoại cực kỳ thân thiện, thuyết phục và chuyên nghiệp.
+                Mục tiêu: giúp khách chọn được máy phù hợp và tăng khả năng chốt đơn.
 
-            QUY TẮC QUAN TRỌNG:
-            - Chỉ dùng "Context sản phẩm" để nói về thông số/giá/tên máy cụ thể.
-            - Nếu Context không có thông tin, tuyệt đối KHÔNG bịa. Hãy nói: "Hiện mình chưa thấy thông tin đó trong hệ thống".
-            - Nếu khách hỏi mơ hồ hoặc thiếu dữ liệu, hãy hỏi tối đa 2–4 câu ngắn để làm rõ nhu cầu.
-            - Luôn tư vấn theo hướng lợi ích: pin, camera, hiệu năng, màn hình, độ bền, bảo hành, phù hợp công việc.
-            - Giọng điệu: tự nhiên, gần gũi, không máy móc, không dài dòng.
-            - Cuối mỗi câu trả lời nên có CTA mềm: “Bạn muốn mình gợi ý 2–3 mẫu phù hợp nhất không?” hoặc “Bạn chốt tầm giá nào để mình gửi lựa chọn tốt nhất?”.
+                QUY TẮC QUAN TRỌNG:
+                - Chỉ dùng "Context sản phẩm" để nói về thông số/giá/tên máy cụ thể.
+                - Nếu Context không có thông tin, tuyệt đối KHÔNG bịa. Hãy nói: "Hiện mình chưa thấy thông tin đó trong hệ thống".
+                - Nếu khách hỏi mơ hồ hoặc thiếu dữ liệu, hãy hỏi tối đa 2–4 câu ngắn để làm rõ nhu cầu.
+                - Luôn tư vấn theo hướng lợi ích: pin, camera, hiệu năng, màn hình, độ bền, bảo hành, phù hợp công việc.
+                - Giọng điệu: tự nhiên, gần gũi, không máy móc, không dài dòng.
+                - Cuối mỗi câu trả lời nên có CTA mềm: “Bạn muốn mình gợi ý 2–3 mẫu phù hợp nhất không?” hoặc “Bạn chốt tầm giá nào để mình gửi lựa chọn tốt nhất?”.
 
-            CÁCH TRẢ LỜI (ưu tiên):
-            1) Tóm tắt nhu cầu khách (1 câu).
-            2) Đưa ra gợi ý rõ ràng (2–5 gạch đầu dòng) dựa trên Context nếu có.
-            3) Nếu chưa đủ dữ liệu → hỏi thêm 2–4 câu.
-            4) Kết thúc bằng CTA.
+                CÁCH TRẢ LỜI (ưu tiên):
+                1) Tóm tắt nhu cầu khách (1 câu).
+                2) Đưa ra gợi ý rõ ràng (2–5 gạch đầu dòng) dựa trên Context nếu có.
+                3) Nếu chưa đủ dữ liệu → hỏi thêm 2–4 câu.
+                4) Kết thúc bằng CTA.
 
-            Context sản phẩm (nếu có):
-            %s
-            """.formatted(context);
-
+                Context sản phẩm (nếu có):
+                %s
+                """
+                .formatted(context);
 
         // Payload gửi lên HuggingFace API
         Map<String, Object> requestBody = Map.of(

@@ -1,12 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
 from datetime import datetime
 from app.services.ai_service import ai_service
 from app.services.diagnostic_service import diagnostic_service
 from app.utils.image_utils import decode_image
 
-diagnostic_bp = Blueprint('diagnostic', __name__)
-
-@diagnostic_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     status = ai_service.get_status()
@@ -14,7 +11,6 @@ def health_check():
     status['timestamp'] = datetime.now().isoformat()
     return jsonify(status)
 
-@diagnostic_bp.route('/api/diagnose', methods=['POST'])
 def diagnose_phone():
     """Main diagnostic endpoint"""
     try:
@@ -84,7 +80,6 @@ def diagnose_phone():
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@diagnostic_bp.route('/api/utils/to-base64', methods=['POST'])
 def convert_to_base64():
     """Helper endpoint to convert image file to base64 string"""
     try:

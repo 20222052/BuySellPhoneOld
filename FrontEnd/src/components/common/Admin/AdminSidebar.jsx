@@ -41,6 +41,12 @@ const menuItems = [
                 path: RoutePaths.ADMIN_VARIANTS,
                 badge: null,
             },
+            {
+                title: 'Bài viết',
+                icon: 'bi-journal-text',
+                path: RoutePaths.ADMIN_BLOGS,
+                badge: null,
+            },
 
             {
                 title: 'Đơn hàng',
@@ -61,10 +67,20 @@ const menuItems = [
                 badge: null,
             },
             {
-                title: 'Tin nhắn',
+                title: 'Hỗ trợ chat',
                 icon: 'bi-chat-dots-fill',
-                path: '/admin/messages',
-                badge: '3',
+                path: RoutePaths.ADMIN_CHAT,
+                badge: null,
+                children: [
+                    { title: 'Chat trực tiếp', path: RoutePaths.ADMIN_CHAT },
+                    { title: 'Lịch sử chat', path: RoutePaths.ADMIN_CHAT_HISTORY },
+                ],
+            },
+            {
+                title: 'Quản lý Trade-In',
+                icon: 'bi-arrow-left-right',
+                path: RoutePaths.ADMIN_TRADEIN,
+                badge: null,
             },
         ],
     },
@@ -72,15 +88,10 @@ const menuItems = [
         section: 'THỐNG KÊ',
         items: [
             {
-                title: 'Báo cáo',
-                icon: 'bi-bar-chart-fill',
-                path: '/admin/reports',
+                title: 'Báo cáo thống kê',
+                icon: 'bi-graph-up-arrow',
+                path: RoutePaths.ADMIN_REPORTS,
                 badge: null,
-                children: [
-                    { title: 'Doanh thu', path: '/admin/reports/revenue' },
-                    { title: 'Sản phẩm bán chạy', path: '/admin/reports/top-products' },
-                    { title: 'Khách hàng', path: '/admin/reports/customers' },
-                ],
             },
         ],
     },

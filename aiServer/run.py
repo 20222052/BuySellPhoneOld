@@ -1,8 +1,9 @@
 from app import create_app
+from app.config import Config
 
 app = create_app()
 
 if __name__ == '__main__':
     print("\n[INFO] Starting AI Server (MVC Version)...")
-    print(f"[INFO] Server running on http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    print(f"[INFO] Server running on http://{Config.HOST}:{Config.PORT}")
+    app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)

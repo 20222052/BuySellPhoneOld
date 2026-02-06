@@ -28,6 +28,7 @@ const AuthService = {
                     phone: userData.phone,
                     roles: userRoles,
                     role: roleFromToken || userRoles[0] || 'user',
+                    avatarUrl: userData.avatarUrl,
                     createdAt: userData.createdAt,
                     modifiedAt: userData.modifiedAt
                 };
@@ -45,6 +46,46 @@ const AuthService = {
             throw { message: "Đăng nhập thất bại" };
         } catch (error) {
             throw error.response?.data || error || { message: "Đăng nhập thất bại" };
+        }
+    },
+
+    // Login with Google
+    loginWithGoogle: async (token) => {
+        try {
+            const response = await api.post("/auth/outbound/authentication", { token });
+            const result = response.data;
+
+            if (result.code === 200 && result.data?.authenticated) {
+                const { token, data: userData } = result.data;
+                localStorage.setItem("accessToken", token);
+
+                const roleFromToken = getRoleFromToken(token);
+                const userRoles = userData?.roles?.map(r => r.name) || [];
+
+                const user = {
+                    id: userData.id,
+                    fullName: userData.fullName,
+                    email: userData.email,
+                    phone: userData.phone,
+                    roles: userRoles,
+                    role: roleFromToken || userRoles[0] || 'user',
+                    avatarUrl: userData.avatarUrl,
+                    createdAt: userData.createdAt,
+                    modifiedAt: userData.modifiedAt
+                };
+
+                localStorage.setItem("user", JSON.stringify(user));
+
+                return {
+                    success: true,
+                    token,
+                    user,
+                    isAdmin: isAdmin(token)
+                };
+            }
+            throw { message: "Google Login failed" };
+        } catch (error) {
+            throw error.response?.data || error || { message: "Google Login failed" };
         }
     },
 
@@ -140,7 +181,7 @@ const AuthService = {
     // Lấy thông tin user hiện tại
     getCurrentUser: async () => {
         try {
-            const response = await api.get("/auth/me");
+            const response = await api.get("/users/myinfo");
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Lấy thông tin user thất bại" };

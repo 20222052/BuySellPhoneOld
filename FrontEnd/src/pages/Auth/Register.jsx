@@ -4,6 +4,10 @@ import { toast } from "react-toastify";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 import AuthService from "../../services/AuthService";
+import { useDispatch } from "react-redux";
+import { useGoogleLogin } from "@react-oauth/google";
+import { loginGoogle } from "../../store/slices/authSlice";
+import { RoutePaths } from "../../routes/RoutePaths";
 import '../../assets/css/home/Auth/Register.css';
 
 export default function Register() {
@@ -24,7 +28,33 @@ export default function Register() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                // Dispatch action with the ACCESS TOKEN
+                const result = await dispatch(loginGoogle(tokenResponse.access_token)).unwrap();
+                console.log("Google register/login success:", result);
+
+                // Redirect based on role (similar to Login logic)
+                if (result.isAdmin) {
+                    navigate(RoutePaths.ADMIN_DASHBOARD, { replace: true });
+                } else {
+                    navigate(RoutePaths.HOME, { replace: true });
+                }
+            } catch (err) {
+                console.error("Google register error:", err);
+                toast.error(err.message || "Đăng nhập Google thất bại");
+            }
+        },
+        onError: (error) => {
+            console.log("Google Login Failed:", error);
+            toast.error("Đăng nhập Google thất bại");
+        }
+    });
 
     const handleChange = (e) => {
         setFormData({
@@ -275,6 +305,17 @@ export default function Register() {
                                         )}
                                     </button>
                                 </form>
+
+                                <div className="auth-divider">
+                                    <span>Hoặc đăng ký với</span>
+                                </div>
+
+                                <div className="social-login">
+                                    <button className="social-btn google" disabled={isLoading} onClick={() => handleGoogleLogin()}>
+                                        <i className="bi bi-google"></i>
+                                        Google
+                                    </button>
+                                </div>
 
                                 <div className="auth-footer">
                                     <p>

@@ -1,5 +1,6 @@
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import torch
+from app.config import Config
 
 class AIService:
     _instance = None
@@ -26,9 +27,9 @@ class AIService:
         print(f"[INFO] Using device: {self.device.upper()}")
         
         try:
-            print("[INFO] Loading BLIP model...")
-            self.processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-            self.model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+            print(f"[INFO] Loading BLIP model: {Config.BLIP_MODEL_ID}...")
+            self.processor = BlipProcessor.from_pretrained(Config.BLIP_MODEL_ID)
+            self.model = BlipForConditionalGeneration.from_pretrained(Config.BLIP_MODEL_ID)
             self.model.to(self.device)
             
             self.initialized = True

@@ -8,11 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
+    long countByCreatedAtBetween(OffsetDateTime start, OffsetDateTime end);
+
     boolean existsByEmail(String email);
 
     boolean existsByPhone(String phone);
@@ -26,29 +29,29 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByPhoneAndIdNot(@Param("phone") String phone, @Param("userId") UUID userId);
 
     @Query("""
-        SELECT DISTINCT u 
-        FROM User u
-        LEFT JOIN u.roles r
-        LEFT JOIN r.permissions p
-        WHERE 
-            (:searchPattern IS NULL OR :searchPattern = '' OR 
-                LOWER(u.fullName) LIKE :searchPattern OR
-                LOWER(u.phone) LIKE :searchPattern OR
-                LOWER(u.email) LIKE :searchPattern
+            SELECT DISTINCT u
+            FROM User u
+            LEFT JOIN u.roles r
+            LEFT JOIN r.permissions p
+            WHERE
+                (:searchPattern IS NULL OR :searchPattern = '' OR
+                    LOWER(u.fullName) LIKE :searchPattern OR
+                    LOWER(u.phone) LIKE :searchPattern OR
+                    LOWER(u.email) LIKE :searchPattern
+                )
+            AND (
+                :status IS NULL OR :status = ''
+                OR CAST(u.status AS string) = :status
             )
-        AND (
-            :status IS NULL OR :status = '' 
-            OR CAST(u.status AS string) = :status
-        )
-        AND (
-            :roleName IS NULL OR :roleName = '' 
-            OR r.name = :roleName
-        )
-        AND (
-            :permissionName IS NULL OR :permissionName = ''
-            OR p.name = :permissionName
-        )
-        """)
+            AND (
+                :roleName IS NULL OR :roleName = ''
+                OR r.name = :roleName
+            )
+            AND (
+                :permissionName IS NULL OR :permissionName = ''
+                OR p.name = :permissionName
+            )
+            """)
     Page<User> getAllUsers(
             @Param("searchPattern") String searchPattern,
             @Param("roleName") String roleName,

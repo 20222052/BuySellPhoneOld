@@ -40,6 +40,12 @@ import UserList from "@/pages/Admin/Users/UserList";
 import ProductItemList from "@/pages/Admin/Products/ProductItemList";
 import ProductList from "@/pages/Admin/Products/ProductList";
 import BlogList from "@/pages/Admin/Blogs/BlogList";
+import AdminChat from "@/pages/Admin/Chat/AdminChat";
+import ChatHistory from "@/pages/Admin/Chat/ChatHistory";
+import AdminProfile from "@/pages/Admin/Account/AdminProfile";
+import OrderList from "@/pages/Admin/Orders/OrderList";
+import Reports from "@/pages/Admin/Reports/Reports";
+import TradeInList from "@/pages/Admin/TradeIn/TradeInList";
 
 import TradeInResult from "@/pages/Home/TradeInResult";
 
@@ -118,7 +124,12 @@ export default function AppRouter() {
           <Route path="products" element={<ProductList />} />
           <Route path="variants" element={<ProductItemList />} />
           <Route path="blogs" element={<BlogList />} />
-          <Route path="orders" element={<div>Admin Orders</div>} />
+          <Route path="orders" element={<OrderList />} />
+          <Route path="chat" element={<AdminChat />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="tradein" element={<TradeInList />} />
+          <Route path="chat/history" element={<ChatHistory />} />
+          <Route path="account" element={<AdminProfile />} />
         </Route>
 
         {/* 404 Not Found */}

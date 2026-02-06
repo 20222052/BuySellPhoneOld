@@ -1,6 +1,7 @@
 package com.eaut.backend.untils;
 
 import com.eaut.backend.constant.ProductStatus;
+import com.eaut.backend.constant.TradeinStatus;
 import com.eaut.backend.entities.*;
 import com.eaut.backend.model.request.BrandRequest;
 import com.eaut.backend.model.request.CategoryRequest;
@@ -218,6 +219,7 @@ public class Mapper {
                                 .waterResistance(request.getWaterResistance())
                                 .sensors(request.getSensors())
                                 .releaseTime(request.getReleaseTime())
+                                .isTradeIn(0)
                                 .build();
         }
 

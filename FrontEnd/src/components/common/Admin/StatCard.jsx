@@ -22,22 +22,12 @@ export default function StatCard({
                 <div className="stat-card-icon">
                     <i className={`bi ${icon}`}></i>
                 </div>
-                <button className="stat-card-menu">
-                    <i className="bi bi-three-dots-vertical"></i>
-                </button>
+                <p className="stat-card-title">{title}</p>
+                <div className="stat-card-value">
+                    <span>{value}</span>
+                </div>
             </div>
-
-            <p className="stat-card-title">{title}</p>
-
-            <div className="stat-card-value">
-                <span>{value}</span>
-                {change && (
-                    <span className={`stat-card-change ${isPositive ? 'positive' : 'negative'}`}>
-                        <i className={`bi bi-arrow-${isPositive ? 'up' : 'down'}`}></i>
-                        {change}
-                    </span>
-                )}
-            </div>
+            
 
             {children && <div className="stat-card-chart">{children}</div>}
         </div>

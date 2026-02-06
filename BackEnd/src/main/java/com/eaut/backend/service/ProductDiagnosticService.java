@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +51,9 @@ public class ProductDiagnosticService {
     @Value("${ai.diagnostic.api.url:http://localhost:5000}")
     private String aiApiUrl;
 
+    @Value("${ai.diagnostic.api.token}")
+    private String aiApiToken;
+
     /**
      * Gọi AI service để phân tích ảnh
      */
@@ -59,6 +64,7 @@ public class ProductDiagnosticService {
             // Prepare request
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            headers.set("Authorization", "Bearer " + aiApiToken);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
@@ -101,6 +107,7 @@ public class ProductDiagnosticService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + aiApiToken);
 
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("image", imageBase64);
@@ -176,6 +183,7 @@ public class ProductDiagnosticService {
             log.info("Calling AI diagnostic service with {} images", images.size());
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + aiApiToken);
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(aiPayload, headers);
 
             String url = aiApiUrl + "/api/diagnose";
@@ -255,6 +263,32 @@ public class ProductDiagnosticService {
         }
 
         // 6. Convert to DTO and return
+        return convertToDTO(diagnostic);
+    }
+
+    /**
+     * Lấy tất cả diagnostic cho admin (với pagination)
+     */
+    @Transactional(readOnly = true)
+    public Page<ProductDiagnosticDTO> getAllDiagnosticsForAdmin(Pageable pageable, DiagnosticStatus status) {
+        Page<ProductDiagnostic> diagnostics;
+        if (status != null) {
+            diagnostics = diagnosticRepository.findByStatus(status, pageable);
+        } else {
+            diagnostics = diagnosticRepository.findAll(pageable);
+        }
+        return diagnostics.map(this::convertToDTO);
+    }
+
+    /**
+     * Cập nhật trạng thái diagnostic
+     */
+    @Transactional
+    public ProductDiagnosticDTO updateDiagnosticStatus(UUID diagnosticId, DiagnosticStatus status) {
+        ProductDiagnostic diagnostic = diagnosticRepository.findById(diagnosticId)
+                .orElseThrow(() -> new RuntimeException("Diagnostic not found: " + diagnosticId));
+        diagnostic.setStatus(status);
+        diagnostic = diagnosticRepository.save(diagnostic);
         return convertToDTO(diagnostic);
     }
 

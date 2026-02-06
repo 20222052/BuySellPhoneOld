@@ -101,6 +101,10 @@ app:
     secret: "gLtX3OhlDhL9nA4afC9lk8gyW9O2FHYJ1cUzujeU7cQhtJTufcli0pvyBzttBz7s"
     expiration: 86400000 # 24 hours in milliseconds
 
+  google:
+    client-id: "882703980752-35acfsufq83kmu2lv7iqmsgtqj4cjdo7.apps.googleusercontent.com"
+    secret: "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"
+
 ## OTP Configuration
 otp:
   length: 6                   # Độ dài mã OTP (số chữ số). Ví dụ: 6 => mã gồm 6 chữ số.
@@ -131,5 +135,6 @@ ai:
   diagnostic:
     api:
       url: "http://localhost:5000"  # Flask API endpoint
+      token: "your_secure_token_here"
       timeout: 300000  # 300 seconds (5 minutes) for AI analysis
 

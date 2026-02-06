@@ -14,6 +14,18 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const loginGoogle = createAsyncThunk(
+  "auth/loginGoogle",
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await AuthService.loginWithGoogle(token);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || "Đăng nhập Google thất bại");
+    }
+  }
+);
+
 export const registerUser = createAsyncThunk(
   "user/register",
   async (userData, { rejectWithValue }) => {
@@ -103,6 +115,32 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.isAdmin = false;
+        state.role = null;
+      })
+
+      // Google Login
+      .addCase(loginGoogle.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = null;
+      })
+      .addCase(loginGoogle.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAdmin = action.payload.isAdmin || false;
+        state.role = action.payload.user?.role || null;
+        state.success = "Đăng nhập Google thành công!";
+        state.error = null;
+      })
+      .addCase(loginGoogle.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.isAuthenticated = false;

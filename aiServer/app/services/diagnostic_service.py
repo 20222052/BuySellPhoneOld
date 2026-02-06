@@ -21,7 +21,7 @@ class DiagnosticService:
         for keyword, score in self.SEVERITY_KEYWORDS['severe'].items():
             if keyword in caption_lower: return score
             
-        # Check moderate damage
+        # Check moderate damage,
         for keyword, score in self.SEVERITY_KEYWORDS['moderate'].items():
             if keyword in caption_lower: return score
             

@@ -526,14 +526,16 @@
 
 .stat-card-header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 16px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-bottom: 0;
 }
 
 .stat-card-icon {
     width: 48px;
     height: 48px;
+    min-width: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -543,36 +545,23 @@
     font-size: 24px;
 }
 
-.stat-card-menu {
-    padding: 4px;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    color: var(--admin-text-muted);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.stat-card-menu:hover {
-    background: var(--admin-bg-primary);
-    color: var(--admin-text-primary);
-}
-
 .stat-card-title {
     font-size: 14px;
     font-weight: 500;
     color: var(--admin-text-secondary);
-    margin-bottom: 8px;
+    margin: 0;
+    white-space: nowrap;
 }
 
 .stat-card-value {
     font-size: 28px;
     font-weight: 700;
     color: var(--admin-text-primary);
-    margin-bottom: 12px;
+    margin: 0;
+    margin-left: auto;
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    align-items: center;
+    white-space: nowrap;
 }
 
 .stat-card-change {

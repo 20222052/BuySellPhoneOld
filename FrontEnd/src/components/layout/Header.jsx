@@ -6,9 +6,10 @@ import { logoutUser } from "../../store/slices/authSlice";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../assets/css/home/Header.css';
 
+import { fetchCart } from "../../store/slices/cartSlice";
+
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [cartCount, setCartCount] = useState(3); // Example cart count
   const [hideNav, setHideNav] = useState(false);
   const lastScrollY = useRef(0);
   const location = useLocation();
@@ -16,6 +17,15 @@ export default function Header() {
   const dispatch = useDispatch();
 
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { totalItems } = useSelector((state) => state.cart);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      dispatch(fetchCart(user.id));
+    }
+  }, [dispatch, isAuthenticated, user]);
+
+  const cartCount = totalItems;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -247,8 +257,8 @@ export default function Header() {
               <Dropdown align="end" className="user-dropdown">
                 <Dropdown.Toggle variant="link" className="user-toggle">
                   <div className="user-avatar">
-                    {user?.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="avatar-img" />
+                    {user?.avatarUrl || user?.avatar ? (
+                      <img src={user.avatarUrl || user.avatar} alt={user.name} className="avatar-img" />
                     ) : (
                       <i className="bi bi-person-circle fs-4"></i>
                     )}
@@ -258,8 +268,8 @@ export default function Header() {
                 <Dropdown.Menu className="user-menu">
                   <div className="user-info">
                     <div className="d-flex align-items-center gap-2 mb-2">
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt={user.name} className="avatar-img-small" />
+                      {user?.avatarUrl || user?.avatar ? (
+                        <img src={user.avatarUrl || user.avatar} alt={user.name} className="avatar-img-small" />
                       ) : (
                         <div className="avatar-placeholder">
                           <i className="bi bi-person"></i>

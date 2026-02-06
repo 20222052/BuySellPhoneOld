@@ -61,7 +61,37 @@ public class CloudinaryServiceImpl implements CloudinaryService {
      * @throws IOException if image reading/writing fails
      */
     private byte[] compressImage(MultipartFile file, float quality) throws IOException {
-        BufferedImage image = ImageIO.read(file.getInputStream());
+        BufferedImage image = null;
+
+        try {
+            image = ImageIO.read(file.getInputStream());
+        } catch (Exception e) {
+            // Trường hợp ImageIO không đọc được (ví dụ: CMYK colorspace)
+            log.warn("ImageIO.read failed: {}. Using original file bytes.", e.getMessage());
+            return file.getBytes();
+        }
+
+        // Nếu ImageIO.read trả về null (không hỗ trợ format)
+        if (image == null) {
+            log.warn("ImageIO.read returned null. Using original file bytes.");
+            return file.getBytes();
+        }
+
+        // Chuyển đổi ảnh có alpha channel hoặc colorspace khác về RGB
+        // Điều này xử lý các trường hợp như PNG với transparency hoặc ảnh CMYK
+        if (image.getType() != BufferedImage.TYPE_INT_RGB) {
+            BufferedImage rgbImage = new BufferedImage(
+                    image.getWidth(),
+                    image.getHeight(),
+                    BufferedImage.TYPE_INT_RGB);
+            // Vẽ ảnh gốc lên ảnh RGB mới (với nền trắng cho các pixel trong suốt)
+            java.awt.Graphics2D g = rgbImage.createGraphics();
+            g.setColor(java.awt.Color.WHITE);
+            g.fillRect(0, 0, image.getWidth(), image.getHeight());
+            g.drawImage(image, 0, 0, null);
+            g.dispose();
+            image = rgbImage;
+        }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();

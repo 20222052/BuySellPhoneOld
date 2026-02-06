@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./store";
 import App from "./App.jsx";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./index.scss";
 
 // jQuery - MUST be set globally BEFORE importing Summernote
@@ -21,7 +22,9 @@ import 'summernote/dist/summernote-bs5.min.js'
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
-      <App />
+      <GoogleOAuthProvider clientId="882703980752-35acfsufq83kmu2lv7iqmsgtqj4cjdo7.apps.googleusercontent.com">
+        <App />
+      </GoogleOAuthProvider>
     </Provider>
   </React.StrictMode>
 );

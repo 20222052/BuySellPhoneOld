@@ -81,7 +81,7 @@ export default function Profile() {
         if (activeTab === "trade-in") fetchTradeIns();
         if (activeTab === "address") fetchAddresses();
     }, [activeTab, user]);
-    
+
 
     const fetchUserInfo = async () => {
         try {
@@ -274,7 +274,7 @@ export default function Profile() {
             });
 
             if (response.data && response.data.data) {
-                const newAvatarUrl = response.data.data.url;
+                const newAvatarUrl = response.data.data.secureUrl;
                 setFormData(prev => ({ ...prev, avatarUrl: newAvatarUrl }));
                 toast.success("Tải ảnh lên thành công!");
             }
@@ -351,12 +351,12 @@ export default function Profile() {
     // Logout
     const handleLogout = async () => {
         try {
-          await dispatch(logoutUser()).unwrap();
-          navigate("/login");
+            await dispatch(logoutUser()).unwrap();
+            navigate("/login");
         } catch (error) {
-          console.error("Logout failed:", error);
+            console.error("Logout failed:", error);
         }
-      };
+    };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);

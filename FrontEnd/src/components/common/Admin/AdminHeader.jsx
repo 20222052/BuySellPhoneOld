@@ -119,7 +119,7 @@ export default function AdminHeader({ onToggleSidebar, isSidebarCollapsed }) {
     const unreadCount = notifications.filter(n => n.unread).length;
 
     // Avatar URL with fallback
-    const avatarUrl = user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Admin')}&background=3b82f6&color=fff&bold=true`;
+    const avatarUrl = user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Admin')}&background=3b82f6&color=fff&bold=true`;
 
     return (
         <header className="admin-header">
@@ -133,7 +133,7 @@ export default function AdminHeader({ onToggleSidebar, isSidebarCollapsed }) {
                     <i className={`bi bi-${isSidebarCollapsed ? 'list' : 'x-lg'}`}></i>
                 </button>
 
-                <div className={`header-search ${searchFocused ? 'focused' : ''}`}>
+                {/* <div className={`header-search ${searchFocused ? 'focused' : ''}`}>
                     <i className="bi bi-search header-search-icon"></i>
                     <input
                         ref={searchInputRef}
@@ -148,25 +148,25 @@ export default function AdminHeader({ onToggleSidebar, isSidebarCollapsed }) {
                         <span>Ctrl</span>
                         <span>K</span>
                     </kbd>
-                </div>
+                </div> */}
             </div>
 
             {/* Right Section */}
             <div className="header-right">
                 {/* Quick Add Button */}
-                <button className="header-icon-btn" title="Thêm nhanh">
+                {/* <button className="header-icon-btn" title="Thêm nhanh">
                     <i className="bi bi-plus-lg"></i>
-                </button>
+                </button> */}
 
                 {/* Messages */}
-                <button className="header-icon-btn" title="Tin nhắn">
+                {/* <button className="header-icon-btn" title="Tin nhắn">
                     <i className="bi bi-chat-dots"></i>
                     <span className="header-badge pulse">3</span>
-                </button>
+                </button> */}
 
                 {/* Notifications */}
                 <div className="dropdown-wrapper" ref={notificationRef}>
-                    <button
+                    {/* <button
                         className={`header-icon-btn ${showNotifications ? 'active' : ''}`}
                         onClick={toggleNotifications}
                         title="Thông báo"
@@ -175,9 +175,9 @@ export default function AdminHeader({ onToggleSidebar, isSidebarCollapsed }) {
                         {unreadCount > 0 && (
                             <span className="header-badge pulse">{unreadCount}</span>
                         )}
-                    </button>
+                    </button> */}
 
-                    <div className={`dropdown-menu notification-dropdown ${showNotifications ? 'show' : ''}`}>
+                    {/* <div className={`dropdown-menu notification-dropdown ${showNotifications ? 'show' : ''}`}>
                         <div className="dropdown-header">
                             <div className="dropdown-header-left">
                                 <i className="bi bi-bell-fill"></i>
@@ -221,7 +221,7 @@ export default function AdminHeader({ onToggleSidebar, isSidebarCollapsed }) {
                                 <i className="bi bi-arrow-right"></i>
                             </Link>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className="header-divider"></div>
