@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from app.models.embedding_models import EmbeddingRequest, EmbeddingResponse
 import torch
+from app.config import Config
 
 class EmbeddingService:
     _instance = None
@@ -25,8 +26,8 @@ class EmbeddingService:
         print(f"[INFO] Using device: {self.device.upper()}")
 
         try:
-            print("[INFO] Loading Vietnamese Bi-Encoder...")
-            self.model = SentenceTransformer('bkai-foundation-models/vietnamese-bi-encoder', device=self.device)
+            print(f"[INFO] Loading Embedding Model: {Config.EMBEDDING_MODEL_ID}...")
+            self.model = SentenceTransformer(Config.EMBEDDING_MODEL_ID, device=self.device)
             self.initialized = True
             print("[SUCCESS] Embedding model loaded!")
             print("=" * 70)

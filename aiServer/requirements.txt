@@ -5,10 +5,8 @@ torch==2.6.0
 torchvision
 Pillow
 requests==2.31.0
-bitsandbytes
-accelerate
 sentence-transformers
 protobuf
 scipy
 huggingface-hub
-llama-cpp-python
+python-dotenv

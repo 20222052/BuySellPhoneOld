@@ -135,5 +135,6 @@ ai:
   diagnostic:
     api:
       url: "http://localhost:5000"  # Flask API endpoint
+      token: "your_secure_token_here"
       timeout: 300000  # 300 seconds (5 minutes) for AI analysis
 

@@ -51,6 +51,9 @@ public class ProductDiagnosticService {
     @Value("${ai.diagnostic.api.url:http://localhost:5000}")
     private String aiApiUrl;
 
+    @Value("${ai.diagnostic.api.token}")
+    private String aiApiToken;
+
     /**
      * Gọi AI service để phân tích ảnh
      */
@@ -61,6 +64,7 @@ public class ProductDiagnosticService {
             // Prepare request
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            headers.set("Authorization", "Bearer " + aiApiToken);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
@@ -103,6 +107,7 @@ public class ProductDiagnosticService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + aiApiToken);
 
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("image", imageBase64);
@@ -178,6 +183,7 @@ public class ProductDiagnosticService {
             log.info("Calling AI diagnostic service with {} images", images.size());
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + aiApiToken);
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(aiPayload, headers);
 
             String url = aiApiUrl + "/api/diagnose";

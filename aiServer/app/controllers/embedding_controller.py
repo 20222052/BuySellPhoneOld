@@ -1,10 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
 from app.services.embedding_service import embedding_service
 from app.models.embedding_models import EmbeddingRequest
 
-embedding_bp = Blueprint('embedding', __name__)
-
-@embedding_bp.route('/api/embed', methods=['POST'])
 def embed():
     try:
         data = request.json
