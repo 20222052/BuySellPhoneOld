@@ -344,7 +344,6 @@ export default function ProductItemList() {
             dimensions: '', weight: '',
             waterResistance: '', sensors: '', releaseTime: '',
             models: [],
-            models: [],
             mediaList: []
         });
         setCurrentStatus('active');
