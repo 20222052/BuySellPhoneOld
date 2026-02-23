@@ -4,11 +4,15 @@ import com.eaut.backend.constant.ConversationStatus;
 import com.eaut.backend.constant.SenderType;
 import com.eaut.backend.entities.ChatMessage;
 import com.eaut.backend.entities.Conversation;
+import com.eaut.backend.model.response.ChatBotResponse;
 import com.eaut.backend.repository.ChatMessageRepository;
 import com.eaut.backend.repository.ConversationRepository;
 import com.eaut.backend.service.AI_ChatBot.AIChatService;
 import com.eaut.backend.service.AI_ChatBot.ChatQueueService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,6 +26,7 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class ChatWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -29,6 +34,7 @@ public class ChatWebSocketController {
     private final ChatQueueService chatQueueService;
     private final ConversationRepository conversationRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ObjectMapper objectMapper;
 
     /**
      * Nhận tin nhắn chat từ user gửi lên
@@ -89,9 +95,15 @@ public class ChatWebSocketController {
             return;
         }
 
-        // 3. Mặc định: Bot xử lý tin nhắn (AIChatService tự lưu USER + BOT message)
-        String aiResponse = aiChatService.processUserMessage(message, sessionId);
-        messagingTemplate.convertAndSend("/queue/chat/" + sessionId, aiResponse);
+        // 3. Mặc định: Bot xử lý — trả về ChatBotResponse (text + products)
+        ChatBotResponse botResponse = aiChatService.processUserMessage(message, sessionId);
+        try {
+            String json = objectMapper.writeValueAsString(botResponse);
+            messagingTemplate.convertAndSend("/queue/chat/" + sessionId, json);
+        } catch (JsonProcessingException e) {
+            log.error("Serialize ChatBotResponse error", e);
+            messagingTemplate.convertAndSend("/queue/chat/" + sessionId, botResponse.getText());
+        }
     }
 
     /**

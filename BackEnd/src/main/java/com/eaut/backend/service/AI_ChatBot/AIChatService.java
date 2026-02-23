@@ -4,10 +4,15 @@ import com.eaut.backend.constant.ConversationStatus;
 import com.eaut.backend.constant.SenderType;
 import com.eaut.backend.entities.ChatMessage;
 import com.eaut.backend.entities.Conversation;
+import com.eaut.backend.model.response.ChatBotResponse;
+import com.eaut.backend.model.response.ProductItemDetailResponse;
+import com.eaut.backend.model.response.ProductMediaResponse;
 import com.eaut.backend.repository.ChatMessageRepository;
 import com.eaut.backend.repository.ConversationRepository;
+import com.eaut.backend.service.ProductItemService;
 import com.eaut.backend.service.RagService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -18,23 +23,26 @@ import org.springframework.web.client.RestClient;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AIChatService {
 
     private final RagService ragService;
     private final ChatQueueService chatQueueService;
     private final ConversationRepository conversationRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ProductItemService productItemService;
 
-    // Số lượng tin nhắn lịch sử gần nhất gửi kèm cho AI
-    private static final int HISTORY_SIZE = 3;
+    /** Số lượng tin nhắn lịch sử gửi kèm cho AI */
+    private static final int HISTORY_SIZE = 1;
 
-    // Config từ application.yaml
     @Value("${spring.ai.deepseek.url}")
     private String deepSeekUrl;
 
@@ -49,73 +57,117 @@ public class AIChatService {
 
     private final RestClient restClient = RestClient.create();
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // PUBLIC API
+    // ──────────────────────────────────────────────────────────────────────────
+
     /**
-     * Xử lý tin nhắn từ User
-     *
-     * @param userMessage Câu hỏi của người dùng
-     * @param sessionId   Phiên làm việc
-     * @return Câu trả lời (hoặc gợi ý gặp nhân viên)
+     * Xử lý tin nhắn từ User, trả về {@link ChatBotResponse} chứa text + product
+     * cards.
      */
     @Transactional
-    public String processUserMessage(String userMessage, String sessionId) {
-        // 0. Tạo hoặc lấy Conversation từ DB
+    public ChatBotResponse processUserMessage(String userMessage, String sessionId) {
+        // 0. Tạo hoặc lấy Conversation
         Conversation conversation = getOrCreateConversation(sessionId);
 
         // Lưu tin nhắn User
         saveMessage(conversation, userMessage, SenderType.USER);
 
-        // 1. Kiểm tra xem user có đang trong hàng đợi không?
+        // 1. Kiểm tra hàng đợi
         if (chatQueueService.getPosition(sessionId) > 0) {
-            return "Bạn đang nằm trong hàng đợi hỗ trợ. Vui lòng chờ nhân viên kết nối.";
+            return ChatBotResponse.builder()
+                    .text("Bạn đang nằm trong hàng đợi hỗ trợ. Vui lòng chờ nhân viên kết nối.")
+                    .build();
         }
 
-        // 2. Lấy lịch sử chat gần nhất (ngoại trừ tin nhắn vừa lưu, lấy trước đó)
-        // Lấy HISTORY_SIZE*2 + 1 để bao gồm cặp user/bot rồi slice,
-        // nhưng đơn giản hơn: lấy (HISTORY_SIZE*2) tin nhắn gần nhất TRƯỚC tin hiện tại
+        // 2. Lấy lịch sử chat gần nhất (HISTORY_SIZE*2 cặp user/bot)
         List<ChatMessage> recentHistory = getRecentHistory(conversation, HISTORY_SIZE * 2);
 
-        // 3. RAG Search: Tìm kiếm thông tin sản phẩm liên quan
+        // 3. RAG Search
         List<Map<String, Object>> relatedDocs = ragService.searchProducts(userMessage);
 
-        String botResponse;
+        String botText;
+        List<ChatBotResponse.ProductSuggestion> productSuggestions = new ArrayList<>();
 
-        // 4. Kiểm tra RAG context
         if (relatedDocs.isEmpty()) {
-            botResponse = callDeepSeekAI(userMessage, "", recentHistory);
+            botText = callDeepSeekAI(userMessage, "", recentHistory);
         } else {
-            // Build Context từ RAG
+            // Build RAG context từ text
             String context = relatedDocs.stream()
                     .map(doc -> (String) doc.get("content"))
                     .collect(Collectors.joining("\n---\n"));
 
-            botResponse = callDeepSeekAI(userMessage, context, recentHistory);
+            botText = callDeepSeekAI(userMessage, context, recentHistory);
+
+            // Build product suggestions từ RAG results
+            productSuggestions = buildProductSuggestions(relatedDocs);
         }
 
-        // Lưu tin nhắn Bot
-        saveMessage(conversation, botResponse, SenderType.BOT);
+        // Lưu phản hồi Bot
+        saveMessage(conversation, botText, SenderType.BOT);
 
-        return botResponse;
+        return ChatBotResponse.builder()
+                .text(botText)
+                .products(productSuggestions)
+                .build();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PRIVATE HELPERS
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Lấy thông tin sản phẩm từ RAG results để build product suggestion cards.
+     */
+    private List<ChatBotResponse.ProductSuggestion> buildProductSuggestions(
+            List<Map<String, Object>> relatedDocs) {
+
+        List<ChatBotResponse.ProductSuggestion> suggestions = new ArrayList<>();
+
+        for (Map<String, Object> doc : relatedDocs) {
+            try {
+                UUID productItemId = UUID.fromString((String) doc.get("productItemId"));
+                ProductItemDetailResponse detail = productItemService.findByIdWithDetails(productItemId);
+
+                // Lấy ảnh primary đầu tiên (sort theo isPrimary rồi sortOrder)
+                String imageUrl = detail.getMedia() == null ? null
+                        : detail.getMedia().stream()
+                                .filter(ProductMediaResponse::isPrimary)
+                                .min(Comparator.comparingInt(m -> m.getSortOrder() == null ? 99 : m.getSortOrder()))
+                                .or(() -> detail.getMedia().stream().findFirst())
+                                .map(ProductMediaResponse::getUrl)
+                                .orElse(null);
+
+                suggestions.add(ChatBotResponse.ProductSuggestion.builder()
+                        .id(productItemId.toString())
+                        .name(detail.getName())
+                        .productName(detail.getProductName())
+                        .brandName(detail.getBrandName())
+                        .sellPrice(detail.getSellPrice())
+                        .comparePrice(detail.getComparePrice())
+                        .imageUrl(imageUrl)
+                        .build());
+            } catch (Exception e) {
+                log.warn("Không thể load product detail cho RAG result: {}", e.getMessage());
+            }
+        }
+        return suggestions;
     }
 
     /**
-     * Lấy lịch sử chat gần nhất của conversation (chỉ USER + BOT),
-     * trả về theo thứ tự thời gian tăng dần (cũ → mới).
-     * Không bao gồm tin nhắn USER vừa được lưu (lấy từ vị trí thứ 2 trở đi khi đếm
-     * từ mới).
+     * Lấy lịch sử chat gần nhất (chỉ USER + BOT), thứ tự cũ → mới.
+     * Bỏ qua tin nhắn USER vừa được lưu (mới nhất).
      */
     private List<ChatMessage> getRecentHistory(Conversation conversation, int limit) {
-        // Lấy limit+1 để bỏ tin nhắn USER vừa lưu (mới nhất)
         List<ChatMessage> raw = chatMessageRepository.findRecentMessages(
                 conversation.getId(),
                 PageRequest.of(0, limit + 1));
-        // raw[0] là tin mới nhất (= USER vừa lưu), bỏ nó đi
         if (raw.size() > 1) {
-            raw = raw.subList(1, raw.size()); // bỏ phần tử đầu (mới nhất)
+            raw = raw.subList(1, raw.size()); // bỏ tin mới nhất (= USER vừa lưu)
         } else {
             return Collections.emptyList();
         }
-        // Đảo lại để có thứ tự cũ → mới
-        Collections.reverse(raw);
+        Collections.reverse(raw); // đảo lại: cũ → mới
         return raw;
     }
 
@@ -139,17 +191,12 @@ public class AIChatService {
                 .isRead(true)
                 .build();
         chatMessageRepository.save(msg);
-
         conversation.setLastMessageAt(OffsetDateTime.now());
         conversationRepository.save(conversation);
     }
 
     /**
-     * Gọi API DeepSeek với lịch sử đoạn chat gần nhất.
-     *
-     * @param query         Câu hỏi hiện tại của user
-     * @param context       Context sản phẩm từ RAG (có thể rỗng)
-     * @param recentHistory Danh sách tin nhắn lịch sử (USER + BOT, cũ → mới)
+     * Gọi DeepSeek AI với lịch sử multi-turn.
      */
     @SuppressWarnings("unchecked")
     private String callDeepSeekAI(String query, String context, List<ChatMessage> recentHistory) {
@@ -160,38 +207,36 @@ public class AIChatService {
                 QUY TẮC QUAN TRỌNG:
                 - Chỉ dùng "Context sản phẩm" để nói về thông số/giá/tên máy cụ thể.
                 - Nếu Context không có thông tin, tuyệt đối KHÔNG bịa. Hãy nói: "Hiện mình chưa thấy thông tin đó trong hệ thống".
+                - Nếu Context có thông tin, tuyệt đối KHÔNG bịa. hãy sử dụng thông tin có trong Context.
                 - Nếu khách hỏi mơ hồ hoặc thiếu dữ liệu, hãy hỏi tối đa 2–4 câu ngắn để làm rõ nhu cầu.
                 - Luôn tư vấn theo hướng lợi ích: pin, camera, hiệu năng, màn hình, độ bền, bảo hành, phù hợp công việc.
                 - Giọng điệu: tự nhiên, gần gũi, không máy móc, không dài dòng.
-                - Cuối mỗi câu trả lời nên có CTA mềm: "Bạn muốn mình gợi ý 2–3 mẫu phù hợp nhất không?" hoặc "Bạn chốt tầm giá nào để mình gửi lựa chọn tốt nhất?".
+                - Cuối mỗi câu trả lời nên có CTA mềm.
+                - Vì hệ thống sẽ hiển thị thẻ sản phẩm riêng, KHÔNG cần liệt kê chi tiết thông số/giá từng máy trong text.
+                  Thay vào đó hãy nêu điểm khác biệt nổi bật và hỏi thêm nhu cầu để dẫn dắt khách.
 
                 CÁCH TRẢ LỜI (ưu tiên):
                 1) Tóm tắt nhu cầu khách (1 câu).
-                2) Đưa ra gợi ý rõ ràng (2–5 gạch đầu dòng) dựa trên Context nếu có.
-                3) Nếu chưa đủ dữ liệu → hỏi thêm 2–4 câu.
-                4) Kết thúc bằng CTA.
+                2) Nêu điểm nổi bật của từng máy (1–2 câu/máy, không liệt kê thông số dài).
+                3) Kết thúc bằng CTA.
+                
+                Nhấn mạnh: chỉ trả lời dựa trên thông tin có trong Context, KHÔNG BỊA. Nếu không có thông tin, hãy thành thật nói bạn không biết.
 
                 Context sản phẩm (nếu có):
                 %s
                 """
                 .formatted(context);
 
-        // Xây dựng danh sách messages theo format multi-turn của DeepSeek/OpenAI
+        // Xây dựng messages multi-turn
         List<Map<String, String>> messages = new ArrayList<>();
-
-        // 1. System prompt
         messages.add(Map.of("role", "system", "content", systemPrompt));
 
-        // 2. Lịch sử các lượt chat trước (cũ → mới)
         for (ChatMessage hist : recentHistory) {
             String role = hist.getSenderType() == SenderType.USER ? "user" : "assistant";
             messages.add(Map.of("role", role, "content", hist.getContent()));
         }
-
-        // 3. Câu hỏi hiện tại của user
         messages.add(Map.of("role", "user", "content", query));
 
-        // Payload gửi lên DeepSeek API
         Map<String, Object> requestBody = Map.of(
                 "model", model,
                 "messages", messages,
@@ -217,8 +262,8 @@ public class AIChatService {
             return "Xin lỗi, hiện tại tôi đang gặp sự cố kết nối với bộ não AI.";
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return "Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau: " + e.getMessage();
+            log.error("DeepSeek API error: {}", e.getMessage());
+            return "Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau.";
         }
     }
 }
