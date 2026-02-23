@@ -39,7 +39,7 @@ export default function BlogSection({ blogs, viewMode = "grid", showHeader = tru
                                     </div>
                                     <h5 className="blog-title">{blog.title}</h5>
                                     <p className="blog-excerpt">{blog.excerpt}</p>
-                                    <Link to={`/blog/${blog.id}`} className="blog-link">
+                                    <Link to={`/blogs/${blog.id}`} className="blog-link">
                                         Đọc thêm <i className="bi bi-arrow-right"></i>
                                     </Link>
                                 </Card.Body>

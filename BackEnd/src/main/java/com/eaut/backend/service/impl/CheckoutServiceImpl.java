@@ -38,6 +38,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final ProductColorRepository productColorRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ProductMediaRepository productMediaRepository;
     private final DistributedLockService distributedLockService;
     private final OrderEventPublisher orderEventPublisher;
 
@@ -210,8 +211,9 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     private String getProductImageUrl(UUID productItemId) {
-        // TODO: Implement actual image URL fetching from ProductMedia
-        return null;
+        return productMediaRepository.findFirstImageByProductItemId(productItemId)
+                .map(media -> media.getUrl())
+                .orElse(null);
     }
 
     private CheckoutResponse mapToCheckoutResponse(Order order, Address address) {

@@ -1,6 +1,7 @@
 package com.eaut.backend.controller;
 
 import com.eaut.backend.entities.User;
+import com.eaut.backend.model.request.ChangePasswordRequest;
 import com.eaut.backend.model.request.RegisterRequest;
 import com.eaut.backend.model.request.UserStatusUpdateRequest;
 import com.eaut.backend.model.request.UserUpdateRequest;
@@ -123,6 +124,22 @@ public class UserController {
                                 HttpStatus.OK.value(),
                                 updatedUser);
 
+                return apiResponse;
+        }
+
+        /**
+         * Đổi mật khẩu tài khoản
+         */
+        @PostAuthorize("#userId == authentication.token.claims['id'] or hasRole('admin')")
+        @PatchMapping("/{userId}/password")
+        public ApiResponse<Void> changePassword(
+                        @PathVariable UUID userId,
+                        @RequestBody ChangePasswordRequest request) {
+                log.info("UserController: changePassword - userId: {}", userId);
+                userService.changePassword(userId, request);
+                ApiResponse<Void> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                null);
                 return apiResponse;
         }
 }

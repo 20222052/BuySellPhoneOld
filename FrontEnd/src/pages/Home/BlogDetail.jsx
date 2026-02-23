@@ -132,7 +132,7 @@ export default function BlogDetail() {
                         />
 
                         {/* Comments Section */}
-                        <BlogComments />
+                        <BlogComments blogId={id} />
                     </Col>
 
                     {/* Sidebar for related posts (optional, or below) */}

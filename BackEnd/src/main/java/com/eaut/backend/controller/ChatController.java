@@ -1,15 +1,20 @@
 package com.eaut.backend.controller;
 
+import com.eaut.backend.constant.ConversationStatus;
+import com.eaut.backend.constant.SenderType;
 import com.eaut.backend.entities.ChatMessage;
 import com.eaut.backend.entities.Conversation;
+import com.eaut.backend.repository.ChatMessageRepository;
 import com.eaut.backend.repository.ConversationRepository;
 import com.eaut.backend.service.AI_ChatBot.ChatQueueService;
 import com.eaut.backend.service.AI_ChatBot.RagServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +28,7 @@ public class ChatController {
     private final ChatQueueService chatQueueService;
     private final RagServiceImpl ragService;
     private final ConversationRepository conversationRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     // API Test Ingest thủ công
@@ -40,6 +46,7 @@ public class ChatController {
 
     // API Admin pick user từ queue
     @PostMapping("/queue/pick")
+    @Transactional
     public ResponseEntity<String> pickUser() {
         String sessionId = chatQueueService.popNextCustomer();
         if (sessionId == null) {
@@ -49,17 +56,39 @@ public class ChatController {
         // Mark session as human mode
         chatQueueService.markAsHumanSession(sessionId);
 
+        // Cập nhật trạng thái Conversation → HUMAN_ACTIVE và ghi thông báo hệ thống
+        conversationRepository.findBySessionId(sessionId).ifPresent(conversation -> {
+            conversation.setStatus(ConversationStatus.HUMAN_ACTIVE);
+            conversationRepository.save(conversation);
+
+            String systemMsg = "Nhân viên đã kết nối. Bạn đang được hỗ trợ trực tiếp.";
+            saveSystemMessage(conversation, systemMsg);
+
+            // Thông báo cho user biết đã có nhân viên tiếp nhận
+            messagingTemplate.convertAndSend("/queue/chat/" + sessionId, systemMsg);
+        });
+
         return ResponseEntity.ok(sessionId);
     }
 
     // API Admin kết thúc hỗ trợ, trả user về bot
     @PostMapping("/queue/end/{sessionId}")
+    @Transactional
     public ResponseEntity<String> endConversation(@PathVariable String sessionId) {
         chatQueueService.endHumanSession(sessionId);
 
+        String systemMsg = "Nhân viên đã kết thúc hỗ trợ. Bạn có thể tiếp tục chat với bot hoặc yêu cầu gặp nhân viên lại.";
+
+        // Cập nhật trạng thái Conversation → BOT_ACTIVE và lưu thông báo hệ thống
+        conversationRepository.findBySessionId(sessionId).ifPresent(conversation -> {
+            conversation.setStatus(ConversationStatus.BOT_ACTIVE);
+            conversationRepository.save(conversation);
+
+            saveSystemMessage(conversation, systemMsg);
+        });
+
         // Thông báo cho customer
-        messagingTemplate.convertAndSend("/queue/chat/" + sessionId,
-                "Nhân viên đã kết thúc hỗ trợ. Bạn có thể tiếp tục chat với bot hoặc yêu cầu gặp nhân viên lại.");
+        messagingTemplate.convertAndSend("/queue/chat/" + sessionId, systemMsg);
 
         return ResponseEntity.ok("Đã kết thúc hỗ trợ cho session: " + sessionId);
     }
@@ -77,16 +106,26 @@ public class ChatController {
     // cuối)
     @GetMapping("/conversations")
     public ResponseEntity<List<Conversation>> getAllConversations() {
-        return ResponseEntity.ok(conversationRepository.findByLastMessageAtAfter(java.time.OffsetDateTime.MIN)); // Lấy
-                                                                                                                 // tất
-                                                                                                                 // cả
-        // Hoặc sắp xếp lại bên Service nếu cần. Tạm thời dùng findByLastMessageAtAfter
-        // với thời gian rất cũ để lấy hết.
-        // Tuy nhiên tốt nhất là dùng findAll với Sort.
+        return ResponseEntity.ok(conversationRepository.findByLastMessageAtAfter(java.time.OffsetDateTime.MIN));
     }
 
     @GetMapping("/history/all")
     public ResponseEntity<List<Conversation>> getAllHistory() {
         return ResponseEntity.ok(conversationRepository.findAllWithMessages());
+    }
+
+    // ──────────── Helper method ────────────
+
+    private void saveSystemMessage(Conversation conversation, String content) {
+        ChatMessage msg = ChatMessage.builder()
+                .conversation(conversation)
+                .content(content)
+                .senderType(SenderType.SYSTEM)
+                .isRead(true)
+                .build();
+        chatMessageRepository.save(msg);
+
+        conversation.setLastMessageAt(OffsetDateTime.now());
+        conversationRepository.save(conversation);
     }
 }

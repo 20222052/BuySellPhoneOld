@@ -165,3 +165,107 @@
     text-align: left;
     word-break: break-word;
 }
+
+/* ====================== RESPONSIVE FILTER ====================== */
+
+/* Override table-toolbar defaults cho order filter panel */
+.order-filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: flex-start;
+    /* căn trái */
+    align-items: stretch;
+}
+
+.order-filter-panel .toolbar-left {
+    justify-content: flex-start;
+    /* căn trái các filter */
+    flex-wrap: wrap;
+}
+
+/* Nút xóa tất cả bộ lọc */
+.btn-clear-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    height: auto;
+    width: auto;
+    min-width: unset;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-clear-filter:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
+
+/* Nút toggle filter - chỉ hiện trên mobile */
+.filter-toggle-btn {
+    display: none;
+    position: relative;
+}
+
+/* Badge đỏ nhỏ báo có filter đang active */
+.filter-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+
+/* Trên desktop: luôn hiện filter panel */
+.order-filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Mobile: ≤ 768px */
+@media (max-width: 768px) {
+
+    /* Hiện nút toggle */
+    .filter-toggle-btn {
+        display: flex;
+    }
+
+    /* Ẩn filter panel mặc định */
+    .order-filter-panel .toolbar-left {
+        display: none;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Hiện filter panel khi có class filter-open */
+    .order-filter-panel.filter-open .toolbar-left {
+        display: flex;
+    }
+
+    /* Điều chỉnh search-box và filter-select cho mobile */
+    .order-filter-panel .search-box {
+        width: 100%;
+    }
+
+    .order-filter-panel .filter-select {
+        min-width: 120px;
+    }
+
+    /* Bố cục date range trên mobile */
+    .order-filter-panel .toolbar-left[style] {
+        display: flex !important;
+        flex-wrap: wrap;
+    }
+}

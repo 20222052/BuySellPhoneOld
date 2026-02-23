@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DataTable from '../../../components/common/Admin/DataTable';
 import OrderService from '../../../services/orderService';
@@ -12,12 +13,17 @@ export default function OrderList() {
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
 
     // Filter & Pagination state
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('desc');
     const [sortBy, setSortBy] = useState('createdAt');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
+    const [paymentFilter, setPaymentFilter] = useState(searchParams.get('payment') || '');
+    const [fromDate, setFromDate] = useState(searchParams.get('from') || '');
+    const [toDate, setToDate] = useState(searchParams.get('to') || '');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
@@ -34,6 +40,19 @@ export default function OrderList() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    // Sync filters khi URL thay đổi (ví dụ: click sidebar)
+    useEffect(() => {
+        const statusFromUrl = searchParams.get('status') || '';
+        const paymentFromUrl = searchParams.get('payment') || '';
+        const fromFromUrl = searchParams.get('from') || '';
+        const toFromUrl = searchParams.get('to') || '';
+        setStatusFilter(statusFromUrl);
+        setPaymentFilter(paymentFromUrl);
+        setFromDate(fromFromUrl);
+        setToDate(toFromUrl);
+        setCurrentPage(1);
+    }, [searchParams]);
+
     // Fetch orders
     const fetchOrders = useCallback(async () => {
         setLoading(true);
@@ -41,6 +60,9 @@ export default function OrderList() {
             const response = await OrderService.getAll({
                 search: debouncedSearch,
                 status: statusFilter,
+                paymentMethod: paymentFilter,
+                fromDate: fromDate || undefined,
+                toDate: toDate || undefined,
                 page: currentPage,
                 limit: pageSize,
                 sortBy: sortBy,
@@ -56,7 +78,7 @@ export default function OrderList() {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, sortOrder, sortBy, statusFilter, currentPage, pageSize]);
+    }, [debouncedSearch, sortOrder, sortBy, statusFilter, paymentFilter, fromDate, toDate, currentPage, pageSize]);
 
     useEffect(() => {
         fetchOrders();
@@ -143,6 +165,17 @@ export default function OrderList() {
                         </h1>
                     </div>
                     <div className="page-header-right">
+                        {/* Nút toggle filter (chỉ visible trên mobile) */}
+                        <button
+                            className={`btn-refresh filter-toggle-btn${(statusFilter || paymentFilter || fromDate || toDate) ? ' filter-active' : ''}`}
+                            title="Bộ lọc"
+                            onClick={() => setShowFilters(v => !v)}
+                        >
+                            <i className="bi bi-funnel-fill"></i>
+                            {(statusFilter || paymentFilter || fromDate || toDate) && (
+                                <span className="filter-badge"></span>
+                            )}
+                        </button>
                         <button className="btn-refresh" onClick={fetchOrders} disabled={loading}>
                             <i className={`bi bi-arrow-clockwise ${loading ? 'spin' : ''}`}></i>
                         </button>
@@ -151,7 +184,7 @@ export default function OrderList() {
             </div>
 
             {/* Search & Filter */}
-            <div className="table-toolbar">
+            <div className={`table-toolbar order-filter-panel${showFilters ? ' filter-open' : ''}`}>
                 <div className="toolbar-left">
                     <div className="search-box">
                         <i className="bi bi-search"></i>
@@ -173,16 +206,41 @@ export default function OrderList() {
                             className="filter-select"
                             value={statusFilter}
                             onChange={(e) => {
-                                setStatusFilter(e.target.value);
+                                const newStatus = e.target.value;
                                 setCurrentPage(1);
+                                const params = {};
+                                if (newStatus) params.status = newStatus;
+                                if (paymentFilter) params.payment = paymentFilter;
+                                setSearchParams(params);
                             }}
                         >
                             <option value="">Tất cả trạng thái</option>
-                            <option value="pending">Pending</option>
-                            <option value="processing">Processing</option>
-                            <option value="shipping">Shipping</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="pending">Chờ xác nhận</option>
+                            <option value="paid">Đã thanh toán</option>
+                            <option value="processing">Đang xử lý</option>
+                            <option value="shipped">Đang giao</option>
+                            <option value="completed">Hoàn thành</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+
+                    {/* Payment method filter */}
+                    <div className="filter-group">
+                        <select
+                            className="filter-select"
+                            value={paymentFilter}
+                            onChange={(e) => {
+                                const newPayment = e.target.value;
+                                setCurrentPage(1);
+                                const params = {};
+                                if (statusFilter) params.status = statusFilter;
+                                if (newPayment) params.payment = newPayment;
+                                setSearchParams(params);
+                            }}
+                        >
+                            <option value="">Tất cả thanh toán</option>
+                            <option value="cod">COD (Tiền mặt)</option>
+                            <option value="bank">Online</option>
                         </select>
                     </div>
 
@@ -199,6 +257,89 @@ export default function OrderList() {
                             <option value="asc">Cũ nhất</option>
                         </select>
                     </div>
+
+                    {/* Nút xóa tất cả bộ lọc */}
+                    {(statusFilter || paymentFilter || fromDate || toDate) && (
+                        <div className="filter-group">
+                            <button
+                                className="btn-clear-filter"
+                                title="Xóa tất cả bộ lọc"
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setFromDate('');
+                                    setToDate('');
+                                    setCurrentPage(1);
+                                    setSearchParams({});
+                                }}
+                            >
+                                <i className="bi bi-x-circle"></i>
+                                Xóa bộ lọc
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Date range filter */}
+                <div className="toolbar-left" style={{ marginTop: 8 }}>
+                    <div className="filter-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <label style={{ color: '#94a3b8', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                            <i className="bi bi-calendar3 me-1"></i>Từ ngày
+                        </label>
+                        <input
+                            type="date"
+                            className="filter-select"
+                            value={fromDate}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setFromDate(val);
+                                setCurrentPage(1);
+                                const params = {};
+                                if (statusFilter) params.status = statusFilter;
+                                if (paymentFilter) params.payment = paymentFilter;
+                                if (val) params.from = val;
+                                if (toDate) params.to = toDate;
+                                setSearchParams(params);
+                            }}
+                        />
+                    </div>
+                    <div className="filter-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <label style={{ color: '#94a3b8', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                            Đến ngày
+                        </label>
+                        <input
+                            type="date"
+                            className="filter-select"
+                            value={toDate}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setToDate(val);
+                                setCurrentPage(1);
+                                const params = {};
+                                if (statusFilter) params.status = statusFilter;
+                                if (paymentFilter) params.payment = paymentFilter;
+                                if (fromDate) params.from = fromDate;
+                                if (val) params.to = val;
+                                setSearchParams(params);
+                            }}
+                        />
+                    </div>
+                    {(fromDate || toDate) && (
+                        <button
+                            className="clear-search"
+                            style={{ marginLeft: 4 }}
+                            title="Xóa bộ lọc ngày"
+                            onClick={() => {
+                                setFromDate('');
+                                setToDate('');
+                                const params = {};
+                                if (statusFilter) params.status = statusFilter;
+                                if (paymentFilter) params.payment = paymentFilter;
+                                setSearchParams(params);
+                            }}
+                        >
+                            <i className="bi bi-x"></i>
+                        </button>
+                    )}
                 </div>
             </div>
 

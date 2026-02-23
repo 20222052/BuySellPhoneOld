@@ -9,12 +9,15 @@ import com.eaut.backend.repository.ConversationRepository;
 import com.eaut.backend.service.RagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +30,9 @@ public class AIChatService {
     private final ChatQueueService chatQueueService;
     private final ConversationRepository conversationRepository;
     private final ChatMessageRepository chatMessageRepository;
+
+    // Số lượng tin nhắn lịch sử gần nhất gửi kèm cho AI
+    private static final int HISTORY_SIZE = 3;
 
     // Config từ application.yaml
     @Value("${spring.ai.deepseek.url}")
@@ -45,7 +51,7 @@ public class AIChatService {
 
     /**
      * Xử lý tin nhắn từ User
-     * 
+     *
      * @param userMessage Câu hỏi của người dùng
      * @param sessionId   Phiên làm việc
      * @return Câu trả lời (hoặc gợi ý gặp nhân viên)
@@ -63,32 +69,54 @@ public class AIChatService {
             return "Bạn đang nằm trong hàng đợi hỗ trợ. Vui lòng chờ nhân viên kết nối.";
         }
 
-        // 2. RAG Search: Tìm kiếm thông tin sản phẩm liên quan
+        // 2. Lấy lịch sử chat gần nhất (ngoại trừ tin nhắn vừa lưu, lấy trước đó)
+        // Lấy HISTORY_SIZE*2 + 1 để bao gồm cặp user/bot rồi slice,
+        // nhưng đơn giản hơn: lấy (HISTORY_SIZE*2) tin nhắn gần nhất TRƯỚC tin hiện tại
+        List<ChatMessage> recentHistory = getRecentHistory(conversation, HISTORY_SIZE * 2);
+
+        // 3. RAG Search: Tìm kiếm thông tin sản phẩm liên quan
         List<Map<String, Object>> relatedDocs = ragService.searchProducts(userMessage);
 
         String botResponse;
 
-        // 3. Kiểm tra độ tin cậy
+        // 4. Kiểm tra RAG context
         if (relatedDocs.isEmpty()) {
-            // botResponse = "Xin lỗi, tôi không tìm thấy thông tin sản phẩm phù hợp trong
-            // hệ thống. " +
-            // "Bạn có muốn trao đổi trực tiếp với nhân viên tư vấn không? (Gõ 'Gặp nhân
-            // viên')";
-            botResponse = callDeepSeekAI(userMessage, "");
+            botResponse = callDeepSeekAI(userMessage, "", recentHistory);
         } else {
-            // 4. Build Context
+            // Build Context từ RAG
             String context = relatedDocs.stream()
-                    .map(doc -> (String) doc.get("content")) // Lấy content từ metadata
+                    .map(doc -> (String) doc.get("content"))
                     .collect(Collectors.joining("\n---\n"));
 
-            // 5. Gọi DeepSeek API
-            botResponse = callDeepSeekAI(userMessage, context);
+            botResponse = callDeepSeekAI(userMessage, context, recentHistory);
         }
 
         // Lưu tin nhắn Bot
         saveMessage(conversation, botResponse, SenderType.BOT);
 
         return botResponse;
+    }
+
+    /**
+     * Lấy lịch sử chat gần nhất của conversation (chỉ USER + BOT),
+     * trả về theo thứ tự thời gian tăng dần (cũ → mới).
+     * Không bao gồm tin nhắn USER vừa được lưu (lấy từ vị trí thứ 2 trở đi khi đếm
+     * từ mới).
+     */
+    private List<ChatMessage> getRecentHistory(Conversation conversation, int limit) {
+        // Lấy limit+1 để bỏ tin nhắn USER vừa lưu (mới nhất)
+        List<ChatMessage> raw = chatMessageRepository.findRecentMessages(
+                conversation.getId(),
+                PageRequest.of(0, limit + 1));
+        // raw[0] là tin mới nhất (= USER vừa lưu), bỏ nó đi
+        if (raw.size() > 1) {
+            raw = raw.subList(1, raw.size()); // bỏ phần tử đầu (mới nhất)
+        } else {
+            return Collections.emptyList();
+        }
+        // Đảo lại để có thứ tự cũ → mới
+        Collections.reverse(raw);
+        return raw;
     }
 
     private Conversation getOrCreateConversation(String sessionId) {
@@ -108,20 +136,23 @@ public class AIChatService {
                 .conversation(conversation)
                 .content(content)
                 .senderType(sender)
-                .isRead(true) // Bot trả lời thì coi như read
+                .isRead(true)
                 .build();
         chatMessageRepository.save(msg);
 
-        // Update last message time
         conversation.setLastMessageAt(OffsetDateTime.now());
         conversationRepository.save(conversation);
     }
 
     /**
-     * Gọi API DeepSeek (qua HuggingFace)
+     * Gọi API DeepSeek với lịch sử đoạn chat gần nhất.
+     *
+     * @param query         Câu hỏi hiện tại của user
+     * @param context       Context sản phẩm từ RAG (có thể rỗng)
+     * @param recentHistory Danh sách tin nhắn lịch sử (USER + BOT, cũ → mới)
      */
     @SuppressWarnings("unchecked")
-    private String callDeepSeekAI(String query, String context) {
+    private String callDeepSeekAI(String query, String context, List<ChatMessage> recentHistory) {
         String systemPrompt = """
                 Bạn là trợ lý AI tư vấn bán hàng điện thoại cực kỳ thân thiện, thuyết phục và chuyên nghiệp.
                 Mục tiêu: giúp khách chọn được máy phù hợp và tăng khả năng chốt đơn.
@@ -132,7 +163,7 @@ public class AIChatService {
                 - Nếu khách hỏi mơ hồ hoặc thiếu dữ liệu, hãy hỏi tối đa 2–4 câu ngắn để làm rõ nhu cầu.
                 - Luôn tư vấn theo hướng lợi ích: pin, camera, hiệu năng, màn hình, độ bền, bảo hành, phù hợp công việc.
                 - Giọng điệu: tự nhiên, gần gũi, không máy móc, không dài dòng.
-                - Cuối mỗi câu trả lời nên có CTA mềm: “Bạn muốn mình gợi ý 2–3 mẫu phù hợp nhất không?” hoặc “Bạn chốt tầm giá nào để mình gửi lựa chọn tốt nhất?”.
+                - Cuối mỗi câu trả lời nên có CTA mềm: "Bạn muốn mình gợi ý 2–3 mẫu phù hợp nhất không?" hoặc "Bạn chốt tầm giá nào để mình gửi lựa chọn tốt nhất?".
 
                 CÁCH TRẢ LỜI (ưu tiên):
                 1) Tóm tắt nhu cầu khách (1 câu).
@@ -145,17 +176,29 @@ public class AIChatService {
                 """
                 .formatted(context);
 
-        // Payload gửi lên HuggingFace API
+        // Xây dựng danh sách messages theo format multi-turn của DeepSeek/OpenAI
+        List<Map<String, String>> messages = new ArrayList<>();
+
+        // 1. System prompt
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+
+        // 2. Lịch sử các lượt chat trước (cũ → mới)
+        for (ChatMessage hist : recentHistory) {
+            String role = hist.getSenderType() == SenderType.USER ? "user" : "assistant";
+            messages.add(Map.of("role", role, "content", hist.getContent()));
+        }
+
+        // 3. Câu hỏi hiện tại của user
+        messages.add(Map.of("role", "user", "content", query));
+
+        // Payload gửi lên DeepSeek API
         Map<String, Object> requestBody = Map.of(
                 "model", model,
-                "messages", List.of(
-                        Map.of("role", "system", "content", systemPrompt),
-                        Map.of("role", "user", "content", query)),
+                "messages", messages,
                 "max_tokens", 500,
                 "stream", false);
 
         try {
-            // Gọi REST API
             Map<String, Object> response = restClient.post()
                     .uri(deepSeekUrl)
                     .header("Authorization", "Bearer " + deepSeekApiKey)
@@ -164,7 +207,6 @@ public class AIChatService {
                     .retrieve()
                     .body(Map.class);
 
-            // Parse Response
             if (response != null && response.containsKey("choices")) {
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
                 if (!choices.isEmpty()) {

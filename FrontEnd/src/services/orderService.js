@@ -6,24 +6,24 @@ const OrderService = {
             const {
                 search = '',
                 status = '',
+                paymentMethod = '',
+                fromDate = '',
+                toDate = '',
                 page = 1,
                 limit = 10,
                 sortBy = 'createdAt',
                 order = 'desc'
             } = params;
 
-            // Updated to /orders instead of /api/orders because apiClient already includes baseURL (likely /api)
-            // or if we updated backend to /orders then this should be just /orders relative to baseURL
-            const response = await api.get("/orders", {
-                params: {
-                    search,
-                    status,
-                    page,
-                    limit,
-                    sortBy,
-                    order
-                }
-            });
+            // Chỉ gửi các param có giá trị (tránh gửi string rỗng lên backend)
+            const queryParams = { page, limit, sortBy, order };
+            if (search) queryParams.search = search;
+            if (status) queryParams.status = status;
+            if (paymentMethod) queryParams.paymentMethod = paymentMethod;
+            if (fromDate) queryParams.fromDate = fromDate;
+            if (toDate) queryParams.toDate = toDate;
+
+            const response = await api.get("/orders", { params: queryParams });
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: "Không thể tải danh sách đơn hàng" };

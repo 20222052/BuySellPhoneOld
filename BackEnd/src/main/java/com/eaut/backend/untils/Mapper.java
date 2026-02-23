@@ -11,6 +11,7 @@ import com.eaut.backend.model.request.ProductRequest;
 import com.eaut.backend.model.request.RegisterRequest;
 import com.eaut.backend.model.response.BrandResponse;
 import com.eaut.backend.model.response.BlogResponse;
+import com.eaut.backend.model.response.CommentResponse;
 import com.eaut.backend.model.response.CategoryResponse;
 import com.eaut.backend.model.response.ProductColorResponse;
 import com.eaut.backend.model.response.ProductItemDetailResponse;
@@ -26,6 +27,46 @@ import com.eaut.backend.constant.UserStatus;
 import static com.eaut.backend.untils.BcryptUtils.passwordEncoder;
 
 public class Mapper {
+
+        // Comment Mappers
+
+        /**
+         * Map Comment entity → CommentResponse (không kèm replies)
+         * Dùng khi map từng reply đơn lẻ (tránh đệ quy vô hạn)
+         */
+        public static CommentResponse toCommentResponse(Comment comment) {
+                if (comment == null)
+                        return null;
+                return CommentResponse.builder()
+                                .id(comment.getId())
+                                .content(comment.getContent())
+                                .userId(comment.getUser() != null ? comment.getUser().getId().toString() : null)
+                                .userFullName(comment.getUser() != null ? comment.getUser().getFullName() : null)
+                                .userAvatar(comment.getUser() != null ? comment.getUser().getAvatarUrl() : null)
+                                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
+                                .createdAt(comment.getCreatedAt())
+                                .status(comment.getStatus())
+                                .build();
+        }
+
+        /**
+         * Map Comment entity → CommentResponse kèm danh sách replies (chỉ 1 cấp)
+         * Dùng khi lấy danh sách comment gốc của blog
+         */
+        public static CommentResponse toCommentResponseWithReplies(Comment comment) {
+                if (comment == null)
+                        return null;
+                CommentResponse response = toCommentResponse(comment);
+                if (comment.getReplies() != null && !comment.getReplies().isEmpty()) {
+                        response.setReplies(
+                                        comment.getReplies().stream()
+                                                        .filter(r -> "ACTIVE".equals(r.getStatus()))
+                                                        .map(Mapper::toCommentResponse)
+                                                        .toList());
+                }
+                return response;
+        }
+
         public static User ToUser(RegisterRequest registerRequest) {
                 User user = new User();
                 user.setFullName(registerRequest.getFullName());

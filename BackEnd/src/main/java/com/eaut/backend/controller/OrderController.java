@@ -1,6 +1,7 @@
 package com.eaut.backend.controller;
 
 import com.eaut.backend.constant.OrderStatus;
+import com.eaut.backend.constant.PaymentMethod;
 import com.eaut.backend.model.request.OrderStatusUpdateRequest;
 import com.eaut.backend.model.response.ApiResponse;
 import com.eaut.backend.model.response.OrderDetailResponse;
@@ -11,9 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -27,6 +30,9 @@ public class OrderController {
     public ApiResponse<PagingResponse<OrderResponse>> getAllOrders(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) PaymentMethod paymentMethod,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -34,7 +40,8 @@ public class OrderController {
         Sort sort = order.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page - 1, limit, sort);
 
-        PagingResponse<OrderResponse> response = orderService.getAllOrders(search, status, pageable);
+        PagingResponse<OrderResponse> response = orderService.getAllOrders(search, status, paymentMethod, fromDate,
+                toDate, pageable);
         return ApiResponse.<PagingResponse<OrderResponse>>builder()
                 .code(HttpStatus.OK.value())
                 .message("Get orders successfully")

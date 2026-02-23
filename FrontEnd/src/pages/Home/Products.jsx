@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Container, Row, Col, Form, Button, Badge } from "react-bootstrap";
 import "../../assets/css/home/Products/PaginationCustom.css";
 import ProductItem from "../../components/common/ProductItem";
@@ -26,8 +27,10 @@ function parsePrice(priceStr) {
 }
 
 export default function Products() {
-    // State lọc
-    const [selectedBrand, setSelectedBrand] = useState("");
+    const [searchParams] = useSearchParams();
+
+    // State lọc — khởi tạo brand từ URL query param nếu có
+    const [selectedBrand, setSelectedBrand] = useState(searchParams.get("brand") || "");
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("active");
     const [selectedPrice, setSelectedPrice] = useState("");
@@ -192,7 +195,7 @@ export default function Products() {
                         className="search-input"
                     />
                 </Col> */}
-                
+
             </Row >
 
             {/* Bộ lọc */}

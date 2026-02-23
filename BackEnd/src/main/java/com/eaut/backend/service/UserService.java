@@ -1,6 +1,7 @@
 package com.eaut.backend.service;
 
 import com.eaut.backend.constant.UserStatus;
+import com.eaut.backend.model.request.ChangePasswordRequest;
 import com.eaut.backend.model.request.RegisterRequest;
 import com.eaut.backend.model.request.UserUpdateRequest;
 import com.eaut.backend.model.response.ApiResponse;
@@ -34,6 +35,8 @@ public interface UserService {
             String permission,
             int pageNumber,
             int pageSize);
+
+    public void changePassword(UUID userId, ChangePasswordRequest request);
 
     public UserResponse getMyInfo();
 

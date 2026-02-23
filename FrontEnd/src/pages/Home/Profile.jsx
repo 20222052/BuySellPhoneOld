@@ -22,6 +22,14 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState("overview");
     const [editMode, setEditMode] = useState(false);
 
+    // Change Password Modal State
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [showOldPw, setShowOldPw] = useState(false);
+    const [showNewPw, setShowNewPw] = useState(false);
+    const [showConfirmPw, setShowConfirmPw] = useState(false);
+
     // User data state
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -323,6 +331,30 @@ export default function Profile() {
         });
     };
 
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        // Frontend validation trước khi gọi API
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            toast.error("Mật khẩu mới và xác nhận mật khẩu không khớp!");
+            return;
+        }
+        if (passwordForm.newPassword.length < 6) {
+            toast.error("Mật khẩu mới phải có ít nhất 6 ký tự!");
+            return;
+        }
+        try {
+            setPasswordLoading(true);
+            await UserService.changePassword(user.id, passwordForm);
+            toast.success("Đổi mật khẩu thành công!");
+            setShowPasswordModal(false);
+            setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+        } catch (error) {
+            toast.error(error?.message || "Không thể đổi mật khẩu. Vui lòng thử lại.");
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
     // Address Actions
     const handleDeleteAddress = async (addressId) => {
         if (window.confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) {
@@ -379,37 +411,6 @@ export default function Profile() {
     return (
         <Container fluid className="py-4" style={{ background: "#f7f8fa", minHeight: "100vh" }}>
             <Row className="justify-content-center">
-                {/* <Col md={3} lg={2} className="mb-3">
-                    <Card className="border-0 shadow-sm p-2">
-                        <ListGroup variant="flush">
-                            {sidebar.map((item, idx) => (
-                                <OverlayTrigger
-                                    key={idx}
-                                    placement="right"
-                                    overlay={<Tooltip>{item.label}</Tooltip>}
-                                >
-                                    <ListGroup.Item
-                                        action
-                                        className={
-                                            (activeTab === item.id ? "fw-bold text-danger bg-light" : "") + " d-flex align-items-center"
-                                        }
-                                        style={{ border: "none", background: "none", fontSize: 16, cursor: "pointer", borderRadius: 8, marginBottom: 2 }}
-                                        onClick={() => {
-                                            if (item.id === "logout") {
-                                                handleLogout();
-                                                return;
-                                            }
-                                            setActiveTab(item.id);
-                                        }}
-                                    >
-                                        <i className={item.icon + " me-2"}></i>
-                                        <span className="d-none d-md-inline">{item.label}</span>
-                                    </ListGroup.Item>
-                                </OverlayTrigger>
-                            ))}
-                        </ListGroup>
-                    </Card>
-                </Col> */}
                 <Col md={12} lg={10}>
                     {/* Header user info */}
                     <Card className="border-0 shadow-sm mb-3 p-3 text-start">
@@ -491,14 +492,21 @@ export default function Profile() {
                             <Col xs={12} sm={3} className="text-end mt-3 mt-sm-0">
                                 {/* <div className="fw-bold text-danger" style={{ fontSize: 22 }}>0đ</div>
                                 <div className="small text-muted">Tổng tích lũy</div> */}
-                                <div className="d-flex justify-content-end gap-2 mt-2">
+                                <div className="d-flex justify-content-end gap-2 mt-2 flex-wrap">
                                     {editMode ? (
                                         <>
                                             <Button variant="outline-secondary" size="sm" onClick={handleCancel}>Hủy</Button>
                                             <Button variant="success" size="sm" onClick={handleSave}>Lưu</Button>
                                         </>
                                     ) : (
-                                        <Button variant="outline-primary" size="sm" onClick={() => setEditMode(true)}>Cập nhật</Button>
+                                        <>
+                                            <Button variant="outline-primary" size="sm" onClick={() => setEditMode(true)}>
+                                                <i className="bi bi-pencil-square me-1"></i>Cập nhật
+                                            </Button>
+                                            <Button variant="outline-warning" size="sm" onClick={() => setShowPasswordModal(true)}>
+                                                <i className="bi bi-shield-lock me-1"></i>Đổi mật khẩu
+                                            </Button>
+                                        </>
                                     )}
                                 </div>
                             </Col>
@@ -526,187 +534,480 @@ export default function Profile() {
                             {/* Content Render */}
                             {activeTab === "overview" && (
                                 <div>
-                                    <h5 className="mb-3">Tổng quan tài khoản</h5>
-                                    <Row>
-                                        <Col md={6} className="mb-3">
-                                            <Card className="h-100 shadow-sm border-0">
-                                                <Card.Body>
-                                                    <h6 className="card-title text-muted">Đơn hàng gần nhất</h6>
+                                    {/* Detail Panels */}
+                                    <Row className="g-3">
+                                        {/* Đơn hàng gần nhất */}
+                                        <Col md={6}>
+                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", height: "100%" }}>
+                                                <div style={{
+                                                    background: "linear-gradient(90deg, #d70018, #a8001a)",
+                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
+                                                }}>
+                                                    <i className="bi bi-bag-check-fill text-white" style={{ fontSize: 16 }}></i>
+                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Đơn hàng gần nhất</span>
+                                                </div>
+                                                <div style={{ padding: "20px 20px 16px" }}>
                                                     {orders.length > 0 ? (
-                                                        <div>
-                                                            <div className="fw-bold fs-5 text-primary">#{orders[0]?.orderCode}</div>
-                                                            <div className="small text-muted">{new Date(orders[0]?.createdAt).toLocaleDateString("vi-VN")}</div>
-                                                            <div className="mt-2">
-                                                                <Badge bg="info">{orders[0]?.status}</Badge>
-                                                                <span className="ms-2 fw-bold text-danger">{formatCurrency(orders[0]?.total)}</span>
+                                                        <>
+                                                            <div className="d-flex align-items-start justify-content-between mb-2">
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: 15, color: "#d70018" }}>
+                                                                        #{orders[0]?.orderCode}
+                                                                    </div>
+                                                                    <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>
+                                                                        <i className="bi bi-calendar3 me-1"></i>
+                                                                        {new Date(orders[0]?.createdAt).toLocaleDateString("vi-VN")}
+                                                                    </div>
+                                                                </div>
+                                                                <Badge bg="danger" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20 }}>
+                                                                    {orders[0]?.status}
+                                                                </Badge>
                                                             </div>
-                                                            <Button variant="link" size="sm" className="p-0 mt-2" onClick={() => handleViewOrder(orders[0]?.orderId)}>Xem chi tiết &rarr;</Button>
-                                                        </div>
+                                                            <div style={{
+                                                                background: "linear-gradient(135deg, #fff5f5, #ffe4e4)",
+                                                                borderRadius: 10, padding: "10px 14px",
+                                                                display: "flex", alignItems: "center", justifyContent: "space-between",
+                                                                marginBottom: 14
+                                                            }}>
+                                                                <span style={{ fontSize: 13, color: "#666" }}>Tổng tiền</span>
+                                                                <span style={{ fontWeight: 700, fontSize: 16, color: "#d70018" }}>
+                                                                    {formatCurrency(orders[0]?.total)}
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleViewOrder(orders[0]?.orderId)}
+                                                                style={{
+                                                                    width: "100%", border: "none", background: "transparent",
+                                                                    color: "#d70018", fontWeight: 600, fontSize: 13, cursor: "pointer",
+                                                                    padding: "8px", borderRadius: 8, transition: "background 0.2s"
+                                                                }}
+                                                                onMouseEnter={e => e.currentTarget.style.background = "#fff0f0"}
+                                                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                                            >
+                                                                Xem chi tiết <i className="bi bi-arrow-right ms-1"></i>
+                                                            </button>
+                                                        </>
                                                     ) : (
-                                                        <p className="text-muted small">Chưa có đơn hàng nào</p>
+                                                        <div className="text-center py-3">
+                                                            <i className="bi bi-bag-x text-muted" style={{ fontSize: 36, opacity: 0.4 }}></i>
+                                                            <div style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>Chưa có đơn hàng nào</div>
+                                                            <button
+                                                                onClick={() => window.location.href = "/"}
+                                                                style={{
+                                                                    marginTop: 10, background: "linear-gradient(135deg,#d70018,#a8001a)",
+                                                                    border: "none", color: "#fff", borderRadius: 8,
+                                                                    padding: "7px 18px", fontSize: 13, cursor: "pointer"
+                                                                }}
+                                                            >
+                                                                Mua sắm ngay
+                                                            </button>
+                                                        </div>
                                                     )}
-                                                </Card.Body>
-                                            </Card>
+                                                </div>
+                                            </div>
                                         </Col>
-                                        <Col md={6} className="mb-3">
-                                            <Card className="h-100 shadow-sm border-0">
-                                                <Card.Body>
-                                                    <h6 className="card-title text-muted">Lịch sử Thu cũ gần nhất</h6>
+
+                                        {/* Thu cũ gần nhất */}
+                                        <Col md={6}>
+                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", height: "100%" }}>
+                                                <div style={{
+                                                    background: "linear-gradient(90deg, #e65c00, #c44b00)",
+                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
+                                                }}>
+                                                    <i className="bi bi-phone-fill text-white" style={{ fontSize: 16 }}></i>
+                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Thu cũ gần nhất</span>
+                                                </div>
+                                                <div style={{ padding: "20px 20px 16px" }}>
                                                     {tradeIns.length > 0 ? (
-                                                        <div>
-                                                            <div className="fw-bold">{tradeIns[0]?.productItemId ? tradeIns[0].productItemId.substring(0, 8) : 'Thiết bị'}...</div>
-                                                            <div className="small text-muted">{new Date(tradeIns[0]?.testDate).toLocaleDateString("vi-VN")}</div>
-                                                            <div className="mt-2">
-                                                                <Badge bg="warning" text="dark">{tradeIns[0]?.overallAssessment}</Badge>
-                                                                <span className="ms-2 fw-bold text-danger">-{tradeIns[0]?.totalDepreciation}%</span>
+                                                        <>
+                                                            <div className="d-flex align-items-start justify-content-between mb-2">
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: 15, color: "#e65c00" }}>
+                                                                        Thiết bị #{tradeIns[0]?.productItemId ? tradeIns[0].productItemId.substring(0, 8) : 'N/A'}
+                                                                    </div>
+                                                                    <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>
+                                                                        <i className="bi bi-calendar3 me-1"></i>
+                                                                        {new Date(tradeIns[0]?.testDate).toLocaleDateString("vi-VN")}
+                                                                    </div>
+                                                                </div>
+                                                                <Badge bg="warning" text="dark" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20 }}>
+                                                                    {tradeIns[0]?.overallAssessment}
+                                                                </Badge>
                                                             </div>
-                                                            <Button variant="link" size="sm" className="p-0 mt-2" onClick={() => handleViewTradeIn(tradeIns[0]?.id)}>Xem chi tiết &rarr;</Button>
-                                                        </div>
+                                                            <div style={{
+                                                                background: "linear-gradient(135deg, #fff8f0, #ffe8d0)",
+                                                                borderRadius: 10, padding: "10px 14px",
+                                                                display: "flex", alignItems: "center", justifyContent: "space-between",
+                                                                marginBottom: 14
+                                                            }}>
+                                                                <span style={{ fontSize: 13, color: "#666" }}>Khấu hao</span>
+                                                                <span style={{ fontWeight: 700, fontSize: 16, color: "#e65c00" }}>
+                                                                    -{tradeIns[0]?.totalDepreciation}%
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleViewTradeIn(tradeIns[0]?.id)}
+                                                                style={{
+                                                                    width: "100%", border: "none", background: "transparent",
+                                                                    color: "#e65c00", fontWeight: 600, fontSize: 13, cursor: "pointer",
+                                                                    padding: "8px", borderRadius: 8, transition: "background 0.2s"
+                                                                }}
+                                                                onMouseEnter={e => e.currentTarget.style.background = "#fff5ec"}
+                                                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                                            >
+                                                                Xem chi tiết <i className="bi bi-arrow-right ms-1"></i>
+                                                            </button>
+                                                        </>
                                                     ) : (
-                                                        <p className="text-muted small">Chưa có giao dịch thu cũ nào</p>
+                                                        <div className="text-center py-3">
+                                                            <i className="bi bi-phone text-muted" style={{ fontSize: 36, opacity: 0.4 }}></i>
+                                                            <div style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>Chưa có giao dịch thu cũ nào</div>
+                                                        </div>
                                                     )}
-                                                </Card.Body>
-                                            </Card>
+                                                </div>
+                                            </div>
                                         </Col>
+
+                                        {/* Địa chỉ mặc định */}
                                         <Col md={12}>
-                                            <Card className="shadow-sm border-0">
-                                                <Card.Body>
-                                                    <h6 className="card-title text-muted">Địa chỉ mặc định</h6>
-                                                    {addresses.find(a => a.isDefault) ? (
-                                                        <div>
-                                                            <strong>{addresses.find(a => a.isDefault).fullName}</strong> - {addresses.find(a => a.isDefault).phone}
-                                                            <div className="text-muted small">{addresses.find(a => a.isDefault).fullAddress || `${addresses.find(a => a.isDefault).addressLine}, ${addresses.find(a => a.isDefault).wardName}, ${addresses.find(a => a.isDefault).districtName}, ${addresses.find(a => a.isDefault).cityName}`}</div>
+                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+                                                <div style={{
+                                                    background: "linear-gradient(90deg, #3a3a3a, #131814)",
+                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
+                                                }}>
+                                                    <i className="bi bi-geo-alt-fill text-white" style={{ fontSize: 16 }}></i>
+                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Địa chỉ mặc định</span>
+                                                </div>
+                                                <div style={{ padding: "18px 20px" }}>
+                                                    {addresses.find(a => a.isDefault) ? (() => {
+                                                        const addr = addresses.find(a => a.isDefault);
+                                                        return (
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <div style={{
+                                                                    width: 44, height: 44, borderRadius: "50%",
+                                                                    background: "linear-gradient(135deg,#3a3a3a,#131814)",
+                                                                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                                }}>
+                                                                    <i className="bi bi-house-fill text-white" style={{ fontSize: 18 }}></i>
+                                                                </div>
+                                                                <div style={{ flex: 1 }}>
+                                                                    <div style={{ fontWeight: 700, fontSize: 15 }}>
+                                                                        {addr.fullName}
+                                                                        <span style={{ fontWeight: 400, color: "#888", fontSize: 13, marginLeft: 8 }}>— {addr.phone}</span>
+                                                                    </div>
+                                                                    <div style={{ color: "#777", fontSize: 13, marginTop: 2 }}>
+                                                                        <i className="bi bi-map me-1" style={{ color: "#d70018" }}></i>
+                                                                        {addr.fullAddress || `${addr.addressLine}, ${addr.wardName}, ${addr.districtName}, ${addr.cityName}`}
+                                                                    </div>
+                                                                </div>
+                                                                <Badge bg="danger" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20, flexShrink: 0 }}>
+                                                                    <i className="bi bi-check-circle me-1"></i>Mặc định
+                                                                </Badge>
+                                                            </div>
+                                                        );
+                                                    })() : (
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div style={{
+                                                                width: 44, height: 44, borderRadius: "50%", background: "#f1f1f1",
+                                                                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                            }}>
+                                                                <i className="bi bi-geo text-muted" style={{ fontSize: 20 }}></i>
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ fontWeight: 600, color: "#555" }}>Chưa có địa chỉ mặc định</div>
+                                                                <div style={{ fontSize: 13, color: "#aaa" }}>
+                                                                    Vào <span
+                                                                        style={{ color: "#d70018", cursor: "pointer", textDecoration: "underline" }}
+                                                                        onClick={() => setActiveTab("address")}
+                                                                    >Sổ địa chỉ</span> để thêm địa chỉ
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    ) : (
-                                                        <p className="text-muted small">Chưa thiết lập địa chỉ mặc định</p>
                                                     )}
-                                                </Card.Body>
-                                            </Card>
+                                                </div>
+                                            </div>
                                         </Col>
                                     </Row>
                                 </div>
                             )}
 
-                            {activeTab === "orders" && (
-                                <Card className="border-0 shadow-sm p-3 text-start">
-                                    <h5 className="mb-3">Lịch sử đơn hàng</h5>
-                                    {orders.length === 0 ? (
-                                        <p className="text-muted">Bạn chưa có đơn hàng nào.</p>
-                                    ) : (
-                                        orders.map(order => (
-                                            <div key={order.orderId} className="mb-3 pb-3 border-bottom cursor-pointer card-hover p-2 rounded" onClick={() => handleViewOrder(order.orderId)} style={{ cursor: 'pointer' }}>
-                                                <div className="d-flex justify-content-between">
-                                                    <div>
-                                                        <strong>#{order.orderCode}</strong>
-                                                        <span className="ms-2 badge bg-primary">{order.status}</span>
-                                                    </div>
-                                                    <div className="text-danger fw-bold">{formatCurrency(order.total)}</div>
-                                                </div>
-                                                <div className="small text-muted">
-                                                    Ngày đặt: {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                                                </div>
-                                                <div className="small text-muted">
-                                                    {order.shippingAddress && `Giao tới: ${order.shippingAddress.fullAddress}`}
-                                                </div>
-                                                <div className="text-end df-none">
-                                                    <small className="text-primary">Nhấn để xem chi tiết</small>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </Card>
-                            )}
 
-                            {activeTab === "trade-in" && (
-                                <Card className="border-0 shadow-sm p-3 text-start">
-                                    <h5 className="mb-3">Lịch sử Thu cũ đổi mới</h5>
-                                    {tradeIns.length === 0 ? (
-                                        <p className="text-muted">Bạn chưa có yêu cầu thu cũ nào.</p>
-                                    ) : (
-                                        <div className="table-responsive">
-                                            <Table hover size="sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Sản phẩm</th>
-                                                        <th>Ngày test</th>
-                                                        <th>Đánh giá</th>
-                                                        <th>Định giá</th>
-                                                        <th>Trạng thái</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {tradeIns.map((item) => (
-                                                        <tr key={item.id} onClick={() => handleViewTradeIn(item.id)} style={{ cursor: "pointer" }}>
-                                                            <td>
-                                                                {/* Ideally product name, but might only have ID or generic name */}
-                                                                ID: {item.productItemId ? item.productItemId.substring(0, 8) : 'N/A'}
-                                                            </td>
-                                                            <td>{item.testDate}</td>
-                                                            <td>{item.overallAssessment}</td>
-                                                            <td className="text-danger fw-bold">
-                                                                {/* Estimated cost logic might be needed if field is null */}
-                                                                {item.estimatedRepairCost ? formatCurrency(item.estimatedRepairCost) : 'Đang cập nhật'}
-                                                            </td>
-                                                            <td><Badge bg="info">{item.status}</Badge></td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </Table>
+                            {
+                                activeTab === "orders" && (
+                                    <div style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 24px rgba(215,0,24,0.10)" }}>
+                                        {/* Header */}
+                                        <div style={{
+                                            background: "linear-gradient(135deg, #d70018 0%, #a8001a 100%)",
+                                            padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between"
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                <div style={{ background: "rgba(255,255,255,0.18)", borderRadius: 10, padding: "7px 10px" }}>
+                                                    <i className="bi bi-bag-check-fill" style={{ fontSize: 18, color: "#fff" }}></i>
+                                                </div>
+                                                <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Lịch sử đơn hàng</span>
+                                            </div>
+                                            <span style={{ background: "rgba(255,255,255,0.2)", color: "#fff", borderRadius: 20, padding: "3px 12px", fontSize: 13 }}>
+                                                {orders.length} đơn
+                                            </span>
                                         </div>
-                                    )}
-                                </Card>
-                            )}
-
-                            {activeTab === "address" && (
-                                <Card className="border-0 shadow-sm p-3 text-start">
-                                    <div className="d-flex justify-content-between mb-3">
-                                        <h5 className="mb-0">Sổ địa chỉ</h5>
-                                        <Button size="sm" variant="outline-primary" onClick={() => setShowAddressModal(true)}><i className="bi bi-plus"></i> Thêm mới</Button>
-                                    </div>
-                                    {addresses.length === 0 ? (
-                                        <p className="text-muted">Bạn chưa lưu địa chỉ nào.</p>
-                                    ) : (
-                                        addresses.map((addr) => (
-                                            <div key={addr.id} className="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                                                <div>
-                                                    <div>
-                                                        <strong>{addr.fullName}</strong> - {addr.phone}
-                                                        {addr.isDefault && <Badge bg="success" className="ms-2">Mặc định</Badge>}
-                                                    </div>
-                                                    <div className="small text-muted">{addr.addressLine}, {addr.wardName}, {addr.districtName}, {addr.cityName}</div>
+                                        {/* Body */}
+                                        <div style={{ background: "#fff", padding: "8px 0" }}>
+                                            {orders.length === 0 ? (
+                                                <div className="text-center py-5">
+                                                    <i className="bi bi-bag-x" style={{ fontSize: 48, color: "#d70018", opacity: 0.3 }}></i>
+                                                    <div style={{ color: "#aaa", fontSize: 14, marginTop: 12 }}>Bạn chưa có đơn hàng nào</div>
+                                                    <button
+                                                        onClick={() => window.location.href = "/"}
+                                                        style={{
+                                                            marginTop: 14, background: "linear-gradient(135deg, #d70018, #a8001a)",
+                                                            border: "none", color: "#fff", borderRadius: 8,
+                                                            padding: "8px 22px", fontSize: 14, cursor: "pointer", fontWeight: 600
+                                                        }}
+                                                    >Mua sắm ngay</button>
                                                 </div>
-                                                <div className="d-flex gap-2">
-                                                    {!addr.isDefault && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline-secondary"
-                                                            onClick={() => handleSetDefaultAddress(addr.id)}
-                                                            title="Đặt làm mặc định"
-                                                        >
-                                                            Mặc định
-                                                        </Button>
-                                                    )}
-                                                    <Button
-                                                        size="sm"
-                                                        variant="link"
-                                                        className="text-danger"
-                                                        onClick={() => handleDeleteAddress(addr.id)}
+                                            ) : (
+                                                orders.map(order => (
+                                                    <div
+                                                        key={order.orderId}
+                                                        onClick={() => handleViewOrder(order.orderId)}
+                                                        style={{ cursor: "pointer", padding: "14px 24px", borderBottom: "1px solid #f3f3f3", transition: "background 0.15s" }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = "#fff5f5"}
+                                                        onMouseLeave={e => e.currentTarget.style.background = "#fff"}
                                                     >
-                                                        Xóa
-                                                    </Button>
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                                <div style={{
+                                                                    width: 36, height: 36, borderRadius: "50%",
+                                                                    background: "linear-gradient(135deg, #d70018, #a8001a)",
+                                                                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                                }}>
+                                                                    <i className="bi bi-receipt" style={{ color: "#fff", fontSize: 16 }}></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: 14, color: "#d70018" }}>#{order.orderCode}</div>
+                                                                    <div style={{ fontSize: 12, color: "#999" }}>
+                                                                        <i className="bi bi-calendar3 me-1"></i>
+                                                                        {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ textAlign: "right" }}>
+                                                                <div style={{ fontWeight: 700, color: "#d70018", fontSize: 15 }}>{formatCurrency(order.total)}</div>
+                                                                <span style={{
+                                                                    fontSize: 11, padding: "2px 10px", borderRadius: 20,
+                                                                    background: "#fff0f0", color: "#d70018", fontWeight: 600
+                                                                }}>{order.status}</span>
+                                                            </div>
+                                                        </div>
+                                                        {order.shippingAddress && (
+                                                            <div style={{ fontSize: 12, color: "#888", marginTop: 6, paddingLeft: 46 }}>
+                                                                <i className="bi bi-geo-alt me-1 text-danger"></i>
+                                                                {order.shippingAddress.fullAddress}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {
+                                activeTab === "trade-in" && (
+                                    <div style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 24px rgba(230,92,0,0.10)" }}>
+                                        {/* Header */}
+                                        <div style={{
+                                            background: "linear-gradient(135deg, #e65c00 0%, #c44b00 100%)",
+                                            padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between"
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                <div style={{ background: "rgba(255,255,255,0.18)", borderRadius: 10, padding: "7px 10px" }}>
+                                                    <i className="bi bi-phone-fill" style={{ fontSize: 18, color: "#fff" }}></i>
                                                 </div>
+                                                <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Lịch sử Thu cũ đổi mới</span>
                                             </div>
-                                        ))
-                                    )}
-                                </Card>
-                            )}
-                        </Col>
-                    </Row>
-                </Col>
-            </Row>
+                                            <span style={{ background: "rgba(255,255,255,0.2)", color: "#fff", borderRadius: 20, padding: "3px 12px", fontSize: 13 }}>
+                                                {tradeIns.length} lần
+                                            </span>
+                                        </div>
+                                        {/* Body */}
+                                        <div style={{ background: "#fff", padding: "8px 0" }}>
+                                            {tradeIns.length === 0 ? (
+                                                <div className="text-center py-5">
+                                                    <i className="bi bi-phone" style={{ fontSize: 48, color: "#e65c00", opacity: 0.3 }}></i>
+                                                    <div style={{ color: "#aaa", fontSize: 14, marginTop: 12 }}>Bạn chưa có giao dịch thu cũ nào</div>
+                                                </div>
+                                            ) : (
+                                                tradeIns.map(item => (
+                                                    <div
+                                                        key={item.id}
+                                                        onClick={() => handleViewTradeIn(item.id)}
+                                                        style={{ cursor: "pointer", padding: "14px 24px", borderBottom: "1px solid #f3f3f3", transition: "background 0.15s" }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = "#fff8f0"}
+                                                        onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+                                                    >
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                                <div style={{
+                                                                    width: 36, height: 36, borderRadius: "50%",
+                                                                    background: "linear-gradient(135deg, #e65c00, #c44b00)",
+                                                                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                                }}>
+                                                                    <i className="bi bi-arrow-repeat" style={{ color: "#fff", fontSize: 16 }}></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: 14, color: "#c44b00" }}>
+                                                                        Thiết bị #{item.productItemId ? item.productItemId.substring(0, 8) : 'N/A'}
+                                                                    </div>
+                                                                    <div style={{ fontSize: 12, color: "#999" }}>
+                                                                        <i className="bi bi-calendar3 me-1"></i>
+                                                                        {new Date(item.testDate).toLocaleDateString("vi-VN")}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ textAlign: "right" }}>
+                                                                <div style={{ fontWeight: 700, color: "#c44b00", fontSize: 15 }}>
+                                                                    {item.estimatedRepairCost ? formatCurrency(item.estimatedRepairCost) : 'Đang cập nhật'}
+                                                                </div>
+                                                                <span style={{
+                                                                    fontSize: 11, padding: "2px 10px", borderRadius: 20,
+                                                                    background: "#fff3e0", color: "#e65c00", fontWeight: 600
+                                                                }}>{item.overallAssessment}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ marginTop: 6, paddingLeft: 46, display: "flex", gap: 8, alignItems: "center" }}>
+                                                            <span style={{ fontSize: 12, color: "#aaa" }}>Trạng thái:</span>
+                                                            <span style={{
+                                                                fontSize: 11, padding: "2px 10px", borderRadius: 20,
+                                                                background: "#e3f2fd", color: "#0277bd", fontWeight: 600
+                                                            }}>{item.status}</span>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            {
+                                activeTab === "address" && (
+                                    <div style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 24px rgba(58,58,58,0.12)" }}>
+                                        {/* Header */}
+                                        <div style={{
+                                            background: "linear-gradient(135deg, #3a3a3a 0%, #131814 100%)",
+                                            padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between"
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 10, padding: "7px 10px" }}>
+                                                    <i className="bi bi-geo-alt-fill" style={{ fontSize: 18, color: "#fff" }}></i>
+                                                </div>
+                                                <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Sổ địa chỉ</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowAddressModal(true)}
+                                                style={{
+                                                    background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.35)",
+                                                    color: "#fff", borderRadius: 20, padding: "5px 16px",
+                                                    fontSize: 13, cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", gap: 5
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
+                                                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+                                            >
+                                                <i className="bi bi-plus-lg"></i> Thêm mới
+                                            </button>
+                                        </div>
+                                        {/* Body */}
+                                        <div style={{ background: "#fff", padding: "8px 0" }}>
+                                            {addresses.length === 0 ? (
+                                                <div className="text-center py-5">
+                                                    <i className="bi bi-geo" style={{ fontSize: 48, color: "#3a3a3a", opacity: 0.25 }}></i>
+                                                    <div style={{ color: "#aaa", fontSize: 14, marginTop: 12 }}>Bạn chưa lưu địa chỉ nào</div>
+                                                    <button
+                                                        onClick={() => setShowAddressModal(true)}
+                                                        style={{
+                                                            marginTop: 14, background: "linear-gradient(135deg, #3a3a3a, #131814)",
+                                                            border: "none", color: "#fff", borderRadius: 8,
+                                                            padding: "8px 22px", fontSize: 14, cursor: "pointer", fontWeight: 600
+                                                        }}
+                                                    >Thêm địa chỉ</button>
+                                                </div>
+                                            ) : (
+                                                addresses.map(addr => (
+                                                    <div
+                                                        key={addr.id}
+                                                        style={{ padding: "16px 24px", borderBottom: "1px solid #f3f3f3" }}
+                                                    >
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                                                <div style={{
+                                                                    width: 40, height: 40, borderRadius: "50%",
+                                                                    background: addr.isDefault
+                                                                        ? "linear-gradient(135deg, #3a3a3a, #131814)"
+                                                                        : "#f1f5f9",
+                                                                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                                }}>
+                                                                    <i className="bi bi-house-fill" style={{ color: addr.isDefault ? "#fff" : "#aaa", fontSize: 16 }}></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: 14 }}>
+                                                                        {addr.fullName}
+                                                                        <span style={{ fontWeight: 400, color: "#888", fontSize: 13, marginLeft: 6 }}>— {addr.phone}</span>
+                                                                        {addr.isDefault && (
+                                                                            <span style={{
+                                                                                marginLeft: 8, fontSize: 11, padding: "2px 10px", borderRadius: 20,
+                                                                                background: "#e8f5e9", color: "#2e7d32", fontWeight: 600
+                                                                            }}>
+                                                                                <i className="bi bi-check-circle me-1"></i>Mặc định
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div style={{ fontSize: 12, color: "#777", marginTop: 2 }}>
+                                                                        <i className="bi bi-map me-1" style={{ color: "#555" }}></i>
+                                                                        {addr.addressLine}, {addr.wardName}, {addr.districtName}, {addr.cityName}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="d-flex gap-2" style={{ flexShrink: 0 }}>
+                                                                {!addr.isDefault && (
+                                                                    <button
+                                                                        onClick={() => handleSetDefaultAddress(addr.id)}
+                                                                        style={{
+                                                                            background: "transparent", border: "1.5px solid #3a3a3a",
+                                                                            color: "#3a3a3a", borderRadius: 8, padding: "4px 12px",
+                                                                            fontSize: 12, cursor: "pointer", fontWeight: 600, transition: "all 0.2s"
+                                                                        }}
+                                                                        onMouseEnter={e => { e.currentTarget.style.background = "#3a3a3a"; e.currentTarget.style.color = "#fff"; }}
+                                                                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3a3a3a"; }}
+                                                                    >Đặt mặc định</button>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => handleDeleteAddress(addr.id)}
+                                                                    style={{
+                                                                        background: "transparent", border: "1.5px solid #d70018",
+                                                                        color: "#d70018", borderRadius: 8, padding: "4px 12px",
+                                                                        fontSize: 12, cursor: "pointer", fontWeight: 600, transition: "all 0.2s"
+                                                                    }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.background = "#d70018"; e.currentTarget.style.color = "#fff"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#d70018"; }}
+                                                                >Xóa</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            }
+                        </Col >
+                    </Row >
+                </Col >
+            </Row >
 
             {/* Add Address Modal */}
-            <Modal show={showAddressModal} onHide={() => setShowAddressModal(false)} size="lg">
+            < Modal show={showAddressModal} onHide={() => setShowAddressModal(false)} size="lg" >
                 <Modal.Header closeButton>
                     <Modal.Title>Thêm địa chỉ mới</Modal.Title>
                 </Modal.Header>
@@ -803,12 +1104,12 @@ export default function Profile() {
                         </Button>
                     </Modal.Footer>
                 </Form>
-            </Modal>
+            </Modal >
 
 
 
             {/* Order Detail Modal */}
-            <Modal show={showOrderModal} onHide={() => setShowOrderModal(false)} size="lg">
+            < Modal show={showOrderModal} onHide={() => setShowOrderModal(false)} size="lg" >
                 <Modal.Header closeButton>
                     <Modal.Title>Chi tiết đơn hàng #{selectedOrder?.orderCode}</Modal.Title>
                 </Modal.Header>
@@ -867,10 +1168,10 @@ export default function Profile() {
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowOrderModal(false)}>Đóng</Button>
                 </Modal.Footer>
-            </Modal>
+            </Modal >
 
             {/* Trade-In Detail Modal */}
-            <Modal show={showTradeInModal} onHide={() => setShowTradeInModal(false)} size="lg">
+            < Modal show={showTradeInModal} onHide={() => setShowTradeInModal(false)} size="lg" >
                 <Modal.Header closeButton>
                     <Modal.Title>Kết quả thẩm định của máy cũ</Modal.Title>
                 </Modal.Header>
@@ -917,7 +1218,112 @@ export default function Profile() {
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowTradeInModal(false)}>Đóng</Button>
                 </Modal.Footer>
-            </Modal>
+            </Modal >
+
+            {/* Change Password Modal */}
+            < Modal
+                show={showPasswordModal}
+                onHide={() => {
+                    setShowPasswordModal(false);
+                    setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                    setShowOldPw(false); setShowNewPw(false); setShowConfirmPw(false);
+                }}
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title><i className="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu</Modal.Title>
+                </Modal.Header>
+                <Form onSubmit={handleChangePassword}>
+                    <Modal.Body>
+                        {/* Mật khẩu hiện tại */}
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mật khẩu hiện tại <span className="text-danger">*</span></Form.Label>
+                            <div className="input-group">
+                                <Form.Control
+                                    type={showOldPw ? "text" : "password"}
+                                    value={passwordForm.oldPassword}
+                                    onChange={e => setPasswordForm(p => ({ ...p, oldPassword: e.target.value }))}
+                                    placeholder="Nhập mật khẩu hiện tại"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => setShowOldPw(v => !v)}
+                                    tabIndex={-1}
+                                >
+                                    <i className={`bi ${showOldPw ? "bi-eye-slash" : "bi-eye"}`}></i>
+                                </button>
+                            </div>
+                        </Form.Group>
+
+                        {/* Mật khẩu mới */}
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mật khẩu mới <span className="text-danger">*</span></Form.Label>
+                            <div className="input-group">
+                                <Form.Control
+                                    type={showNewPw ? "text" : "password"}
+                                    value={passwordForm.newPassword}
+                                    onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                                    placeholder="Tối thiểu 6 ký tự"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => setShowNewPw(v => !v)}
+                                    tabIndex={-1}
+                                >
+                                    <i className={`bi ${showNewPw ? "bi-eye-slash" : "bi-eye"}`}></i>
+                                </button>
+                            </div>
+                        </Form.Group>
+
+                        {/* Xác nhận mật khẩu mới */}
+                        <Form.Group className="mb-2">
+                            <Form.Label>Xác nhận mật khẩu mới <span className="text-danger">*</span></Form.Label>
+                            <div className="input-group">
+                                <Form.Control
+                                    type={showConfirmPw ? "text" : "password"}
+                                    value={passwordForm.confirmPassword}
+                                    onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                                    placeholder="Nhập lại mật khẩu mới"
+                                    required
+                                    isInvalid={
+                                        passwordForm.confirmPassword.length > 0 &&
+                                        passwordForm.newPassword !== passwordForm.confirmPassword
+                                    }
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => setShowConfirmPw(v => !v)}
+                                    tabIndex={-1}
+                                >
+                                    <i className={`bi ${showConfirmPw ? "bi-eye-slash" : "bi-eye"}`}></i>
+                                </button>
+                                <Form.Control.Feedback type="invalid">
+                                    Mật khẩu xác nhận không khớp!
+                                </Form.Control.Feedback>
+                            </div>
+                        </Form.Group>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button
+                            variant="secondary"
+                            onClick={() => {
+                                setShowPasswordModal(false);
+                                setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                            }}
+                        >
+                            Hủy
+                        </Button>
+                        <Button variant="warning" type="submit" disabled={passwordLoading}>
+                            {passwordLoading ? <><Spinner size="sm" className="me-1" />Đang xử lý...</> : <><i className="bi bi-check-lg me-1"></i>Xác nhận</>}
+                        </Button>
+                    </Modal.Footer>
+                </Form>
+            </Modal >
         </Container >
     );
 }
