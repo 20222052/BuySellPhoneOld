@@ -6,11 +6,19 @@ import { logoutUser } from "../../store/slices/authSlice";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../assets/css/home/Header.css';
 
+import ProductItemService from "../../services/productItemService";
 import { fetchCart } from "../../store/slices/cartSlice";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hideNav, setHideNav] = useState(false);
+
+  // Search States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchContainerRef = useRef(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,6 +34,55 @@ export default function Header() {
   }, [dispatch, isAuthenticated, user]);
 
   const cartCount = totalItems;
+
+  useEffect(() => {
+    // Close search dropdown on outside click
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setShowDropdown(false);
+        return;
+      }
+      setIsSearching(true);
+      setShowDropdown(true);
+      try {
+        const response = await ProductItemService.getAllForList({ search: searchQuery, pageSize: 5 });
+        if (response && response.data) {
+          setSearchResults(response.data.items || []);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tìm kiếm:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchSearchResults();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setShowDropdown(false);
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -222,16 +279,74 @@ export default function Header() {
           {/* Right Side Actions */}
           <Nav className="ms-auto align-items-center">
             {/* Search Bar - Desktop */}
-            <Form className="search-form d-none d-lg-flex me-3">
-              <Form.Control
-                type="search"
-                placeholder="Tìm kiếm sản phẩm..."
-                className="search-input"
-              />
-              <button className="search-btn" type="submit">
-                <i className="bi bi-search"></i>
-              </button>
-            </Form>
+            <div className="search-container position-relative me-3 d-none d-lg-flex" ref={searchContainerRef}>
+              <Form className="search-form w-100 d-flex" onSubmit={handleSearchSubmit}>
+                <Form.Control
+                  type="search"
+                  placeholder="Tìm kiếm sản phẩm..."
+                  className="search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.trim() && setShowDropdown(true)}
+                />
+                <button className="search-btn" type="submit">
+                  <i className="bi bi-search"></i>
+                </button>
+              </Form>
+
+              {/* Search Dropdown */}
+              {showDropdown && (
+                <div
+                  className="search-dropdown position-absolute w-100 bg-white shadow rounded mt-1 z-3 border"
+                  style={{ top: '100%', left: 0, maxHeight: '400px', overflowY: 'auto', zIndex: 1050 }}
+                >
+                  {isSearching ? (
+                    <div className="p-3 text-center text-muted">Đang tìm kiếm...</div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="list-group list-group-flush">
+                      {searchResults.map((product) => (
+                        <Link
+                          key={product.id}
+                          to={`/products/${product.id}`}
+                          className="list-group-item list-group-item-action d-flex align-items-center gap-2 border-0 border-bottom"
+                          onClick={() => {
+                            setShowDropdown(false);
+                            setSearchQuery("");
+                          }}
+                        >
+                          <img
+                            src={product.primaryImageUrl || '/placeholder.png'}
+                            alt={product.name}
+                            style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+                          />
+                          <div className="flex-grow-1 text-truncate">
+                            <h6 className="mb-0 text-truncate fw-bold" style={{ fontSize: '13px' }}>
+                              {product.productName} {product.name}
+                            </h6>
+                            <small className="text-danger fw-bold">{ProductItemService.formatPrice(product.sellPrice)}</small>
+                          </div>
+                        </Link>
+                      ))}
+                      <Link
+                        to={`/products?search=${encodeURIComponent(searchQuery.trim())}`}
+                        className="p-2 text-center text-primary d-block fw-bold"
+                        onClick={() => {
+                          setShowDropdown(false);
+                          setSearchQuery("");
+                        }}
+                        style={{ textDecoration: 'none', fontSize: '14px', backgroundColor: '#f8f9fa' }}
+                      >
+                        Xem tất cả {searchResults.length >= 5 ? 'kết quả' : ''} <i className="bi bi-arrow-right"></i>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="p-3 text-center text-muted">
+                      Không tìm thấy "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Search Icon - Mobile */}
             <Nav.Link className="d-lg-none icon-link">

@@ -34,8 +34,16 @@ export default function Products() {
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("active");
     const [selectedPrice, setSelectedPrice] = useState("");
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
     const [sortOption, setSortOption] = useState("createdAt-DESC");
+
+    // Sync search query from URL
+    useEffect(() => {
+        const urlSearch = searchParams.get("search") || "";
+        setSearchQuery(urlSearch);
+        setCurrentPage(1);
+    }, [searchParams]);
+
     // State phân trang
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 12;
