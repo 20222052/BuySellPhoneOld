@@ -274,7 +274,7 @@ export default function Products() {
                         <p>{error}</p>
                         <p className="mb-0">
                             <small>Vui lòng kiểm tra:</small><br />
-                            <small>- Backend có đang chạy tại http://localhost:8080 không?</small><br />
+                            <small>- Backend có đang chạy tại {import.meta.env.VITE_API_URL || "http://localhost:8080"} không?</small><br />
                             <small>- Xem Console (F12) để biết thêm chi tiết</small>
                         </p>
                     </div>

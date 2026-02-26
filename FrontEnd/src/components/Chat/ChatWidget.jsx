@@ -3,7 +3,7 @@ import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import './ChatWidget.css';
 
-const SOCKET_URL = 'http://localhost:8080/api/ws';
+const SOCKET_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/api/ws';
 
 // ── Inline Product Card component ────────────────────────────────────────────
 const ProductCard = ({ product }) => {

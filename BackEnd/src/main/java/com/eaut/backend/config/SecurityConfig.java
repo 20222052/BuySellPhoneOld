@@ -46,7 +46,8 @@ public class SecurityConfig {
                         "/api/product-items/*/details",
                         "/api/blogs/list",
                         "/api/blogs/*",
-                        "/api/blogs/*/comments"
+                        "/api/blogs/*/comments",
+                        "/api/webhook/sepay"
         };
 
         @Value("${app.jwt.secret}")

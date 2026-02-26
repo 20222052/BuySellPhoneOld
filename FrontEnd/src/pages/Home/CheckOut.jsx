@@ -4,6 +4,8 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 import LocationService from "../../services/locationService";
 import AddressService from "../../services/addressService";
@@ -20,6 +22,12 @@ export default function CheckOut() {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [orderResult, setOrderResult] = useState(null);
+
+    // QR Payment state
+    const [showQrModal, setShowQrModal] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(300); // 5 mins in seconds
+    const [pendingOrderCode, setPendingOrderCode] = useState(null);
+    const [stompClient, setStompClient] = useState(null);
 
     // Address state
     const [addresses, setAddresses] = useState([]);
@@ -66,10 +74,38 @@ export default function CheckOut() {
 
     // Fetch cart if empty
     useEffect(() => {
-        if (cartItems.length === 0 && !submitted) {
+        if (cartItems.length === 0 && !submitted && !showQrModal) {
             navigate("/cart");
         }
-    }, [cartItems, navigate, submitted]);
+    }, [cartItems, navigate, submitted, showQrModal]);
+
+    // WebSocket logic for QR Payment Timeout
+    useEffect(() => {
+        let timer;
+        if (showQrModal && timeLeft > 0) {
+            timer = setInterval(() => {
+                setTimeLeft(prev => prev - 1);
+            }, 1000);
+        } else if (showQrModal && timeLeft === 0) {
+            // Timeout reached
+            if (stompClient) {
+                stompClient.deactivate();
+            }
+            setShowQrModal(false);
+            setForm(f => ({ ...f, paymentMethod: "cod" }));
+            toast.error("Hết thời gian thanh toán. Thông tin đã được chuyển về thanh toán COD.");
+        }
+        return () => clearInterval(timer);
+    }, [showQrModal, timeLeft, stompClient]);
+
+    // Clean up websocket
+    useEffect(() => {
+        return () => {
+            if (stompClient) {
+                stompClient.deactivate();
+            }
+        };
+    }, [stompClient]);
 
     const fetchAddresses = async () => {
         try {
@@ -175,20 +211,31 @@ export default function CheckOut() {
 
         try {
             setSubmitting(true);
+            const reqPaymentMethod = form.paymentMethod === "bank_transfer" ? "bank" : form.paymentMethod;
             const res = await CheckoutService.checkout({
                 userId: user.id,
                 addressId: selectedAddressId,
-                paymentMethod: form.paymentMethod,
+                paymentMethod: reqPaymentMethod,
                 note: form.note
             });
             console.log(res);
             if (res.code === 200 || res.code === 201) {
-                setOrderResult(res.data);
-                setSubmitted(true);
-                toast.success(res.message || "Đặt hàng thành công!");
-                setTimeout(() => {
-                    navigate("/");
-                }, 2000);
+                if (reqPaymentMethod === "bank") {
+                    // Open QR code and connect socket
+                    setPendingOrderCode(res.data.orderCode);
+                    setOrderResult(res.data);
+                    setTimeLeft(300); // 5 mins
+                    setShowQrModal(true);
+                    connectWebSocket(res.data.orderCode, res.data);
+                } else {
+                    // Regular COD checkout
+                    setOrderResult(res.data);
+                    setSubmitted(true);
+                    toast.success(res.message || "Đặt hàng thành công!");
+                    setTimeout(() => {
+                        navigate("/orders");
+                    }, 2000);
+                }
             } else {
                 toast.error(res.message || "Đặt hàng thất bại");
             }
@@ -202,6 +249,107 @@ export default function CheckOut() {
     const formatPrice = (price) => new Intl.NumberFormat("vi-VN").format(price || 0);
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
 
+    const connectWebSocket = (code, rawOrderResult) => {
+        // Sử dụng cú pháp mới chuẩn với @stomp/stompjs v7
+        const client = new Client({
+            webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL || "http://localhost:8080/api/ws"),
+            connectHeaders: {},
+            debug: function (str) {
+                console.log('STOMP Debug: ', str);
+            },
+            reconnectDelay: 5000,
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
+            onConnect: () => {
+                console.log("WebSocket connected successfully. Subscribing to: " + `/topic/payment-status/${code}`);
+                client.subscribe(`/topic/payment-status/${code}`, (message) => {
+                    console.log("Received payment status STOMP message: ", message.body);
+                    if (message.body === "PAID") {
+                        client.deactivate();
+                        setShowQrModal(false);
+                        // Move to success screen
+                        setOrderResult(rawOrderResult);
+                        setSubmitted(true);
+                        toast.success("Hệ thống đã nhận được thanh toán. Đặt hàng thành công!");
+                        setTimeout(() => {
+                            navigate("/orders"); // Tới trang giỏ hàng orders theo rule chung
+                        }, 2000);
+                    }
+                });
+            },
+            onStompError: (frame) => {
+                console.error('Broker reported error: ' + frame.headers['message']);
+                console.error('Additional details: ' + frame.body);
+            },
+            onWebSocketError: (event) => {
+                console.error('WebSocket Error: ', event);
+            },
+            onWebSocketClose: (event) => {
+                console.log('WebSocket Closed: ', event);
+            }
+        });
+
+        client.activate();
+        setStompClient(client);
+    };
+
+    // Filter format timer func
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    // Pending QR Modal Screen (Render instead of form if active)
+    if (showQrModal && orderResult) {
+        return (
+            <Container className="py-4">
+                <ToastContainer position="top-right" autoClose={3000} />
+                <Card className="p-4 border-0 shadow-sm text-center">
+                    <h2 className="mb-3 text-primary">Thanh toán đơn hàng</h2>
+                    <Alert variant="warning" className="fw-bold fs-5">
+                        Thời gian còn lại: {formatTime(timeLeft)}
+                    </Alert>
+
+                    <div className="mb-4 p-3 border rounded border-danger" style={{ backgroundColor: "#fff9f9" }}>
+                        <h5 className="text-danger fw-bold">Vui lòng quét mã QR để thanh toán</h5>
+                        <p className="mb-2">Mã đơn hàng: <strong>{orderResult.orderCode}</strong></p>
+                        <p className="mb-3">Tổng tiền: <strong className="text-danger">{formatPrice(orderResult.total)}₫</strong></p>
+
+                        <div className="d-flex flex-column align-items-center justify-content-center my-3">
+                            <img
+                                src={`https://qr.sepay.vn/img?acc=2004020423&bank=MBBank&amount=${orderResult.total}&des=${orderResult.orderCode}`}
+                                alt="QR code SePay"
+                                style={{ width: 250, border: "1px solid #ddd", borderRadius: 8 }}
+                            />
+                            <div className="mt-3 text-start bg-white p-3 rounded border shadow-sm" style={{ minWidth: 300 }}>
+                                <div className="mb-2 d-flex justify-content-between"><span>Ngân hàng:</span> <strong>MBBank</strong></div>
+                                <div className="mb-2 d-flex justify-content-between"><span>Số tài khoản:</span> <strong>2004020423</strong></div>
+                                <div className="mb-2 d-flex justify-content-between"><span>Chủ tài khoản:</span> <strong>BUYSELLPHONEOLD</strong></div>
+                                <div className="mb-2 d-flex justify-content-between"><span>Số tiền:</span> <strong className="text-danger">{formatPrice(orderResult.total)}₫</strong></div>
+                                <div className="mb-2 d-flex justify-content-between align-items-center">
+                                    <span>Nội dung:</span>
+                                    <strong className="fs-5 text-primary">{orderResult.orderCode}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <p className="small text-muted mb-0">Hệ thống sẽ tự động chuyển trang khi nhận được tiền. Vui lòng giữ nguyên màn hình này.</p>
+                    </div>
+
+                    <div className="mt-3">
+                        <Button variant="outline-secondary" onClick={() => {
+                            if (stompClient) stompClient.disconnect();
+                            setShowQrModal(false);
+                            setForm(f => ({ ...f, paymentMethod: "cod" }));
+                        }}>
+                            Huỷ thanh toán QR và đổi phương thức
+                        </Button>
+                    </div>
+                </Card>
+            </Container>
+        );
+    }
+
     // Success screen
     if (submitted && orderResult) {
         return (
@@ -214,6 +362,14 @@ export default function CheckOut() {
                     <h2 className="mb-3 text-success">Đặt hàng thành công!</h2>
                     <p className="mb-2">Mã đơn hàng: <strong>{orderResult.orderCode}</strong></p>
                     <p className="mb-3">Tổng tiền: <strong className="text-danger">{formatPrice(orderResult.total)}₫</strong></p>
+
+                    {form.paymentMethod === "bank_transfer" && (
+                        <div className="alert alert-success">
+                            <i className="bi bi-info-circle-fill me-2"></i>
+                            Thanh toán đã được xác nhận qua Chuyển khoản ngân hàng.
+                        </div>
+                    )}
+
                     <p className="text-muted mb-4">Cảm ơn bạn đã mua hàng tại PhoneZin. Đơn hàng của bạn sẽ được xử lý sớm nhất.</p>
                     <div className="d-flex gap-2 justify-content-center">
                         <Button variant="outline-primary" onClick={() => navigate("/orders")}>
@@ -412,14 +568,9 @@ export default function CheckOut() {
                                         />
                                     </div>
                                     {form.paymentMethod === "bank_transfer" && (
-                                        <div className="mt-3 text-center">
-                                            <div className="mb-2">Quét mã QR để thanh toán</div>
-                                            <img
-                                                src={`https://img.vietqr.io/image/970422-123456789-compact2.jpg?amount=${totalPrice}&addInfo=ThanhToanDonHang`}
-                                                alt="QR code"
-                                                style={{ width: 180, border: "1px solid #eee", borderRadius: 8 }}
-                                            />
-                                            <div className="small text-muted mt-1">Sử dụng app ngân hàng hoặc ví điện tử để quét mã</div>
+                                        <div className="mt-3 text-center p-3 bg-light rounded border">
+                                            <div className="fw-bold mb-2">Thanh toán chuyển khoản qua MBBank</div>
+                                            <div className="small text-muted mt-1">Hệ thống sẽ cung cấp mã QR và thông tin chuyển khoản chính xác (kèm theo mã đơn hàng) ở bước tiếp theo sau khi tạo đơn hàng thành công.</div>
                                         </div>
                                     )}
                                 </div>
