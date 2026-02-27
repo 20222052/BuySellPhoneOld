@@ -138,3 +138,6 @@ ai:
       token: "your_secure_token_here"
       timeout: 300000  # 300 seconds (5 minutes) for AI analysis
 
+# Cấu hình API Key cho SePay Webhook
+sepay:
+  api-key: "YOUR_SEPAY_API_KEY"

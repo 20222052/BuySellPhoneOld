@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface RagService {
+    //ingest ListProductItem for Product
+    void ingestProductItems(UUID productId);
     void ingestProduct(UUID productItemId);
 
     void deleteProduct(UUID productItemId);

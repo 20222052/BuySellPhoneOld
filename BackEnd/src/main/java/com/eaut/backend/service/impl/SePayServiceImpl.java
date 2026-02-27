@@ -30,11 +30,26 @@ public class SePayServiceImpl implements SePayService {
             return;
         }
 
+        String content = request.getContent();
         String orderCode = request.getCode();
-        if (orderCode == null || orderCode.isEmpty()) {
-            log.warn("Transfer code is empty. Cannot map to order. Content: {}", request.getContent());
-            return;
+
+        // Nếu code từ request null hoặc rỗng
+        if (orderCode == null || orderCode.trim().isEmpty()) {
+
+            if (content == null || !content.contains("-")) {
+                log.warn("Content invalid. Cannot extract orderCode. Content: {}", content);
+                return;
+            }
+
+            String[] parts = content.split("-");
+            if (parts.length < 2 || parts[1].trim().isEmpty()) {
+                log.warn("OrderCode missing in content. Content: {}", content);
+                return;
+            }
+
+            orderCode = parts[1];
         }
+
 
         orderCode = orderCode.trim();
         String redisKey = "sepay:pending_order:" + orderCode;

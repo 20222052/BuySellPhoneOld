@@ -9,6 +9,7 @@ import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.model.response.ProductItemDetailResponse;
 import com.eaut.backend.model.response.ProductItemListResponse;
 import com.eaut.backend.model.response.ProductItemResponse;
+import com.eaut.backend.service.AI_ChatBot.RagServiceImpl;
 import com.eaut.backend.service.ProductItemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/product-items")
 public class ProductItemController {
-
+        private final RagServiceImpl ragService;
         private final ProductItemService productItemService;
 
         @GetMapping
@@ -102,6 +103,9 @@ public class ProductItemController {
         public ResponseEntity<ApiResponse<ProductItemResponse>> create(
                         @RequestBody ProductItemRequest request) {
                 ProductItemResponse response = productItemService.create(request);
+                // Sau khi tạo mới ProductItem, gọi RAG để ingest dữ liệu vào vector database
+                ragService.ingestProduct(response.getProductId());
+                log.info("Product item retrieved successfully with ID: {}, Product ID: {}", response.getId(), response.getProductId());
                 ApiResponse<ProductItemResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.CREATED.value(),
                                 "Product item created successfully",
@@ -115,6 +119,8 @@ public class ProductItemController {
                         @PathVariable UUID id,
                         @RequestBody ProductItemRequest request) {
                 ProductItemResponse response = productItemService.update(id, request);
+                ragService.ingestProduct(response.getProductId());
+                log.info("Product item retrieved successfully with ID: {}, Product ID: {}", response.getId(), response.getProductId());
                 ApiResponse<ProductItemResponse> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 "Product item updated successfully",
@@ -153,6 +159,9 @@ public class ProductItemController {
         public ResponseEntity<ApiResponse<Void>> delete(
                         @PathVariable UUID id) {
                 productItemService.delete(id);
+                // Sau khi xóa ProductItem, gọi RAG để xóa dữ liệu trong vector database
+                ragService.deleteProduct(id);
+                log.info("Product item deleted successfully with ID: {}", id);
                 ApiResponse<Void> apiResponse = new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 "Product item deleted successfully",

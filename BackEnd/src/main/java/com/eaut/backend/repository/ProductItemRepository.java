@@ -167,4 +167,12 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, UUID> 
             WHERE m.productItem.id = :productItemId
             """)
     List<ProductModel> findModelsWithColorsByProductItemId(@Param("productItemId") UUID productItemId);
+
+    // Query để lấy tất cả ProductItem IDs của một Product (dùng cho batch processing)
+    @Query("""
+            SELECT pi.id
+            FROM ProductItem pi
+            WHERE pi.product.id = :productId
+            """)
+    List<UUID> findAllIdsByProductId(@Param("productId") UUID productId);
 }
