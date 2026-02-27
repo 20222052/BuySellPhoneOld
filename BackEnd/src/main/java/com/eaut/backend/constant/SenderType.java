@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum SenderType {
-    USER("user"), BOT("bot"), AGENT("agent");
+    USER("user"), BOT("bot"), AGENT("agent"), SYSTEM("system");
 
     private final String value;
 }

@@ -4,6 +4,7 @@ import com.eaut.backend.constant.UserStatus;
 import com.eaut.backend.domain.OtpDomain;
 import com.eaut.backend.entities.User;
 import com.eaut.backend.exception.ApplicationException;
+import com.eaut.backend.model.request.ChangePasswordRequest;
 import com.eaut.backend.model.request.RegisterRequest;
 import com.eaut.backend.model.request.UserUpdateRequest;
 import com.eaut.backend.model.response.*;
@@ -263,5 +264,59 @@ public class UserServiceImpl implements UserService {
                 userId, status);
 
         return new UserResponse(updatedUser);
+    }
+
+    /**
+     * Đổi mật khẩu tài khoản
+     *
+     * @param userId  ID của user cần đổi mật khẩu
+     * @param request oldPassword, newPassword, confirmPassword
+     */
+    @Transactional
+    @Override
+    public void changePassword(UUID userId, ChangePasswordRequest request) throws ApplicationException {
+        log.info("UserService: changePassword - userId: {}", userId);
+
+        if (request == null) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "ChangePasswordRequest cannot be null");
+        }
+
+        // Kiểm tra các trường bắt buộc
+        if (request.getOldPassword() == null || request.getOldPassword().isBlank()) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "Mật khẩu hiện tại không được để trống");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "Mật khẩu mới không được để trống");
+        }
+        if (request.getConfirmPassword() == null || request.getConfirmPassword().isBlank()) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "Xác nhận mật khẩu không được để trống");
+        }
+
+        // Kiểm tra mật khẩu mới và xác nhận phải khớp nhau
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new ApplicationException(ErrorCode.PASSWORD_NOT_MATCH,
+                    "Mật khẩu mới và xác nhận mật khẩu không khớp");
+        }
+
+        // Kiểm tra độ dài mật khẩu mới tối thiểu
+        if (request.getNewPassword().length() < 6) {
+            throw new ApplicationException(ErrorCode.PASSWORD_TOO_WEAK, "Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+
+        // Tìm user
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with ID: " + userId));
+
+        // Xác minh mật khẩu cũ
+        if (!BcryptUtils.matches(request.getOldPassword(), existingUser.getPassword())) {
+            throw new ApplicationException(ErrorCode.INVALID_CREDENTIALS, "Mật khẩu hiện tại không đúng");
+        }
+
+        // Cập nhật mật khẩu mới
+        existingUser.setPassword(BcryptUtils.encode(request.getNewPassword()));
+        userRepository.save(existingUser);
+
+        log.info("UserService: Password changed successfully for userId: {}", userId);
     }
 }

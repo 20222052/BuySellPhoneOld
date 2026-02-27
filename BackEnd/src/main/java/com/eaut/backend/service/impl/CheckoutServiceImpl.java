@@ -19,6 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.redis.core.RedisTemplate;
+import com.eaut.backend.model.request.PendingCheckoutData;
+import com.eaut.backend.constant.PaymentMethod;
+
+import java.time.Duration;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,8 +43,10 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final ProductColorRepository productColorRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ProductMediaRepository productMediaRepository;
     private final DistributedLockService distributedLockService;
     private final OrderEventPublisher orderEventPublisher;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final long LOCK_TIMEOUT_MS = 10000; // 10 seconds
     private static final long LOCK_DURATION_MS = 30000; // 30 seconds
@@ -48,6 +55,76 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Transactional
     public CheckoutResponse checkout(CheckoutRequest request) {
         log.info("Starting checkout for user: {}", request.getUserId());
+
+        if (PaymentMethod.bank.equals(request.getPaymentMethod())) {
+            return processPendingCheckout(request);
+        }
+
+        return doRealCheckout(request, PaymentStatus.unpaid, generateOrderCode());
+    }
+
+    private CheckoutResponse processPendingCheckout(CheckoutRequest request) {
+        log.info("Process pending checkout for bank payment (Redis 5 mins): user {}", request.getUserId());
+
+        userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
+                        "User not found with id: " + request.getUserId()));
+
+        addressRepository.findByIdAndUserId(request.getAddressId(), request.getUserId())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
+                        "Address not found with id: " + request.getAddressId()));
+
+        List<CartItem> cartItems = cartItemRepository.findByUserId(request.getUserId());
+        if (cartItems.isEmpty()) {
+            throw new ApplicationException(ErrorCode.BAD_REQUEST, "Cart is empty");
+        }
+
+        BigDecimal subtotal = cartItems.stream()
+                .map(CartItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal shippingFee = BigDecimal.ZERO;
+        BigDecimal total = subtotal.add(shippingFee);
+
+        String orderCode = generateOrderCode();
+
+        PendingCheckoutData pendingData = PendingCheckoutData.builder()
+                .userId(request.getUserId())
+                .addressId(request.getAddressId())
+                .paymentMethod(request.getPaymentMethod())
+                .note(request.getNote())
+                .orderCode(orderCode)
+                .total(total)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        redisTemplate.opsForValue().set("sepay:pending_order:" + orderCode, pendingData, Duration.ofMinutes(5));
+
+        return CheckoutResponse.builder()
+                .orderCode(orderCode)
+                .total(total)
+                .paymentMethod(PaymentMethod.bank)
+                .paymentStatus(PaymentStatus.unpaid)
+                .status(OrderStatus.pending)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void processRealCheckout(PendingCheckoutData data) {
+        log.info("Processing REAL checkout from Redis for code: {}", data.getOrderCode());
+
+        CheckoutRequest request = new CheckoutRequest();
+        request.setUserId(data.getUserId());
+        request.setAddressId(data.getAddressId());
+        request.setPaymentMethod(data.getPaymentMethod());
+        request.setNote(data.getNote());
+
+        doRealCheckout(request, PaymentStatus.paid, data.getOrderCode());
+    }
+
+    private CheckoutResponse doRealCheckout(CheckoutRequest request, PaymentStatus paymentStatus,
+            String generatedOrderCode) {
+        log.info("Starting real checkout transaction for user: {}", request.getUserId());
 
         // 1. Validate User
         User user = userRepository.findById(request.getUserId())
@@ -68,10 +145,10 @@ public class CheckoutServiceImpl implements CheckoutService {
         // 4. Create Order
         Order order = Order.builder()
                 .user(user)
-                .code(generateOrderCode())
+                .code(generatedOrderCode)
                 .status(OrderStatus.pending)
                 .paymentMethod(request.getPaymentMethod())
-                .paymentStatus(PaymentStatus.unpaid)
+                .paymentStatus(paymentStatus)
                 .subtotal(BigDecimal.ZERO)
                 .shippingFee(BigDecimal.ZERO)
                 .total(BigDecimal.ZERO)
@@ -210,8 +287,9 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     private String getProductImageUrl(UUID productItemId) {
-        // TODO: Implement actual image URL fetching from ProductMedia
-        return null;
+        return productMediaRepository.findFirstImageByProductItemId(productItemId)
+                .map(media -> media.getUrl())
+                .orElse(null);
     }
 
     private CheckoutResponse mapToCheckoutResponse(Order order, Address address) {

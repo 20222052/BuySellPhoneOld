@@ -9,28 +9,61 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
-    @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-        RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                // Khởi tạo cấu hình cache mặc định (bắt đầu từ các thiết lập mặc định của Spring)
-                .entryTtl(Duration.ofMinutes(10)) // TTL cho cache: đặt thời gian sống mặc định cho mỗi entry là 10 phút
-                .disableCachingNullValues() // Không lưu các giá trị null vào cache (tránh đánh dấu "đã cache" cho dữ liệu không tồn tại)
-                .serializeValuesWith(
-                        // Cấu hình serializer cho phần value của cache: chuyển đổi object -> JSON khi lưu
-                        RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJackson2JsonRedisSerializer()
-                        )
-                ); // Lưu ý: GenericJackson2JsonRedisSerializer ghi thông tin kiểu để deserialize; thay đổi class model có thể gây lỗi khi đọc dữ liệu cũ
+        @Bean
+        public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
+                mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                mapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
+                                ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
 
-        return RedisCacheManager.builder(
-                // Tạo RedisCacheWriter không dùng khóa (non-locking) dựa vào RedisConnectionFactory được Spring cung cấp
-                RedisCacheWriter.nonLockingRedisCacheWriter(redisConnectionFactory)
-        )
-                .cacheDefaults(cacheConfiguration) // Áp cấu hình mặc định vừa tạo cho CacheManager (nếu không override riêng cho cache cụ thể)
-                .build(); // Xây dựng RedisCacheManager và trả về bean để Spring quản lý
-    }
+                GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(mapper);
+
+                RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                                .entryTtl(Duration.ofMinutes(10))
+                                .disableCachingNullValues()
+                                .serializeValuesWith(
+                                                RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+
+                return RedisCacheManager.builder(
+                                RedisCacheWriter.nonLockingRedisCacheWriter(redisConnectionFactory))
+                                .cacheDefaults(cacheConfiguration)
+                                .build();
+        }
+
+        @Bean
+        public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+                RedisTemplate<String, Object> template = new RedisTemplate<>();
+                template.setConnectionFactory(connectionFactory);
+
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
+                mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                mapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
+                                ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+
+                GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(mapper);
+
+                template.setKeySerializer(new StringRedisSerializer());
+                template.setValueSerializer(serializer);
+
+                template.setHashKeySerializer(new StringRedisSerializer());
+                template.setHashValueSerializer(serializer);
+
+                template.afterPropertiesSet();
+                return template;
+        }
 }

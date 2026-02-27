@@ -149,6 +149,21 @@ const UserService = {
         } catch (error) {
             throw error.response?.data || { message: "Không thể tìm kiếm người dùng" };
         }
+    },
+
+    /**
+     * Đổi mật khẩu tài khoản
+     * @param {string} userId - ID user (UUID)
+     * @param {Object} data - { oldPassword, newPassword, confirmPassword }
+     * @returns {Promise}
+     */
+    changePassword: async (userId, data) => {
+        try {
+            const response = await api.patch(`/users/${userId}/password`, data);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể đổi mật khẩu" };
+        }
     }
 };
 

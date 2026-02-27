@@ -55,9 +55,12 @@ const menuItems = [
                 badge: '5',
                 children: [
                     { title: 'Tất cả đơn hàng', path: '/admin/orders' },
-                    { title: 'Chờ xác nhận', path: '/admin/orders/pending' },
-                    { title: 'Đang giao', path: '/admin/orders/shipping' },
-                    { title: 'Hoàn thành', path: '/admin/orders/completed' },
+                    { title: 'Chờ xác nhận', path: '/admin/orders?status=pending' },
+                    { title: 'Đã thanh toán', path: '/admin/orders?status=paid' },
+                    { title: 'Đang xử lý', path: '/admin/orders?status=processing' },
+                    { title: 'Đang giao', path: '/admin/orders?status=shipped' },
+                    { title: 'Hoàn thành', path: '/admin/orders?status=completed' },
+                    { title: 'Đã hủy', path: '/admin/orders?status=cancelled' },
                 ],
             },
             {
@@ -146,9 +149,16 @@ export default function AdminSidebar({ isCollapsed, isMobileOpen, onToggle }) {
 function MenuItem({ item, isActive, isCollapsed }) {
     const location = useLocation();
     const hasChildren = item.children && item.children.length > 0;
-    const isChildActive = hasChildren && item.children.some(
-        child => location.pathname === child.path
-    );
+    const isChildActive = hasChildren && item.children.some(child => {
+        const [childPath, childQuery] = child.path.split('?');
+        if (childQuery) {
+            const params = new URLSearchParams(childQuery);
+            const locParams = new URLSearchParams(location.search);
+            return location.pathname === childPath &&
+                [...params.entries()].every(([k, v]) => locParams.get(k) === v);
+        }
+        return location.pathname === child.path && !location.search;
+    });
 
     if (hasChildren) {
         return (
@@ -195,17 +205,26 @@ function MenuItemWithChildren({ item, isActive, isCollapsed }) {
                 </span>
             </div>
             <div className={`submenu ${isOpen && !isCollapsed ? 'open' : ''}`}>
-                {item.children.map((child, idx) => (
-                    <NavLink
-                        key={idx}
-                        to={child.path}
-                        className={({ isActive }) =>
-                            `submenu-item ${isActive ? 'active' : ''}`
-                        }
-                    >
-                        {child.title}
-                    </NavLink>
-                ))}
+                {item.children.map((child, idx) => {
+                    const [childPath, childQuery] = child.path.split('?');
+                    const isSubActive = childQuery
+                        ? (() => {
+                            const params = new URLSearchParams(childQuery);
+                            const locParams = new URLSearchParams(location.search);
+                            return location.pathname === childPath &&
+                                [...params.entries()].every(([k, v]) => locParams.get(k) === v);
+                        })()
+                        : location.pathname === child.path && !location.search;
+                    return (
+                        <NavLink
+                            key={idx}
+                            to={child.path}
+                            className={`submenu-item ${isSubActive ? 'active' : ''}`}
+                        >
+                            {child.title}
+                        </NavLink>
+                    );
+                })}
             </div>
         </div>
     );

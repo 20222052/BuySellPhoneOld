@@ -344,7 +344,6 @@ export default function ProductItemList() {
             dimensions: '', weight: '',
             waterResistance: '', sensors: '', releaseTime: '',
             models: [],
-            models: [],
             mediaList: []
         });
         setCurrentStatus('active');
@@ -1216,7 +1215,7 @@ export default function ProductItemList() {
                         </select>
                     </div>
 
-                    <div className="filter-group">
+                    {/* <div className="filter-group">
                         <select
                             className="filter-select"
                             value={statusFilter}
@@ -1226,7 +1225,7 @@ export default function ProductItemList() {
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
-                    </div>
+                    </div> */}
 
                     <div className="filter-group">
                         <select

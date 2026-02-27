@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Container, Row, Col, Form, Button, Badge } from "react-bootstrap";
 import "../../assets/css/home/Products/PaginationCustom.css";
 import ProductItem from "../../components/common/ProductItem";
@@ -26,13 +27,23 @@ function parsePrice(priceStr) {
 }
 
 export default function Products() {
-    // State lọc
-    const [selectedBrand, setSelectedBrand] = useState("");
+    const [searchParams] = useSearchParams();
+
+    // State lọc — khởi tạo brand từ URL query param nếu có
+    const [selectedBrand, setSelectedBrand] = useState(searchParams.get("brand") || "");
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("active");
     const [selectedPrice, setSelectedPrice] = useState("");
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
     const [sortOption, setSortOption] = useState("createdAt-DESC");
+
+    // Sync search query from URL
+    useEffect(() => {
+        const urlSearch = searchParams.get("search") || "";
+        setSearchQuery(urlSearch);
+        setCurrentPage(1);
+    }, [searchParams]);
+
     // State phân trang
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 12;
@@ -192,7 +203,7 @@ export default function Products() {
                         className="search-input"
                     />
                 </Col> */}
-                
+
             </Row >
 
             {/* Bộ lọc */}
@@ -271,7 +282,7 @@ export default function Products() {
                         <p>{error}</p>
                         <p className="mb-0">
                             <small>Vui lòng kiểm tra:</small><br />
-                            <small>- Backend có đang chạy tại http://localhost:8080 không?</small><br />
+                            <small>- Backend có đang chạy tại {import.meta.env.VITE_API_URL || "http://localhost:8080"} không?</small><br />
                             <small>- Xem Console (F12) để biết thêm chi tiết</small>
                         </p>
                     </div>

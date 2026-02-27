@@ -1,10 +1,53 @@
 import { useState, useEffect, useRef } from 'react';
-import SockJS from 'sockjs-client'; // Import SockJS directly
+import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import './ChatWidget.css';
 
-const SOCKET_URL = 'http://localhost:8080/api/ws';
+const SOCKET_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/api/ws';
 
+// ── Inline Product Card component ────────────────────────────────────────────
+const ProductCard = ({ product }) => {
+    const formatPrice = (price) => {
+        if (price == null || price === undefined) return '';
+        const num = typeof price === 'string' ? parseFloat(price) : Number(price);
+        if (isNaN(num)) return '';
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    };
+
+    const handleClick = () => {
+        window.location.href = `/products/${product.id}`;
+    };
+
+    return (
+        <div className="chat-product-card" onClick={handleClick}>
+            <div className="chat-product-img-wrap">
+                {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name || product.productName} className="chat-product-img" />
+                ) : (
+                    <div className="chat-product-img-placeholder">
+                        <i className="bi bi-phone"></i>
+                    </div>
+                )}
+            </div>
+            <div className="chat-product-info">
+                {product.brandName && <div className="chat-product-brand">{product.brandName}</div>}
+                <div className="chat-product-name">{product.name || product.productName || 'Sản phẩm'}</div>
+                {product.sellPrice != null && (
+                    <div className="chat-product-price">{formatPrice(product.sellPrice)}</div>
+                )}
+                {product.comparePrice != null && Number(product.comparePrice) > Number(product.sellPrice) && (
+                    <div className="chat-product-compare">{formatPrice(product.comparePrice)}</div>
+                )}
+            </div>
+            <button className="chat-product-btn" onClick={handleClick}>
+                <i className="bi bi-arrow-right-circle-fill"></i>
+            </button>
+        </div>
+    );
+};
+
+
+// ── Main ChatWidget ───────────────────────────────────────────────────────────
 const ChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -18,7 +61,6 @@ const ChatWidget = () => {
 
     // Initial Setup
     useEffect(() => {
-        // Generate or retrieve Session ID
         let storedSessionId = sessionStorage.getItem('chatSessionId');
         if (!storedSessionId) {
             storedSessionId = 'guest-' + Math.random().toString(36).substr(2, 9);
@@ -26,16 +68,15 @@ const ChatWidget = () => {
         }
         setSessionId(storedSessionId);
 
-        // Load messages from session storage
         const storedMessages = sessionStorage.getItem('chatMessages');
         if (storedMessages) {
             setMessages(JSON.parse(storedMessages));
         } else {
-            // Welcome message
             const welcomeMsg = {
                 id: Date.now(),
                 sender: 'BOT',
-                content: 'Xin chào! Tôi là trợ lý ảo AI. Tôi có thể giúp gì cho bạn hôm nay?',
+                text: 'Xin chào! Tôi là trợ lý ảo AI. Tôi có thể giúp gì cho bạn hôm nay?',
+                products: [],
                 timestamp: new Date().toLocaleTimeString()
             };
             setMessages([welcomeMsg]);
@@ -58,17 +99,26 @@ const ChatWidget = () => {
     const connect = () => {
         const socket = new SockJS(SOCKET_URL);
         const client = Stomp.over(socket);
-
-        // Disable debug logs to keep console clean
         client.debug = () => { };
 
         client.connect({}, () => {
             setIsConnected(true);
 
-            // Subscribe to private queue
             client.subscribe(`/queue/chat/${sessionId}`, (message) => {
                 const body = message.body;
-                addMessage('BOT', body);
+                // Thử parse JSON (ChatBotResponse từ bot), nếu không thì plain text
+                let text = body;
+                let products = [];
+                try {
+                    const parsed = JSON.parse(body);
+                    if (parsed && parsed.text !== undefined) {
+                        text = parsed.text;
+                        products = parsed.products || [];
+                    }
+                } catch (_) {
+                    // plain text (SYSTEM / AGENT messages)
+                }
+                addMessage('BOT', text, products);
                 setIsTyping(false);
             });
         }, (error) => {
@@ -79,11 +129,12 @@ const ChatWidget = () => {
         setStompClient(client);
     };
 
-    const addMessage = (sender, content) => {
+    const addMessage = (sender, text, products = []) => {
         const newMessage = {
             id: Date.now(),
             sender,
-            content,
+            text,
+            products,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
@@ -96,50 +147,45 @@ const ChatWidget = () => {
 
     const handleSendMessage = () => {
         if (!inputValue.trim() || !stompClient) return;
-
-        // Add user message
         addMessage('USER', inputValue);
-
-        // Send to backend
-        stompClient.send("/app/chat.send", {}, JSON.stringify({
+        stompClient.send('/app/chat.send', {}, JSON.stringify({
             sessionId: sessionId,
             content: inputValue
         }));
-
         setInputValue('');
-        setIsTyping(true); // Assume bot is thinking
+        setIsTyping(true);
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            handleSendMessage();
-        }
+        if (e.key === 'Enter') handleSendMessage();
     };
 
     const handleRequestHuman = () => {
         if (!stompClient) return;
-
         addMessage('USER', 'Tôi muốn gặp nhân viên tư vấn');
-
-        stompClient.send("/app/chat.send", {}, JSON.stringify({
+        stompClient.send('/app/chat.send', {}, JSON.stringify({
             sessionId: sessionId,
-            content: 'human' // Keyword handled by backend
+            content: 'human'
         }));
-
         setIsTyping(true);
     };
 
-    const formatMessage = (text) => {
-        if (!text) return '';
-        // Replace ": " with ":\n"
-        let newText = text.replace(/:\s+/g, ':\n');
-        // Replace "? " with "?\n"
-        newText = newText.replace(/\?\s+/g, '?\n');
-        // Ensure numbered lists start on new line
-        newText = newText.replace(/\s+(\d+\.)\s/g, '\n$1 ');
-        // Ensure bullet points start on new line
-        newText = newText.replace(/\s+(-\s)/g, '\n$1');
-        return newText;
+    // Render markdown-lite: bold + newline
+    const renderText = (text) => {
+        if (!text) return null;
+        const lines = text.split('\n');
+        return lines.map((line, i) => {
+            // Bold: **text**
+            const parts = line.split(/\*\*(.*?)\*\*/g);
+            return (
+                <span key={i}>
+                    {parts.map((part, j) =>
+                        j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                    )}
+                    {i < lines.length - 1 && <br />}
+                </span>
+            );
+        });
     };
 
     return (
@@ -180,7 +226,20 @@ const ChatWidget = () => {
                                 key={msg.id}
                                 className={`message-bubble ${msg.sender === 'USER' ? 'sent' : 'received'}`}
                             >
-                                <div className="message-content">{formatMessage(msg.content)}</div>
+                                {/* Text content */}
+                                <div className="message-content">
+                                    {renderText(msg.text || msg.content)}
+                                </div>
+
+                                {/* Product cards (only for BOT messages with products) */}
+                                {msg.sender === 'BOT' && msg.products && msg.products.length > 0 && (
+                                    <div className="chat-product-list">
+                                        {msg.products.map((p) => (
+                                            <ProductCard key={p.id} product={p} />
+                                        ))}
+                                    </div>
+                                )}
+
                                 <div className="message-time">{msg.timestamp}</div>
                             </div>
                         ))}

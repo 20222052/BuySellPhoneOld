@@ -147,7 +147,70 @@ const BlogService = {
         } catch (error) {
             throw error.response?.data || { message: "Không thể tải danh sách bài viết của bạn" };
         }
+    },
+
+    // =====================================================================
+    // COMMENT API
+    // =====================================================================
+
+    /**
+     * Lấy danh sách comments của blog (public, phân trang)
+     * @param {string} blogId - UUID của blog
+     * @param {number} page - Số trang (0-indexed)
+     * @param {number} pageSize - Số comment mỗi trang
+     */
+    getComments: async (blogId, page = 0, pageSize = 10) => {
+        try {
+            const response = await api.get(`/blogs/${blogId}/comments`, {
+                params: { page, page_size: pageSize }
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể tải bình luận" };
+        }
+    },
+
+    /**
+     * Thêm comment vào blog (yêu cầu đăng nhập)
+     * @param {string} blogId - UUID của blog
+     * @param {string} content - Nội dung comment
+     */
+    addComment: async (blogId, content) => {
+        try {
+            const response = await api.post(`/blogs/${blogId}/comments`, { content });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể gửi bình luận" };
+        }
+    },
+
+    /**
+     * Reply vào một comment (yêu cầu đăng nhập)
+     * @param {number} commentId - ID của comment cha
+     * @param {string} content - Nội dung reply
+     */
+    replyToComment: async (commentId, content) => {
+        try {
+            const response = await api.post(`/comments/${commentId}/replies`, { content });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể gửi trả lời" };
+        }
+    },
+
+    /**
+     * Xóa comment (yêu cầu đăng nhập, chỉ chủ sở hữu hoặc admin)
+     * @param {number} commentId - ID của comment cần xóa
+     */
+    deleteComment: async (commentId) => {
+        try {
+            const response = await api.delete(`/comments/${commentId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể xóa bình luận" };
+        }
     }
 };
 
 export default BlogService;
+

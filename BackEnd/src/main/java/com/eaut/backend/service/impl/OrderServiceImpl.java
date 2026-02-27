@@ -2,6 +2,7 @@ package com.eaut.backend.service.impl;
 
 import com.eaut.backend.constant.ErrorCode;
 import com.eaut.backend.constant.OrderStatus;
+import com.eaut.backend.constant.PaymentMethod;
 import com.eaut.backend.entities.Order;
 import com.eaut.backend.entities.OrderItem;
 import com.eaut.backend.exception.ApplicationException;
@@ -11,30 +12,40 @@ import com.eaut.backend.model.response.OrderItemResponse;
 import com.eaut.backend.model.response.OrderResponse;
 import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.repository.OrderRepository;
+import com.eaut.backend.repository.ProductMediaRepository;
 import com.eaut.backend.service.OrderService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final ProductMediaRepository productMediaRepository;
 
     @Override
-    public PagingResponse<OrderResponse> getAllOrders(String search, OrderStatus status, Pageable pageable) {
+    public PagingResponse<OrderResponse> getAllOrders(String search, OrderStatus status, PaymentMethod paymentMethod,
+            LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+        log.info("[getAllOrders] search={}, status={}, paymentMethod={}, fromDate={}, toDate={}, page={}",
+                search, status, paymentMethod, fromDate, toDate, pageable.getPageNumber());
         Specification<Order> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -50,10 +61,26 @@ public class OrderServiceImpl implements OrderService {
                 predicates.add(cb.equal(root.get("status"), status));
             }
 
+            if (paymentMethod != null) {
+                predicates.add(cb.equal(root.get("paymentMethod"), paymentMethod));
+            }
+
+            if (fromDate != null) {
+                OffsetDateTime from = fromDate.atStartOfDay().atOffset(ZoneOffset.UTC);
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), from));
+            }
+
+            if (toDate != null) {
+                OffsetDateTime to = toDate.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+                predicates.add(cb.lessThan(root.get("createdAt"), to));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         Page<Order> orderPage = orderRepository.findAll(spec, pageable);
+        log.info("[getAllOrders] totalElements={}, totalPages={}",
+                orderPage.getTotalElements(), orderPage.getTotalPages());
 
         List<OrderResponse> items = orderPage.getContent().stream()
                 .map(this::mapToOrderResponse)
@@ -126,12 +153,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderItemResponse mapToOrderItemResponse(OrderItem item) {
+        // Dùng snapshot URL nếu có, nếu không fallback fetch ảnh hiện tại
+        String imageUrl = item.getSnapshotProductMediaUrl();
+        if (imageUrl == null && item.getProductItem() != null) {
+            imageUrl = productMediaRepository
+                    .findFirstImageByProductItemId(item.getProductItem().getId())
+                    .map(media -> media.getUrl())
+                    .orElse(null);
+        }
         return OrderItemResponse.builder()
                 .id(item.getId())
                 .productName(item.getProductItem().getProduct().getName() + "-" + item.getSnapshotProductName())
                 .modelName(item.getSnapshotProductModel())
                 .colorName(item.getSnapshotProductColor())
-                .imageUrl(item.getSnapshotProductMediaUrl())
+                .imageUrl(imageUrl)
                 .quantity(item.getQty())
                 .unitPrice(item.getUnitPrice())
                 .totalPrice(item.getTotalPrice())

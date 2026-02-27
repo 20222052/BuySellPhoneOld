@@ -41,11 +41,16 @@ public class SecurityConfig {
                         "/ws/**",
                         "/blogs/list",
                         "/blogs/*",
+                        "/blogs/*/comments",
                         "/api/product-items/list",
                         "/api/product-items/*/details",
                         "/api/blogs/list",
-                        "/api/blogs/*"
+                        "/api/blogs/list",
+                        "/api/blogs/*",
+                        "/api/blogs/*/comments",
+                        "/webhook/sepay"
         };
+
         @Value("${app.jwt.secret}")
         @NonFinal
         private String jwtSecret;

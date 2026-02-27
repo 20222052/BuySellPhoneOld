@@ -4,6 +4,7 @@ import DataTable from '../../../components/common/Admin/DataTable';
 import { FormInput } from '../../../components/common/Admin';
 import BlogService from '../../../services/blogService';
 import SummernoteEditor from '../../../components/common/Admin/SummernoteEditor';
+import BlogComments from '../../Home/BlogComments';
 import '../../../assets/css/admin/brands.css';
 
 export default function BlogList() {
@@ -22,6 +23,7 @@ export default function BlogList() {
     const [formLoading, setFormLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
+    const [showFullContent, setShowFullContent] = useState(false);
 
     // Image upload state
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -76,6 +78,7 @@ export default function BlogList() {
     const openModal = (mode, blog = null) => {
         setModalMode(mode);
         setSelectedBlog(blog);
+        setShowFullContent(false);
         if (blog) {
             setFormData({
                 title: blog.title || '',
@@ -601,55 +604,97 @@ export default function BlogList() {
                                             disabled={formLoading}
                                         />
                                     ) : (
-                                        <textarea
-                                            name="content"
-                                            value={formData.content}
-                                            readOnly
-                                            className="form-control"
-                                            rows={10}
-                                            style={{ resize: 'vertical', minHeight: 200 }}
-                                        />
+                                        <div>
+                                            <div style={{ position: 'relative' }}>
+                                                <div
+                                                    className="blog-content"
+                                                    dangerouslySetInnerHTML={{ __html: formData.content }}
+                                                    style={{
+                                                        maxHeight: showFullContent ? 'none' : '320px',
+                                                        overflow: 'hidden',
+                                                        padding: '12px 16px',
+                                                        background: '#f8f9fa',
+                                                        borderRadius: 8,
+                                                        border: '1px solid #dee2e6',
+                                                        lineHeight: 1.7,
+                                                        fontSize: '0.95rem'
+                                                    }}
+                                                />
+                                                {!showFullContent && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        height: 60,
+                                                        background: 'linear-gradient(transparent, #f8f9fa)',
+                                                        borderRadius: '0 0 8px 8px',
+                                                        pointerEvents: 'none'
+                                                    }} />
+                                                )}
+                                            </div>
+                                            <div style={{ textAlign: 'center', marginTop: 8 }}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm"
+                                                    onClick={() => setShowFullContent(v => !v)}
+                                                >
+                                                    {showFullContent ? (
+                                                        <><i className="bi bi-chevron-up me-1" />Thu gọn</>
+                                                    ) : (
+                                                        <><i className="bi bi-chevron-down me-1" />Xem thêm</>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
 
                                 {modalMode === 'view' && selectedBlog && (
-                                    <div className="view-details mt-3">
-                                        <div className="detail-row">
-                                            <span className="detail-label">ID:</span>
-                                            <span className="detail-value" style={{ fontSize: '0.8rem' }}>
-                                                {selectedBlog.id}
-                                            </span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Lượt xem:</span>
-                                            <span className="detail-value">
-                                                {formatViews(selectedBlog.viewCount)}
-                                            </span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Ngày tạo:</span>
-                                            <span className="detail-value">
-                                                {formatDate(selectedBlog.createdAt)}
-                                            </span>
-                                        </div>
-                                        {selectedBlog.createdByUserName && (
+                                    <>
+                                        <div className="view-details mt-3">
                                             <div className="detail-row">
-                                                <span className="detail-label">Người tạo:</span>
-                                                <span className="detail-value">
-                                                    {selectedBlog.createdByUserName}
+                                                <span className="detail-label">ID:</span>
+                                                <span className="detail-value" style={{ fontSize: '0.8rem' }}>
+                                                    {selectedBlog.id}
                                                 </span>
                                             </div>
-                                        )}
-                                        {selectedBlog.updatedAt && (
                                             <div className="detail-row">
-                                                <span className="detail-label">Cập nhật lần cuối:</span>
+                                                <span className="detail-label">Lượt xem:</span>
                                                 <span className="detail-value">
-                                                    {formatDate(selectedBlog.updatedAt)}
-                                                    {selectedBlog.updatedByUserName && ` bởi ${selectedBlog.updatedByUserName}`}
+                                                    {formatViews(selectedBlog.viewCount)}
                                                 </span>
                                             </div>
-                                        )}
-                                    </div>
+                                            <div className="detail-row">
+                                                <span className="detail-label">Ngày tạo:</span>
+                                                <span className="detail-value">
+                                                    {formatDate(selectedBlog.createdAt)}
+                                                </span>
+                                            </div>
+                                            {selectedBlog.createdByUserName && (
+                                                <div className="detail-row">
+                                                    <span className="detail-label">Người tạo:</span>
+                                                    <span className="detail-value">
+                                                        {selectedBlog.createdByUserName}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {selectedBlog.updatedAt && (
+                                                <div className="detail-row">
+                                                    <span className="detail-label">Cập nhật lần cuối:</span>
+                                                    <span className="detail-value">
+                                                        {formatDate(selectedBlog.updatedAt)}
+                                                        {selectedBlog.updatedByUserName && ` bởi ${selectedBlog.updatedByUserName}`}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Comments Section */}
+                                        <div className="mt-4" style={{ borderTop: '1px solid #dee2e6', paddingTop: 16 }}>
+                                            <BlogComments blogId={selectedBlog.id} />
+                                        </div>
+                                    </>
                                 )}
                             </div>
 

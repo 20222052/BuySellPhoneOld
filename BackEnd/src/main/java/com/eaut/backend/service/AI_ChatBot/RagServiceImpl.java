@@ -5,6 +5,7 @@ import com.eaut.backend.entities.ProductEmbedding;
 import com.eaut.backend.exception.ApplicationException;
 import com.eaut.backend.model.response.ProductItemDetailResponse;
 import com.eaut.backend.repository.ProductEmbeddingRepository;
+import com.eaut.backend.repository.ProductItemRepository;
 import com.eaut.backend.service.ProductItemService;
 import com.eaut.backend.service.RagService;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,31 @@ public class RagServiceImpl implements RagService {
     private final ProductEmbeddingRepository embeddingRepository;
     private final ProductFlatteningService flatteningService;
     private final ProductItemService productItemService;
+    private final ProductItemRepository productItemRepository;
 
     @org.springframework.beans.factory.annotation.Value("${spring.ai.rag.threshold}")
     private double similarityThreshold;
+
+    @Override
+    public void ingestProductItems(UUID productId) {
+        log.info("Bắt đầu ingest product items cho productId: {}", productId);
+
+        // 1. Lấy tất cả ProductItem của Product
+        List<UUID> productItemIds = productItemRepository.findAllIdsByProductId(productId);
+        log.info("Tìm thấy {} product items cho productId: {}", productItemIds.size(), productId);
+
+        // 2. Gọi ingestProduct cho từng ProductItem
+        for (UUID productItemId : productItemIds) {
+            try {
+                ingestProduct(productItemId);
+            } catch (Exception e) {
+                log.error("Lỗi khi ingest product item ID: {}: ", productItemId, e);
+                // Tiếp tục ingest các item còn lại, không dừng toàn bộ quá trình
+            }
+        }
+
+        log.info("Kết thúc ingest product items cho productId: {}", productId);
+    }
 
     /**
      * Hàm này được gọi khi Admin thêm/sửa sản phẩm để tạo embedding

@@ -1,6 +1,7 @@
 package com.eaut.backend.service;
 
 import com.eaut.backend.model.request.CheckoutRequest;
+import com.eaut.backend.model.request.PendingCheckoutData;
 import com.eaut.backend.model.response.CheckoutResponse;
 
 import java.util.List;
@@ -18,6 +19,11 @@ public interface CheckoutService {
      * @return CheckoutResponse with order details
      */
     CheckoutResponse checkout(CheckoutRequest request);
+
+    /**
+     * Process checkout completely from Redis PendingCheckoutData after paid
+     */
+    void processRealCheckout(PendingCheckoutData data);
 
     /**
      * Get order details by order ID

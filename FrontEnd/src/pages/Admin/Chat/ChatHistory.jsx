@@ -84,7 +84,9 @@ const ChatHistory = () => {
                                                 </span>
                                             </td>
                                             <td className="text-truncate" style={{ maxWidth: '200px' }}>
-                                                {conv.messages?.length > 0 ? conv.messages[conv.messages.length - 1].content : ''}
+                                                {conv.messages?.length > 0
+                                                    ? [...conv.messages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).at(-1)?.content
+                                                    : ''}
                                             </td>
                                             <td className="text-end pe-4">
                                                 <button
@@ -111,22 +113,24 @@ const ChatHistory = () => {
                 <Modal.Body className="bg-light" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                     {selectedConv && selectedConv.messages && selectedConv.messages.length > 0 ? (
                         <div className="d-flex flex-column gap-3">
-                            {selectedConv.messages.map((msg, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`d-flex flex-column ${msg.senderType === 'USER' ? 'align-items-end' : 'align-items-start'}`}
-                                >
+                            {[...selectedConv.messages]
+                                .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+                                .map((msg, idx) => (
                                     <div
-                                        className={`p-3 rounded-3 shadow-sm ${msg.senderType === 'USER' ? 'bg-primary text-white' : 'bg-white text-dark border'}`}
-                                        style={{ maxWidth: '80%' }}
+                                        key={idx}
+                                        className={`d-flex flex-column ${msg.senderType === 'USER' ? 'align-items-end' : 'align-items-start'}`}
                                     >
-                                        {msg.content}
+                                        <div
+                                            className={`p-3 rounded-3 shadow-sm ${msg.senderType === 'USER' ? 'bg-primary text-white' : 'bg-white text-dark border'}`}
+                                            style={{ maxWidth: '80%' }}
+                                        >
+                                            {msg.content}
+                                        </div>
+                                        <small className="text-muted mt-1">
+                                            {formatDate(msg.createdAt)} - {msg.senderType}
+                                        </small>
                                     </div>
-                                    <small className="text-muted mt-1">
-                                        {formatDate(msg.createdAt)} - {msg.senderType}
-                                    </small>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     ) : (
                         <p className="text-center text-muted p-3">Không có tin nhắn nào.</p>

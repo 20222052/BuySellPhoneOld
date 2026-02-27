@@ -5,6 +5,7 @@ import com.eaut.backend.model.request.ProductRequest;
 import com.eaut.backend.model.response.ApiResponse;
 import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.model.response.ProductResponse;
+import com.eaut.backend.service.AI_ChatBot.RagServiceImpl;
 import com.eaut.backend.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/products")
 public class ProductController {
-
+    private final RagServiceImpl ragService;
     private final ProductService productService;
 
     @GetMapping
@@ -52,6 +53,9 @@ public class ProductController {
     public ResponseEntity<ApiResponse<ProductResponse>> create(
             @RequestBody ProductRequest request) {
         ProductResponse response = productService.create(request);
+        // ingest product items để tạo embedding sau khi tạo product thành công
+        ragService.ingestProductItems(response.getId());
+        log.info("ProductController: Ingest product items for productId: {}", response.getId());
         ApiResponse<ProductResponse> apiResponse = new ApiResponse<>(
                 HttpStatus.CREATED.value(),
                 "Product created successfully",
@@ -65,6 +69,9 @@ public class ProductController {
             @PathVariable UUID id,
             @RequestBody ProductRequest request) {
         ProductResponse response = productService.update(id, request);
+        // ingest product items để cập nhật embedding sau khi cập nhật product thành công
+        ragService.ingestProductItems(response.getId());
+        log.info("ProductController: Ingest product items for productId: {}", response.getId());
         ApiResponse<ProductResponse> apiResponse = new ApiResponse<>(
                 HttpStatus.OK.value(),
                 "Product updated successfully",

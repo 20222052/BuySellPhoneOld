@@ -297,3 +297,116 @@
         transform: scale(1);
     }
 }
+
+/* ── Product Cards in Chat ── */
+.message-bubble.received {
+    max-width: 90%;
+    /* wider to accommodate product cards */
+}
+
+.chat-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.chat-product-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+    color: inherit;
+}
+
+.chat-product-card:hover {
+    border-color: #d70018;
+    box-shadow: 0 2px 10px rgba(215, 0, 24, 0.12);
+    transform: translateY(-1px);
+}
+
+.chat-product-img-wrap {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f8f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.chat-product-img-placeholder {
+    font-size: 22px;
+    color: #ccc;
+}
+
+.chat-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-product-brand {
+    font-size: 10px;
+    color: #d70018;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.chat-product-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.chat-product-price {
+    font-size: 13px;
+    font-weight: 700;
+    color: #d70018;
+    margin-top: 3px;
+}
+
+.chat-product-compare {
+    font-size: 11px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.chat-product-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #d70018;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.chat-product-card:hover .chat-product-btn {
+    opacity: 1;
+    transform: translateX(2px);
+}

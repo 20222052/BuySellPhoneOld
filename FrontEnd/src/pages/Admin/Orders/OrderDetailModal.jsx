@@ -157,11 +157,32 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
                                         <tr key={item.id}>
                                             <td style={{ paddingLeft: '20px' }}>
                                                 <div className="d-flex align-items-center gap-3">
-                                                    <img
-                                                        src={item.imageUrl}
-                                                        alt={item.productName}
+                                                    {item.imageUrl ? (
+                                                        <img
+                                                            src={item.imageUrl}
+                                                            alt={item.productName}
+                                                            className="order-item-img"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.style.display = 'none';
+                                                                e.target.nextSibling.style.display = 'flex';
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div
                                                         className="order-item-img"
-                                                    />
+                                                        style={{
+                                                            display: item.imageUrl ? 'none' : 'flex',
+                                                            background: '#f1f5f9',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: '#94a3b8',
+                                                            fontSize: '20px',
+                                                            flexShrink: 0,
+                                                        }}
+                                                    >
+                                                        <i className="bi bi-image"></i>
+                                                    </div>
                                                     <div>
                                                         <div className="fw-medium text-dark">{item.productName}</div>
                                                         <small className="text-muted">Mã SP: {item.productId?.substring(0, 8)}...</small>
