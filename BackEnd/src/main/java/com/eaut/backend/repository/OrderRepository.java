@@ -38,5 +38,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
 
     Optional<Order> findByCode(String code);
 
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.productItem pi LEFT JOIN FETCH pi.product WHERE o.id = :id")
+    Optional<Order> findByIdWithItems(@Param("id") UUID id);
+
     boolean existsByCode(String code);
 }

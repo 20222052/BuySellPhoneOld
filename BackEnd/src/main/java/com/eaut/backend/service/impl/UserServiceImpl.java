@@ -237,6 +237,45 @@ public class UserServiceImpl implements UserService {
         return new UserResponse(user);
     }
 
+    @Transactional
+    @Override
+    public UserResponse updateBankInfo(com.eaut.backend.model.request.UserBankUpdateRequest request)
+            throws ApplicationException {
+        var authenticatedUser = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(authenticatedUser.getName())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with email: " + authenticatedUser.getName()));
+
+        if (request == null) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "Request payload cannot be null");
+        }
+
+        user.setBankName(request.getBankName());
+        user.setAccountName(request.getAccountName());
+        user.setBankAccount(request.getBankAccount());
+
+        User updatedUser = userRepository.save(user);
+        log.info("UserService: Bank info updated successfully for user: {}", user.getEmail());
+        return new UserResponse(updatedUser);
+    }
+
+    @Transactional
+    @Override
+    public UserResponse deleteBankInfo() throws ApplicationException {
+        var authenticatedUser = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(authenticatedUser.getName())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND,
+                        "User not found with email: " + authenticatedUser.getName()));
+
+        user.setBankName("");
+        user.setAccountName("");
+        user.setBankAccount("");
+
+        User updatedUser = userRepository.save(user);
+        log.info("UserService: Bank info deleted successfully for user: {}", user.getEmail());
+        return new UserResponse(updatedUser);
+    }
+
     /**
      * Cập nhật trạng thái tài khoản (chỉ admin)
      * 

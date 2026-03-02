@@ -23,6 +23,9 @@ public class UserResponse extends AuditBase {
     private UserStatus status;
     private String avatarUrl;
     private Set<Role> roles;
+    private String bankName;
+    private String accountName;
+    private String bankAccount;
 
     public UserResponse(User user) {
         this.id = user.getId();
@@ -32,5 +35,8 @@ public class UserResponse extends AuditBase {
         this.status = user.getStatus();
         this.avatarUrl = user.getAvatarUrl();
         this.roles = user.getRoles();
+        this.bankName = user.getBankName();
+        this.accountName = user.getAccountName();
+        this.bankAccount = user.getBankAccount();
     }
 }

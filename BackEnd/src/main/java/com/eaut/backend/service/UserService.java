@@ -40,4 +40,8 @@ public interface UserService {
 
     public UserResponse getMyInfo();
 
+    public UserResponse updateBankInfo(com.eaut.backend.model.request.UserBankUpdateRequest request);
+
+    public UserResponse deleteBankInfo();
+
 }

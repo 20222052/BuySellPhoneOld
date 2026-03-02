@@ -20,5 +20,15 @@ public class MailProducer {
         String message = email + "|" + otp;
         kafkaTemplate.send("forgot-password-topic", message);
     }
-}
 
+    public void sendOrderConfirmationMail(String email, String orderNumber, String customerName, String totalAmount,
+            String orderItemsHTML) {
+        String message = email + "|" + orderNumber + "|" + customerName + "|" + totalAmount + "|" + orderItemsHTML;
+        kafkaTemplate.send("order-confirmation-topic", message);
+    }
+
+    public void sendOrderCancellationMail(String email, String orderNumber, String customerName, String reason) {
+        String message = email + "|" + orderNumber + "|" + customerName + "|" + reason;
+        kafkaTemplate.send("order-cancellation-topic", message);
+    }
+}

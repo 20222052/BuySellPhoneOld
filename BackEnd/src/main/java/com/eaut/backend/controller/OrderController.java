@@ -24,50 +24,62 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
+        private final OrderService orderService;
 
-    @GetMapping
-    public ApiResponse<PagingResponse<OrderResponse>> getAllOrders(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) OrderStatus status,
-            @RequestParam(required = false) PaymentMethod paymentMethod,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String order) {
-        Sort sort = order.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page - 1, limit, sort);
+        @GetMapping
+        public ApiResponse<PagingResponse<OrderResponse>> getAllOrders(
+                        @RequestParam(required = false) String search,
+                        @RequestParam(required = false) OrderStatus status,
+                        @RequestParam(required = false) PaymentMethod paymentMethod,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+                        @RequestParam(defaultValue = "1") int page,
+                        @RequestParam(defaultValue = "10") int limit,
+                        @RequestParam(defaultValue = "createdAt") String sortBy,
+                        @RequestParam(defaultValue = "desc") String order) {
+                Sort sort = order.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+                Pageable pageable = PageRequest.of(page - 1, limit, sort);
 
-        PagingResponse<OrderResponse> response = orderService.getAllOrders(search, status, paymentMethod, fromDate,
-                toDate, pageable);
-        return ApiResponse.<PagingResponse<OrderResponse>>builder()
-                .code(HttpStatus.OK.value())
-                .message("Get orders successfully")
-                .data(response)
-                .build();
-    }
+                PagingResponse<OrderResponse> response = orderService.getAllOrders(search, status, paymentMethod,
+                                fromDate,
+                                toDate, pageable);
+                return ApiResponse.<PagingResponse<OrderResponse>>builder()
+                                .code(HttpStatus.OK.value())
+                                .message("Get orders successfully")
+                                .data(response)
+                                .build();
+        }
 
-    @GetMapping("/{id}")
-    public ApiResponse<OrderDetailResponse> getOrderDetails(@PathVariable UUID id) {
-        OrderDetailResponse response = orderService.getOrderDetails(id);
-        return ApiResponse.<OrderDetailResponse>builder()
-                .code(HttpStatus.OK.value())
-                .message("Get order details successfully")
-                .data(response)
-                .build();
-    }
+        @GetMapping("/{id}")
+        public ApiResponse<OrderDetailResponse> getOrderDetails(@PathVariable UUID id) {
+                OrderDetailResponse response = orderService.getOrderDetails(id);
+                return ApiResponse.<OrderDetailResponse>builder()
+                                .code(HttpStatus.OK.value())
+                                .message("Get order details successfully")
+                                .data(response)
+                                .build();
+        }
 
-    @PutMapping("/{id}/status")
-    public ApiResponse<OrderResponse> updateOrderStatus(
-            @PathVariable UUID id,
-            @RequestBody OrderStatusUpdateRequest request) {
-        OrderResponse response = orderService.updateOrderStatus(id, request);
-        return ApiResponse.<OrderResponse>builder()
-                .code(HttpStatus.OK.value())
-                .message("Update order status successfully")
-                .data(response)
-                .build();
-    }
+        @PutMapping("/{id}/status")
+        public ApiResponse<OrderResponse> updateOrderStatus(
+                        @PathVariable UUID id,
+                        @RequestBody OrderStatusUpdateRequest request) {
+                OrderResponse response = orderService.updateOrderStatus(id, request);
+                return ApiResponse.<OrderResponse>builder()
+                                .code(HttpStatus.OK.value())
+                                .message("Update order status successfully")
+                                .data(response)
+                                .build();
+        }
+
+        @PutMapping("/{id}/cancel")
+        public ApiResponse<OrderResponse> cancelOrder(@PathVariable UUID id,
+                        @RequestBody com.eaut.backend.model.request.CancelOrderRequest request) {
+                OrderResponse response = orderService.cancelOrder(id, request);
+                return ApiResponse.<OrderResponse>builder()
+                                .code(HttpStatus.OK.value())
+                                .message("Cancel order successfully")
+                                .data(response)
+                                .build();
+        }
 }

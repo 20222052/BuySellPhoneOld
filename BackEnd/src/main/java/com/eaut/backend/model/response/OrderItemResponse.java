@@ -11,6 +11,7 @@ import java.util.UUID;
 public class OrderItemResponse {
     private UUID id;
     private String productName;
+    private String productItemName;
     private String modelName;
     private String colorName;
     private String imageUrl;
