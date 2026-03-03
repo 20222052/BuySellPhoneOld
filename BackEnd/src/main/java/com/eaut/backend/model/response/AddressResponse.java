@@ -12,6 +12,9 @@ public class AddressResponse {
     private String fullName;
     private String phone;
     private String addressLine;
+    private String wardCode;
+    private String districtCode;
+    private String cityCode;
     private String wardName;
     private String districtName;
     private String cityName;

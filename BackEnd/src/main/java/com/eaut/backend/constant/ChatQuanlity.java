@@ -5,8 +5,6 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum DiagnosticStatus {
-    pending("pending"), tested("tested"), processing("processing"), completed("completed"), cancelled("cancelled");
-
+public enum ChatQuanlity { good("good"), bad("bad");
     private final String value;
 }

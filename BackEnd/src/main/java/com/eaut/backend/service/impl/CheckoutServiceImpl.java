@@ -70,7 +70,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "User not found with id: " + request.getUserId()));
 
-        addressRepository.findByIdAndUserId(request.getAddressId(), request.getUserId())
+        addressRepository.findByIdAndUserIdAndIsDeleteFalse(request.getAddressId(), request.getUserId())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "Address not found with id: " + request.getAddressId()));
 
@@ -132,7 +132,8 @@ public class CheckoutServiceImpl implements CheckoutService {
                         "User not found with id: " + request.getUserId()));
 
         // 2. Validate Address
-        Address address = addressRepository.findByIdAndUserId(request.getAddressId(), request.getUserId())
+        Address address = addressRepository
+                .findByIdAndUserIdAndIsDeleteFalse(request.getAddressId(), request.getUserId())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "Address not found with id: " + request.getAddressId()));
 

@@ -81,6 +81,139 @@ public class MailConsumer {
         }
     }
 
+    @KafkaListener(topics = "tradein-status-topic", groupId = "mail-group")
+    public void consumeTradeInStatusMail(String message) {
+        System.out.println("Consumer: Processing trade-in status message: " + message);
+        try {
+            // Format: email|customerName|diagnosticId|status|staffMessage
+            String[] parts = message.split("\\|", 5);
+            if (parts.length >= 4) {
+                String toEmail = parts[0];
+                String customerName = parts[1];
+                String diagnosticId = parts[2];
+                String status = parts[3];
+                String staffMessage = parts.length >= 5 ? parts[4] : "";
+                sendTradeInStatusEmail(toEmail, customerName, diagnosticId, status, staffMessage);
+            } else {
+                System.err.println("Invalid message format for tradein-status-topic: " + message);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to process trade-in status message: " + e.getMessage());
+        }
+    }
+
+    private void sendTradeInStatusEmail(String toEmail, String customerName, String diagnosticId,
+            String status, String staffMessage)
+            throws MessagingException, UnsupportedEncodingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+        helper.setFrom("tradein@buysellphone.com", "BuySellPhone Trade-In");
+        helper.setTo(toEmail);
+
+        String subject;
+        String htmlContent;
+
+        switch (status) {
+            case "processing":
+                subject = "📞 Yêu Cầu Thu Cũ Đang Được Xử Lý - BuySellPhone";
+                htmlContent = createTradeInProcessingEmailTemplate(customerName, diagnosticId, staffMessage);
+                break;
+            case "completed":
+                subject = "✅ Yêu Cầu Thu Cũ Hoàn Thành - BuySellPhone";
+                htmlContent = createTradeInCompletedEmailTemplate(customerName, diagnosticId, staffMessage);
+                break;
+            case "cancelled":
+                subject = "❌ Yêu Cầu Thu Cũ Đã Bị Hủy - BuySellPhone";
+                htmlContent = createTradeInCancelledEmailTemplate(customerName, diagnosticId, staffMessage);
+                break;
+            default:
+                System.err.println("Unknown trade-in status for email: " + status);
+                return;
+        }
+
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+        mailSender.send(mimeMessage);
+        System.out.println("Sent trade-in " + status + " email to " + toEmail);
+    }
+
+    private String createTradeInProcessingEmailTemplate(String customerName, String diagnosticId, String staffMessage) {
+        String time = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String msgBlock = (staffMessage != null && !staffMessage.isBlank())
+                ? "<div style=\"background:#e8f4fd;border-left:4px solid #2196F3;padding:14px 18px;border-radius:6px;margin:20px 0;\">"
+                        + "<p style=\"margin:0;color:#1565C0;font-size:15px;\"><strong>💬 Lời nhắn từ nhân viên:</strong></p>"
+                        + "<p style=\"margin:8px 0 0;color:#333;\">" + staffMessage + "</p></div>"
+                : "";
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='font-family:Segoe UI,Arial,sans-serif;background:#f5f5f5;margin:0;padding:0'>"
+                + "<div style='max-width:600px;margin:20px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1)'>"
+                + "<div style='background:linear-gradient(135deg,#2196F3,#1565C0);padding:28px 24px;text-align:center'>"
+                + "<h1 style='color:white;margin:0;font-size:24px'>📞 Yêu Cầu Thu Cũ Đang Được Xử Lý</h1>"
+                + "<p style='color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px'>BuySellPhone Trade-In</p></div>"
+                + "<div style='padding:30px 24px'>"
+                + "<p style='font-size:16px;color:#333'>Xin chào <strong>" + customerName + "</strong>,</p>"
+                + "<p style='color:#555;line-height:1.7'>Yêu cầu thu cũ của bạn <strong>#"
+                + diagnosticId.substring(0, Math.min(8, diagnosticId.length()))
+                + "...</strong> đang được nhân viên xem xét và sẽ liên hệ với bạn sớm.</p>"
+                + msgBlock
+                + "<p style='color:#555;line-height:1.7'>Vui lòng giữ liên lạc và chuẩn bị thiết bị để nhân viên có thể hỗ trợ tốt nhất.</p>"
+                + "<div style='text-align:center;margin:24px 0'><a href='http://localhost:5173/user/profile' style='display:inline-block;background:#2196F3;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
+                + "</div><div style='background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888'>© "
+                + time.substring(6) + " BuySellPhone — Email tự động, vui lòng không trả lời.</div>"
+                + "</div></body></html>";
+    }
+
+    private String createTradeInCompletedEmailTemplate(String customerName, String diagnosticId, String staffMessage) {
+        String time = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String msgBlock = (staffMessage != null && !staffMessage.isBlank())
+                ? "<div style=\"background:#e8f5e9;border-left:4px solid #4CAF50;padding:14px 18px;border-radius:6px;margin:20px 0;\">"
+                        + "<p style=\"margin:0;color:#1b5e20;font-size:15px;\"><strong>💬 Ghi chú:</strong></p>"
+                        + "<p style=\"margin:8px 0 0;color:#333;\">" + staffMessage + "</p></div>"
+                : "";
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='font-family:Segoe UI,Arial,sans-serif;background:#f5f5f5;margin:0;padding:0'>"
+                + "<div style='max-width:600px;margin:20px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1)'>"
+                + "<div style='background:linear-gradient(135deg,#43a047,#1b5e20);padding:28px 24px;text-align:center'>"
+                + "<h1 style='color:white;margin:0;font-size:24px'>✅ Yêu Cầu Thu Cũ Hoàn Thành!</h1>"
+                + "<p style='color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px'>BuySellPhone Trade-In</p></div>"
+                + "<div style='padding:30px 24px'>"
+                + "<p style='font-size:16px;color:#333'>Xin chào <strong>" + customerName + "</strong>,</p>"
+                + "<p style='color:#555;line-height:1.7'>Yêu cầu thu cũ <strong>#"
+                + diagnosticId.substring(0, Math.min(8, diagnosticId.length()))
+                + "...</strong> đã được <strong style='color:#43a047'>hoàn tất</strong>. Cảm ơn bạn đã tin tưởng BuySellPhone!</p>"
+                + msgBlock
+                + "<div style='text-align:center;margin:24px 0'><a href='http://localhost:5173/user/profile' style='display:inline-block;background:#43a047;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
+                + "</div><div style='background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888'>© "
+                + time.substring(6) + " BuySellPhone — Email tự động, vui lòng không trả lời.</div>"
+                + "</div></body></html>";
+    }
+
+    private String createTradeInCancelledEmailTemplate(String customerName, String diagnosticId, String staffMessage) {
+        String time = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String msgBlock = (staffMessage != null && !staffMessage.isBlank())
+                ? "<div style=\"background:#fdecea;border-left:4px solid #f44336;padding:14px 18px;border-radius:6px;margin:20px 0;\">"
+                        + "<p style=\"margin:0;color:#b71c1c;font-size:15px;\"><strong>📋 Lý do hủy:</strong></p>"
+                        + "<p style=\"margin:8px 0 0;color:#333;\">" + staffMessage + "</p></div>"
+                : "";
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='font-family:Segoe UI,Arial,sans-serif;background:#f5f5f5;margin:0;padding:0'>"
+                + "<div style='max-width:600px;margin:20px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1)'>"
+                + "<div style='background:linear-gradient(135deg,#e53935,#b71c1c);padding:28px 24px;text-align:center'>"
+                + "<h1 style='color:white;margin:0;font-size:24px'>❌ Yêu Cầu Thu Cũ Đã Bị Hủy</h1>"
+                + "<p style='color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px'>BuySellPhone Trade-In</p></div>"
+                + "<div style='padding:30px 24px'>"
+                + "<p style='font-size:16px;color:#333'>Xin chào <strong>" + customerName + "</strong>,</p>"
+                + "<p style='color:#555;line-height:1.7'>Yêu cầu thu cũ <strong>#"
+                + diagnosticId.substring(0, Math.min(8, diagnosticId.length()))
+                + "...</strong> đã bị <strong style='color:#e53935'>hủy</strong>.</p>"
+                + msgBlock
+                + "<p style='color:#555;line-height:1.7'>Nếu bạn có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ của chúng tôi.</p>"
+                + "<div style='text-align:center;margin:24px 0'><a href='http://localhost:5173/user/profile' style='display:inline-block;background:#e53935;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
+                + "</div><div style='background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888'>© "
+                + time.substring(6) + " BuySellPhone — Email tự động, vui lòng không trả lời.</div>"
+                + "</div></body></html>";
+    }
+
     private void sendOrderCancellationEmail(String toAddress, String orderCode, String customerName, String reason)
             throws MessagingException, UnsupportedEncodingException {
         MimeMessage mimeMessage = mailSender.createMimeMessage();

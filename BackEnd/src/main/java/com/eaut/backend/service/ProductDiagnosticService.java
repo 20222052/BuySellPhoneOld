@@ -13,6 +13,7 @@ import com.eaut.backend.model.response.UserResponse;
 import com.eaut.backend.repository.ProductDiagnosticRepository;
 import com.eaut.backend.repository.ProductItemRepository;
 import com.eaut.backend.repository.UserRepository;
+import com.eaut.backend.service.mailService.MailProducer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ public class ProductDiagnosticService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final CloudinaryService cloudinaryService;
+    private final MailProducer mailProducer;
 
     @Value("${ai.diagnostic.api.url:http://localhost:5000}")
     private String aiApiUrl;
@@ -316,19 +318,41 @@ public class ProductDiagnosticService {
      * Cập nhật trạng thái diagnostic
      */
     @Transactional
-    public ProductDiagnosticDTO updateDiagnosticStatus(UUID diagnosticId, DiagnosticStatus status) {
+    public ProductDiagnosticDTO updateDiagnosticStatus(UUID diagnosticId, DiagnosticStatus status,
+            String staffMessage) {
         ProductDiagnostic diagnostic = diagnosticRepository.findById(diagnosticId)
                 .orElseThrow(() -> new RuntimeException("Diagnostic not found: " + diagnosticId));
         diagnostic.setStatus(status);
         diagnostic = diagnosticRepository.save(diagnostic);
+
+        // Gửi email thông báo cho khách hàng khi trạng thái thay đổi
+        User customer = diagnostic.getCreatedBy();
+        if (customer != null && customer.getEmail() != null) {
+            Set<DiagnosticStatus> notifyStatuses = Set.of(
+                    DiagnosticStatus.processing, DiagnosticStatus.completed, DiagnosticStatus.cancelled);
+            if (notifyStatuses.contains(status)) {
+                try {
+                    mailProducer.sendTradeInStatusMail(
+                            customer.getEmail(),
+                            customer.getFullName() != null ? customer.getFullName() : "Khách hàng",
+                            diagnostic.getId().toString(),
+                            status.getValue(),
+                            staffMessage);
+                } catch (Exception e) {
+                    log.warn("Failed to send trade-in status email: {}", e.getMessage());
+                }
+            }
+        }
+
         return convertToDTO(diagnostic);
     }
 
     /**
      * Lấy tất cả diagnostic của một product item
      */
+    @Transactional(readOnly = true)
     public List<ProductDiagnosticDTO> getDiagnosticsByProductItem(UUID productItemId) {
-        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByProductItemId(productItemId);
+        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByProductItemIdWithJoinFetch(productItemId);
         return diagnostics.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -337,8 +361,9 @@ public class ProductDiagnosticService {
     /**
      * Lấy lịch sử diagnostic của user
      */
+    @Transactional(readOnly = true)
     public List<ProductDiagnosticDTO> getDiagnosticsByUserId(UUID userId) {
-        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByCreatedBy_Id(userId);
+        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByCreatedBy_IdWithJoinFetch(userId);
         return diagnostics.stream()
                 .map(this::convertToDTO)
                 .sorted(Comparator.comparing(ProductDiagnosticDTO::getTestDate).reversed())
@@ -348,16 +373,18 @@ public class ProductDiagnosticService {
     /**
      * Lấy diagnostic mới nhất của một product item
      */
+    @Transactional(readOnly = true)
     public Optional<ProductDiagnosticDTO> getLatestDiagnostic(UUID productItemId) {
-        return diagnosticRepository.findLatestByProductItemId(productItemId)
+        return diagnosticRepository.findLatestByProductItemIdWithJoinFetch(productItemId)
                 .map(this::convertToDTO);
     }
 
     /**
      * Lấy diagnostic theo ID
      */
+    @Transactional(readOnly = true)
     public ProductDiagnosticDTO getDiagnosticById(UUID diagnosticId) {
-        ProductDiagnostic diagnostic = diagnosticRepository.findById(diagnosticId)
+        ProductDiagnostic diagnostic = diagnosticRepository.findByIdWithJoinFetch(diagnosticId)
                 .orElseThrow(() -> new RuntimeException("Diagnostic not found: " + diagnosticId));
         return convertToDTO(diagnostic);
     }
@@ -437,6 +464,7 @@ public class ProductDiagnosticService {
      * Convert entity to DTO
      */
     private ProductDiagnosticDTO convertToDTO(ProductDiagnostic diagnostic) {
+        User customer = diagnostic.getCreatedBy();
         return ProductDiagnosticDTO.builder()
                 .id(diagnostic.getId())
                 .productItemId(diagnostic.getProductItem().getId())
@@ -464,11 +492,15 @@ public class ProductDiagnosticService {
                 .estimatedRepairCost(diagnostic.getEstimatedRepairCost())
                 .staffId(diagnostic.getStaff() != null ? diagnostic.getStaff().getId() : null)
                 .staffName(diagnostic.getStaff() != null ? diagnostic.getStaff().getFullName() : null)
-                .aiAnalysisDetails(diagnostic.getRepairRecommendations()) // Contains JSON of AI analysis
+                .aiAnalysisDetails(diagnostic.getRepairRecommendations())
                 .minPredictedPrice(diagnostic.getMinPredictedPrice())
                 .maxPredictedPrice(diagnostic.getMaxPredictedPrice())
                 .isContactStore(diagnostic.getIsContactStore())
                 .images(diagnostic.getImages())
+                // Customer contact info
+                .customerName(customer != null ? customer.getFullName() : null)
+                .customerEmail(customer != null ? customer.getEmail() : null)
+                .customerPhone(customer != null ? customer.getPhone() : null)
                 .build();
     }
 

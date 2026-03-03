@@ -9,7 +9,6 @@ import com.eaut.backend.model.response.AddressResponse;
 import com.eaut.backend.repository.AddressRepository;
 import com.eaut.backend.repository.UserRepository;
 import com.eaut.backend.service.AddressService;
-import com.eaut.backend.service.LocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,6 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
-    private final LocationService locationService;
 
     @Override
     @Transactional
@@ -35,23 +33,21 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "User not found with id: " + request.getUserId()));
 
-        // Auto-fill location names from codes if provided
         String cityName = request.getCityName();
         String districtName = request.getDistrictName();
         String wardName = request.getWardName();
 
-        if (cityName == null && request.getCityCode() != null) {
-            cityName = locationService.getProvinceName(request.getCityCode());
+        // Handle empty or null district
+        String districtCode = request.getDistrictCode();
+        if (districtCode != null && districtCode.trim().isEmpty()) {
+            districtCode = null;
         }
-        if (districtName == null && request.getDistrictCode() != null) {
-            districtName = locationService.getDistrictName(request.getDistrictCode());
-        }
-        if (wardName == null && request.getWardCode() != null) {
-            wardName = locationService.getCommuneName(request.getWardCode());
+        if (districtName != null && districtName.trim().isEmpty()) {
+            districtName = null;
         }
 
         // If this is the first address or marked as default, handle default logic
-        List<Address> existingAddresses = addressRepository.findByUserId(request.getUserId());
+        List<Address> existingAddresses = addressRepository.findByUserIdAndIsDeleteFalse(request.getUserId());
         boolean shouldBeDefault = request.isDefault() || existingAddresses.isEmpty();
 
         // If setting as default, unset other defaults
@@ -60,6 +56,7 @@ public class AddressServiceImpl implements AddressService {
                     .filter(Address::isDefault)
                     .forEach(addr -> {
                         addr.setDefault(false);
+                        addr.setDelete(false);
                         addressRepository.save(addr);
                     });
         }
@@ -71,7 +68,7 @@ public class AddressServiceImpl implements AddressService {
                 .addressLine(request.getAddressLine())
                 .cityCode(request.getCityCode())
                 .cityName(cityName)
-                .districtCode(request.getDistrictCode())
+                .districtCode(districtCode)
                 .districtName(districtName)
                 .wardCode(request.getWardCode())
                 .wardName(wardName)
@@ -91,13 +88,17 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "Address not found with id: " + addressId));
+        if (address.isDelete()) {
+            throw new ApplicationException(ErrorCode.BAD_REQUEST,
+                    "Address not found with id: " + addressId);
+        }
         return mapToResponse(address);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AddressResponse> getAddressesByUserId(UUID userId) {
-        return addressRepository.findByUserId(userId).stream()
+        return addressRepository.findByUserIdAndIsDeleteFalse(userId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -109,30 +110,28 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "Address not found with id: " + addressId));
 
-        // Verify ownership
-        if (!address.getUser().getId().equals(request.getUserId())) {
+        // Verify ownership and deletion status
+        if (!address.getUser().getId().equals(request.getUserId()) || address.isDelete()) {
             throw new ApplicationException(ErrorCode.BAD_REQUEST,
-                    "Address does not belong to this user");
+                    "Address does not belong to this user or is deleted");
         }
 
-        // Auto-fill location names from codes if provided
         String cityName = request.getCityName();
         String districtName = request.getDistrictName();
         String wardName = request.getWardName();
 
-        if (cityName == null && request.getCityCode() != null) {
-            cityName = locationService.getProvinceName(request.getCityCode());
+        // Handle empty or null district
+        String districtCode = request.getDistrictCode();
+        if (districtCode != null && districtCode.trim().isEmpty()) {
+            districtCode = null;
         }
-        if (districtName == null && request.getDistrictCode() != null) {
-            districtName = locationService.getDistrictName(request.getDistrictCode());
-        }
-        if (wardName == null && request.getWardCode() != null) {
-            wardName = locationService.getCommuneName(request.getWardCode());
+        if (districtName != null && districtName.trim().isEmpty()) {
+            districtName = null;
         }
 
         // Handle default logic
         if (request.isDefault() && !address.isDefault()) {
-            addressRepository.findByUserId(request.getUserId()).stream()
+            addressRepository.findByUserIdAndIsDeleteFalse(request.getUserId()).stream()
                     .filter(Address::isDefault)
                     .forEach(addr -> {
                         addr.setDefault(false);
@@ -145,7 +144,7 @@ public class AddressServiceImpl implements AddressService {
         address.setAddressLine(request.getAddressLine());
         address.setCityCode(request.getCityCode());
         address.setCityName(cityName);
-        address.setDistrictCode(request.getDistrictCode());
+        address.setDistrictCode(districtCode);
         address.setDistrictName(districtName);
         address.setWardCode(request.getWardCode());
         address.setWardName(wardName);
@@ -165,15 +164,22 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "Address not found with id: " + addressId));
 
+        if (address.isDelete()) {
+            throw new ApplicationException(ErrorCode.BAD_REQUEST,
+                    "Address not found with id: " + addressId);
+        }
+
         UUID userId = address.getUser().getId();
         boolean wasDefault = address.isDefault();
 
-        addressRepository.delete(address);
+        address.setDelete(true);
+        address.setDefault(false);
+        addressRepository.save(address);
         log.info("Deleted address {}", addressId);
 
         // If deleted address was default, set another as default
         if (wasDefault) {
-            List<Address> remaining = addressRepository.findByUserId(userId);
+            List<Address> remaining = addressRepository.findByUserIdAndIsDeleteFalse(userId);
             if (!remaining.isEmpty()) {
                 Address newDefault = remaining.get(0);
                 newDefault.setDefault(true);
@@ -186,7 +192,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public AddressResponse setDefaultAddress(UUID userId, UUID addressId) {
-        Address address = addressRepository.findByIdAndUserId(addressId, userId)
+        Address address = addressRepository.findByIdAndUserIdAndIsDeleteFalse(addressId, userId)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.BAD_REQUEST,
                         "Address not found or does not belong to user"));
 
@@ -217,9 +223,9 @@ public class AddressServiceImpl implements AddressService {
         fullAddress.append(address.getAddressLine());
         if (address.getWardName() != null)
             fullAddress.append(", ").append(address.getWardName());
-        if (address.getDistrictName() != null)
+        if (address.getDistrictName() != null && !address.getDistrictName().trim().isEmpty())
             fullAddress.append(", ").append(address.getDistrictName());
-        if (address.getCityName() != null)
+        if (address.getCityName() != null && !address.getCityName().trim().isEmpty())
             fullAddress.append(", ").append(address.getCityName());
 
         return AddressResponse.builder()
@@ -227,6 +233,9 @@ public class AddressServiceImpl implements AddressService {
                 .fullName(address.getFullName())
                 .phone(address.getPhone())
                 .addressLine(address.getAddressLine())
+                .wardCode(address.getWardCode())
+                .districtCode(address.getDistrictCode())
+                .cityCode(address.getCityCode())
                 .wardName(address.getWardName())
                 .districtName(address.getDistrictName())
                 .cityName(address.getCityName())

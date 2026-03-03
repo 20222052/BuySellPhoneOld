@@ -1,328 +1,350 @@
+import { useState } from "react";
+import { Row, Col, Card, Badge, Table } from "react-bootstrap";
 import '../../../assets/css/admin/categories.css';
 
+// ---- Hằng số tính khấu hao ----
+const WEIGHTS = {
+    screenCracks: 0.25, scratches: 0.15, edgeDings: 0.10,
+    dents: 0.10, displayFailure: 0.20, deadPixels: 0.10, displayLines: 0.10
+};
+const FUNCTIONAL_PENALTIES = {
+    microphoneDamage: 5, frontCameraDamage: 10, rearCameraDamage: 15,
+    chargingPortDamage: 10, speakerDamage: 5, buttonDamage: 5,
+    wifiBluetoothIssue: 15
+};
+const getCosmeticDeduction = (key, score) => (score * (WEIGHTS[key] || 0)).toFixed(1);
+function getLabel(key) {
+    const labels = {
+        screenCracks: "Nứt vỡ màn hình", scratches: "Trầy xước màn hình/thân",
+        edgeDings: "Cấn móp cạnh", dents: "Móp méo thân vỏ",
+        displayFailure: "Lỗi hiển thị", deadPixels: "Điểm chết", displayLines: "Sọc màn hình",
+        microphoneDamage: "Hỏng Microphone", frontCameraDamage: "Hỏng Camera trước",
+        rearCameraDamage: "Hỏng Camera sau", chargingPortDamage: "Hỏng chân sạc",
+        speakerDamage: "Hỏng loa", buttonDamage: "Hỏng phím cứng",
+        wifiBluetoothIssue: "Lỗi Wifi/Bluetooth", battery: "Pin chai (<80%)"
+    };
+    return labels[key] || key;
+}
+
+// Định nghĩa luồng chuyển trạng thái hợp lệ
+const STATUS_TRANSITIONS = {
+    tested: [
+        { to: 'processing', label: 'Đang xử lý', btnClass: 'btn-primary', icon: 'bi-telephone', requiresMessage: true, messageLabel: 'Lời nhắn tới khách hàng' },
+        { to: 'cancelled', label: 'Hủy yêu cầu', btnClass: 'btn-danger', icon: 'bi-x-lg', requiresMessage: true, messageLabel: 'Lý do hủy (bắt buộc)', required: true }
+    ],
+    processing: [
+        { to: 'completed', label: 'Hoàn thành', btnClass: 'btn-success', icon: 'bi-bag-check', requiresMessage: false, messageLabel: 'Ghi chú hoàn thành (tùy chọn)' },
+        { to: 'cancelled', label: 'Hủy yêu cầu', btnClass: 'btn-danger', icon: 'bi-x-lg', requiresMessage: true, messageLabel: 'Lý do hủy (bắt buộc)', required: true }
+    ]
+};
+
+const STATUS_LABELS = {
+    pending: 'Chờ xử lý', tested: 'Đã kiểm tra',
+    processing: 'Đang xử lý', completed: 'Hoàn thành', cancelled: 'Đã hủy'
+};
+const STATUS_BADGE_COLORS = {
+    pending: 'warning text-dark', tested: 'success',
+    processing: 'primary', completed: 'dark', cancelled: 'danger'
+};
+
 export default function TradeInDetailModal({ diagnostic, onClose, onStatusChange }) {
+    const [pendingTransition, setPendingTransition] = useState(null); // { to, label, requiresMessage, messageLabel, required }
+    const [message, setMessage] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
     if (!diagnostic) return null;
 
-    const formatPercent = (value) => {
-        if (value === null || value === undefined) return '-';
-        return `${parseFloat(value).toFixed(1)}%`;
+    const selectedTradeIn = diagnostic;
+    const transitions = STATUS_TRANSITIONS[selectedTradeIn.status] || [];
+
+    const handleTransitionClick = (transition) => {
+        setPendingTransition(transition);
+        setMessage('');
     };
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '-';
-        return new Date(dateStr).toLocaleDateString('vi-VN');
+    const handleConfirm = async () => {
+        if (!pendingTransition) return;
+        if (pendingTransition.required && !message.trim()) {
+            alert('Vui lòng nhập lý do!');
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await onStatusChange(pendingTransition.to, message.trim());
+            setPendingTransition(null);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const getCheckStatus = (value) => {
-        if (value === true) return { icon: 'bi-x-circle-fill', class: 'text-danger', label: 'Lỗi' };
-        if (value === false) return { icon: 'bi-check-circle-fill', class: 'text-success', label: 'Tốt' };
-        return { icon: 'bi-dash-circle', class: 'text-muted', label: 'N/A' };
+    const handleCancelTransition = () => {
+        setPendingTransition(null);
+        setMessage('');
     };
-
-    const getStatusLabel = (status) => {
-        const labels = {
-            pending: 'Chờ xử lý',
-            tested: 'Đã kiểm tra',
-            cancelled: 'Đã hủy'
-        };
-        return labels[status] || status;
-    };
-
-    const functionalChecks = [
-        { label: 'Micro', value: diagnostic.microphoneDamage, icon: 'bi-mic' },
-        { label: 'Camera trước', value: diagnostic.frontCameraDamage, icon: 'bi-camera' },
-        { label: 'Camera sau', value: diagnostic.rearCameraDamage, icon: 'bi-camera-fill' },
-        { label: 'Cổng sạc', value: diagnostic.chargingPortDamage, icon: 'bi-plug' },
-        { label: 'Loa', value: diagnostic.speakerDamage, icon: 'bi-speaker' },
-        { label: 'Nút bấm', value: diagnostic.buttonDamage, icon: 'bi-toggles' },
-        { label: 'Wifi/Bluetooth', value: diagnostic.wifiBluetoothIssue, icon: 'bi-wifi' },
-    ];
-
-    const screenChecks = [
-        { label: 'Nứt màn hình', value: diagnostic.screenCracks },
-        { label: 'Trầy xước', value: diagnostic.scratches },
-        { label: 'Móp cạnh', value: diagnostic.edgeDings },
-        { label: 'Lõm', value: diagnostic.dents },
-        { label: 'Lỗi hiển thị', value: diagnostic.displayFailure },
-        { label: 'Điểm chết', value: diagnostic.deadPixels },
-        { label: 'Sọc màn', value: diagnostic.displayLines },
-    ];
 
     return (
         <div className="modal-overlay active" onClick={onClose}>
-            <div className="modal-container modal-lg" onClick={e => e.stopPropagation()}>
+            <div
+                className="modal-container modal-lg"
+                onClick={e => e.stopPropagation()}
+                style={{ maxWidth: 1100, width: '96%', maxHeight: '92vh', overflowY: 'auto' }}
+            >
                 {/* Header */}
                 <div className="modal-header">
                     <h2 className="modal-title">
                         <i className="bi bi-clipboard-check me-2"></i>
-                        Chi tiết yêu cầu Trade-In
+                        Kết quả thẩm định của máy cũ
+                        <span className={`badge bg-${STATUS_BADGE_COLORS[selectedTradeIn.status] || 'secondary'} ms-3 fs-6 fw-normal`}>
+                            {STATUS_LABELS[selectedTradeIn.status] || selectedTradeIn.status}
+                        </span>
                     </h2>
                     <button className="modal-close-btn" onClick={onClose}>
                         <i className="bi bi-x-lg"></i>
                     </button>
                 </div>
 
+                {/* Dialog nhập lời nhắn khi chuyển trạng thái */}
+                {pendingTransition && (
+                    <div style={{ background: '#fffbe6', borderBottom: '2px solid #f59e0b', padding: '16px 24px' }}>
+                        <h6 className="mb-2 fw-bold" style={{ color: '#92400e' }}>
+                            <i className="bi bi-chat-dots me-2"></i>
+                            Chuyển sang: <strong>{STATUS_LABELS[pendingTransition.to]}</strong>
+                        </h6>
+                        <p className="mb-2 small text-muted">{pendingTransition.messageLabel}</p>
+                        <textarea
+                            className="form-control mb-3"
+                            rows={3}
+                            placeholder={pendingTransition.required ? 'Bắt buộc nhập...' : 'Tuỳ chọn...'}
+                            value={message}
+                            onChange={e => setMessage(e.target.value)}
+                            style={{ resize: 'vertical' }}
+                        />
+                        <div className="d-flex gap-2 justify-content-end">
+                            <button className="btn btn-outline-secondary btn-sm" onClick={handleCancelTransition}>
+                                <i className="bi bi-arrow-left me-1"></i>Quay lại
+                            </button>
+                            <button
+                                className={`btn ${pendingTransition.btnClass} btn-sm`}
+                                onClick={handleConfirm}
+                                disabled={submitting || (pendingTransition.required && !message.trim())}
+                            >
+                                {submitting
+                                    ? <><span className="spinner-border spinner-border-sm me-1"></span>Đang xử lý...</>
+                                    : <><i className={`bi ${pendingTransition.icon} me-1`}></i>Xác nhận</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Body */}
-                <div className="modal-body">
-                    {/* Summary Cards */}
-                    <div className="row mb-4">
-                        <div className="col-md-3">
-                            <div className="stat-card stat-card-primary">
-                                <div className="stat-icon">
-                                    <i className="bi bi-hash"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-label">Mã yêu cầu</span>
-                                    <span className="stat-value">{diagnostic.id?.substring(0, 8)}...</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="stat-card stat-card-info">
-                                <div className="stat-icon">
-                                    <i className="bi bi-calendar3"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-label">Ngày kiểm tra</span>
-                                    <span className="stat-value">{formatDate(diagnostic.testDate)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="stat-card stat-card-warning">
-                                <div className="stat-icon">
-                                    <i className="bi bi-percent"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-label">Độ hao mòn</span>
-                                    <span className="stat-value">{formatPercent(diagnostic.totalDepreciation)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="stat-card stat-card-success">
-                                <div className="stat-icon">
-                                    <i className="bi bi-flag"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-label">Trạng thái</span>
-                                    <span className={`status-badge status-${diagnostic.status?.toLowerCase()}`}>
-                                        {getStatusLabel(diagnostic.status)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div className="modal-body bg-light" style={{ padding: '1.5rem' }}>
+                    <Row className="gy-4">
+                        {/* Cột trái: Thông tin thiết bị + thông tin liên hệ */}
+                        <Col lg={4}>
+                            {/* Thông tin liên hệ khách hàng */}
+                            {(selectedTradeIn.customerName || selectedTradeIn.customerEmail || selectedTradeIn.customerPhone) && (
+                                <Card className="shadow-sm mb-3 border-0" style={{ background: 'linear-gradient(135deg,#e0f2fe,#f0fdf4)' }}>
+                                    <Card.Header className="bg-transparent border-bottom-0 pb-0">
+                                        <h6 className="mb-0 text-primary fw-bold">
+                                            <i className="bi bi-person-fill me-2"></i>Thông tin khách hàng
+                                        </h6>
+                                    </Card.Header>
+                                    <Card.Body className="pt-2">
+                                        {selectedTradeIn.customerName && (
+                                            <p className="mb-1 small">
+                                                <i className="bi bi-person me-1 text-muted"></i>
+                                                <strong>Họ tên:</strong> {selectedTradeIn.customerName}
+                                            </p>
+                                        )}
+                                        {selectedTradeIn.customerEmail && (
+                                            <p className="mb-1 small">
+                                                <i className="bi bi-envelope me-1 text-muted"></i>
+                                                <strong>Email:</strong>{' '}
+                                                <a href={`mailto:${selectedTradeIn.customerEmail}`} className="text-decoration-none">
+                                                    {selectedTradeIn.customerEmail}
+                                                </a>
+                                            </p>
+                                        )}
+                                        {selectedTradeIn.customerPhone && (
+                                            <p className="mb-0 small">
+                                                <i className="bi bi-telephone me-1 text-muted"></i>
+                                                <strong>SĐT:</strong>{' '}
+                                                <a href={`tel:${selectedTradeIn.customerPhone}`} className="text-decoration-none">
+                                                    {selectedTradeIn.customerPhone}
+                                                </a>
+                                            </p>
+                                        )}
+                                    </Card.Body>
+                                </Card>
+                            )}
 
-                    {/* Battery Health */}
-                    <div className="form-section mb-4">
-                        <h4 className="form-section-title">
-                            <i className="bi bi-battery-charging me-2"></i>
-                            Tình trạng pin
-                        </h4>
-                        <div className="battery-container">
-                            <div className="battery-bar-bg">
-                                <div
-                                    className="battery-bar-fill"
-                                    style={{
-                                        width: `${diagnostic.batteryHealth || 0}%`,
-                                        background: parseFloat(diagnostic.batteryHealth) > 80
-                                            ? 'linear-gradient(90deg, #10b981, #34d399)'
-                                            : parseFloat(diagnostic.batteryHealth) > 50
-                                                ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                                                : 'linear-gradient(90deg, #ef4444, #f87171)'
-                                    }}
-                                ></div>
-                            </div>
-                            <span className="battery-value">{formatPercent(diagnostic.batteryHealth)}</span>
-                        </div>
-                    </div>
-
-                    {/* Functional Checks */}
-                    <div className="form-section mb-4">
-                        <h4 className="form-section-title">
-                            <i className="bi bi-gear me-2"></i>
-                            Kiểm tra chức năng
-                        </h4>
-                        <div className="row">
-                            {functionalChecks.map((check, idx) => {
-                                const status = getCheckStatus(check.value);
-                                return (
-                                    <div key={idx} className="col-md-4 col-lg-3 mb-3">
-                                        <div className={`functional-check-card ${check.value === true ? 'damaged' : check.value === false ? 'ok' : ''}`}>
-                                            <i className={`bi ${check.icon} check-icon`}></i>
-                                            <span className="check-label">{check.label}</span>
-                                            <div className={`check-status ${status.class}`}>
-                                                <i className={`bi ${status.icon}`}></i>
-                                                <span>{status.label}</span>
-                                            </div>
+                            {/* Thông tin thiết bị */}
+                            <Card className="shadow-sm h-auto">
+                                <Card.Header className="bg-primary text-white">
+                                    <h5 className="mb-0 text-start">Thông tin thiết bị</h5>
+                                </Card.Header>
+                                <Card.Body>
+                                    <p className="text-start mb-1">
+                                        <strong>Thiết bị:</strong> #{selectedTradeIn.productItemId ? selectedTradeIn.productItemId.substring(0, 8) : 'N/A'}
+                                    </p>
+                                    <p className="text-start mb-2">
+                                        <strong>Ngày kiểm tra:</strong> {new Date(selectedTradeIn.testDate).toLocaleDateString('vi-VN')}
+                                    </p>
+                                    {selectedTradeIn.additionalNotes && (
+                                        <p className="text-start text-muted small mt-2">Ghi chú: {selectedTradeIn.additionalNotes}</p>
+                                    )}
+                                    <hr />
+                                    <div className="text-center">
+                                        <h6 className="text-start">Đánh giá tổng quan</h6>
+                                        <h3 className="text-primary fw-bold mb-0">{selectedTradeIn.overallAssessment}</h3>
+                                    </div>
+                                    <hr />
+                                    <div className="text-center">
+                                        <h6 className="text-start">Tổng Khấu Hao</h6>
+                                        <h1 className="text-danger fw-bold m-0">-{selectedTradeIn.totalDepreciation}%</h1>
+                                        <p className="small text-start mb-0">
+                                            Giá trị còn lại thực: <strong>{(100 - selectedTradeIn.totalDepreciation).toFixed(2)}%</strong>.
+                                        </p>
+                                    </div>
+                                    <hr />
+                                    {selectedTradeIn.isContactStore || selectedTradeIn.totalDepreciation >= 75 ? (
+                                        <div className="alert alert-danger mt-3 text-start mb-0">
+                                            <strong>Thiết bị quá hạn mức hoặc cần chuyên gia kiểm tra lại.</strong><br />
+                                            Vui lòng <strong>Liên hệ cửa hàng</strong> để được tư vấn giá thu cụ thể.
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                                    ) : (
+                                        <div className="text-center mt-3 p-3 bg-white rounded border border-success">
+                                            <h6 className="text-success fw-bold mb-2">Khoảng giá dự kiến thu lại</h6>
+                                            {selectedTradeIn.minPredictedPrice && selectedTradeIn.maxPredictedPrice ? (
+                                                <h5 className="text-success fw-bold m-0 text-nowrap mt-2">
+                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedTradeIn.minPredictedPrice)}
+                                                    <br />-<br />
+                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedTradeIn.maxPredictedPrice)}
+                                                </h5>
+                                            ) : (
+                                                <h5 className="text-muted m-0">Đang cập nhật...</h5>
+                                            )}
+                                        </div>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </Col>
 
-                    {/* Screen Checks */}
-                    <div className="form-section mb-4">
-                        <h4 className="form-section-title">
-                            <i className="bi bi-phone me-2"></i>
-                            Tình trạng màn hình & vỏ
-                        </h4>
-                        <div className="screen-checks-grid">
-                            {screenChecks.map((check, idx) => (
-                                <div key={idx} className="screen-check-item">
-                                    <div className="screen-check-header">
-                                        <span className="check-name">{check.label}</span>
-                                        <span className={`check-value ${parseFloat(check.value) > 20 ? 'text-danger' : parseFloat(check.value) > 10 ? 'text-warning' : 'text-success'}`}>
-                                            {formatPercent(check.value)}
-                                        </span>
-                                    </div>
-                                    <div className="screen-check-bar">
-                                        <div
-                                            className="screen-check-fill"
-                                            style={{
-                                                width: `${Math.min(parseFloat(check.value) || 0, 100)}%`,
-                                                background: parseFloat(check.value) > 20
-                                                    ? 'linear-gradient(90deg, #ef4444, #f87171)'
-                                                    : parseFloat(check.value) > 10
-                                                        ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                                                        : 'linear-gradient(90deg, #10b981, #34d399)'
-                                            }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Overall Assessment */}
-                    <div className="form-section">
-                        <h4 className="form-section-title">
-                            <i className="bi bi-card-text me-2"></i>
-                            Đánh giá tổng thể
-                        </h4>
-                        <div className="assessment-box">
-                            {diagnostic.overallAssessment || 'Chưa có đánh giá'}
-                        </div>
-                    </div>
-
-                    {/* Notes */}
-                    {diagnostic.additionalNotes && (
-                        <div className="form-section mt-4">
-                            <h4 className="form-section-title">
-                                <i className="bi bi-journal-text me-2"></i>
-                                Ghi chú
-                            </h4>
-                            <div className="notes-box">
-                                {diagnostic.additionalNotes}
-                            </div>
-                        </div>
-                    )}
+                        {/* Cột phải: Chi tiết khấu hao */}
+                        <Col lg={8}>
+                            <Card className="shadow-sm border-0 h-100">
+                                <Card.Header className="bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <h5 className="mb-0 text-start">Chi tiết các hạng mục khấu hao</h5>
+                                    {selectedTradeIn.images && selectedTradeIn.images.length > 0 && (
+                                        <div style={{ display: "flex", gap: "6px" }}>
+                                            {selectedTradeIn.images.map((img, idx) => (
+                                                <a href={img} target="_blank" rel="noopener noreferrer" key={idx}>
+                                                    <img src={img} alt={`img-${idx}`}
+                                                        style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }} />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+                                </Card.Header>
+                                <Card.Body className="p-0" style={{ maxHeight: "550px", overflowY: "auto" }}>
+                                    <Table striped hover responsive className="mb-0">
+                                        <thead className="bg-light sticky-top" style={{ zIndex: 1 }}>
+                                            <tr>
+                                                <th>Hạng mục</th>
+                                                <th>Tình trạng / Mức độ</th>
+                                                <th className="text-end">Khấu hao ước tính (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {Object.keys(WEIGHTS).map(key => {
+                                                const score = selectedTradeIn[key] || 0;
+                                                if (score > 0) {
+                                                    const deduction = getCosmeticDeduction(key, score);
+                                                    return (
+                                                        <tr key={key}>
+                                                            <td className="align-middle">{getLabel(key)}</td>
+                                                            <td className="align-middle">
+                                                                <Badge bg={score > 50 ? 'danger' : 'warning'}>
+                                                                    {score > 50 ? 'Nặng' : 'Nhẹ'} (Score: {score})
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="text-end text-danger fw-bold align-middle">-{deduction}%</td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                            {Object.keys(FUNCTIONAL_PENALTIES).map((key, idx) => {
+                                                if (selectedTradeIn[key]) {
+                                                    return (
+                                                        <tr key={`func-${idx}`}>
+                                                            <td className="align-middle">{getLabel(key)}</td>
+                                                            <td className="align-middle"><Badge bg="danger">Hỏng / Lỗi</Badge></td>
+                                                            <td className="text-end text-danger fw-bold align-middle">-{FUNCTIONAL_PENALTIES[key]}%</td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                            {selectedTradeIn.batteryHealth < 80 && (
+                                                <tr>
+                                                    <td className="align-middle">{getLabel('battery')}</td>
+                                                    <td className="align-middle">Pin: {selectedTradeIn.batteryHealth}%</td>
+                                                    <td className="text-end text-danger fw-bold align-middle">-{(80 - selectedTradeIn.batteryHealth) * 0.5}%</td>
+                                                </tr>
+                                            )}
+                                            {selectedTradeIn.totalDepreciation === 0 && (
+                                                <tr>
+                                                    <td colSpan="3" className="text-center text-success py-4">
+                                                        <i className="bi bi-check-circle-fill me-2 fs-4 align-middle"></i>
+                                                        <span className="align-middle fw-semibold">Thiết bị hoạt động hoàn hảo, không có lỗi lầm!</span>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                        <tfoot className="fw-bold bg-white sticky-bottom shadow-sm">
+                                            <tr>
+                                                <td colSpan="2" className="text-start">TỔNG CỘNG</td>
+                                                <td className="text-end text-danger fs-5">-{selectedTradeIn.totalDepreciation}%</td>
+                                            </tr>
+                                        </tfoot>
+                                    </Table>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
                 </div>
 
-                {/* Footer */}
-                <div className="modal-footer">
-                    {diagnostic.status === 'pending' && (
-                        <>
-                            <button
-                                className="btn btn-success"
-                                onClick={() => onStatusChange('tested')}
-                            >
-                                <i className="bi bi-check-lg me-2"></i>
-                                Đánh dấu đã kiểm tra
-                            </button>
-                            <button
-                                className="btn btn-danger"
-                                onClick={() => onStatusChange('cancelled')}
-                            >
-                                <i className="bi bi-x-lg me-2"></i>
-                                Hủy yêu cầu
-                            </button>
-                        </>
+                {/* Footer — Action buttons theo luồng trạng thái */}
+                <div className="modal-footer bg-white">
+                    {/* Hiện nút chuyển trạng thái nếu chưa mở dialog */}
+                    {!pendingTransition && transitions.length > 0 && transitions.map(transition => (
+                        <button
+                            key={transition.to}
+                            className={`btn ${transition.btnClass}`}
+                            onClick={() => handleTransitionClick(transition)}
+                        >
+                            <i className={`bi ${transition.icon} me-2`}></i>
+                            {transition.label}
+                        </button>
+                    ))}
+
+                    {/* Thông báo trạng thái cuối */}
+                    {!pendingTransition && transitions.length === 0 && (
+                        <span className="text-muted fst-italic me-auto small">
+                            <i className={`bi bi-${selectedTradeIn.status === 'completed' ? 'check-circle-fill text-success' : 'x-circle-fill text-danger'} me-1`}></i>
+                            {selectedTradeIn.status === 'completed'
+                                ? 'Yêu cầu đã hoàn thành.'
+                                : 'Yêu cầu đã bị hủy, không thể thay đổi trạng thái.'}
+                        </span>
                     )}
+
                     <button className="btn btn-secondary" onClick={onClose}>
-                        <i className="bi bi-x-circle me-2"></i>
-                        Đóng
+                        <i className="bi bi-x-circle me-2"></i>Đóng
                     </button>
                 </div>
             </div>
-
-            <style>{`
-                .stat-card {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px;
-                    background: var(--card-bg);
-                    border-radius: 12px;
-                    border: 1px solid var(--border-color);
-                }
-                .stat-card .stat-icon {
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 12px;
-                    font-size: 1.25rem;
-                }
-                .stat-card-primary .stat-icon { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
-                .stat-card-info .stat-icon { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-                .stat-card-warning .stat-icon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-                .stat-card-success .stat-icon { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-                .stat-content { display: flex; flex-direction: column; }
-                .stat-label { font-size: 0.75rem; color: var(--text-muted); }
-                .stat-value { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
-
-                .battery-container { display: flex; align-items: center; gap: 16px; }
-                .battery-bar-bg {
-                    flex: 1;
-                    height: 24px;
-                    background: var(--bg-tertiary);
-                    border-radius: 12px;
-                    overflow: hidden;
-                }
-                .battery-bar-fill {
-                    height: 100%;
-                    border-radius: 12px;
-                    transition: width 0.3s ease;
-                }
-                .battery-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); min-width: 60px; }
-
-                .functional-check-card {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 16px;
-                    background: var(--bg-tertiary);
-                    border-radius: 12px;
-                    border: 2px solid transparent;
-                    transition: all 0.2s ease;
-                }
-                .functional-check-card.ok { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05); }
-                .functional-check-card.damaged { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
-                .check-icon { font-size: 1.5rem; color: var(--text-muted); }
-                .check-label { font-size: 0.85rem; color: var(--text-secondary); }
-                .check-status { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 600; }
-
-                .screen-checks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-                .screen-check-item { background: var(--bg-tertiary); padding: 12px 16px; border-radius: 8px; }
-                .screen-check-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-                .check-name { font-size: 0.85rem; color: var(--text-secondary); }
-                .check-value { font-weight: 600; font-size: 0.85rem; }
-                .screen-check-bar { height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; }
-                .screen-check-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
-
-                .assessment-box, .notes-box {
-                    background: var(--bg-tertiary);
-                    padding: 16px;
-                    border-radius: 8px;
-                    color: var(--text-secondary);
-                    line-height: 1.6;
-                }
-            `}</style>
         </div>
     );
 }

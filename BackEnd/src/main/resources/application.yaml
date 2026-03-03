@@ -58,7 +58,7 @@ spring:
     deepseek:
       model: "deepseek-ai/DeepSeek-V3-0324"
       url: "https://router.huggingface.co/v1/chat/completions"
-      api-key: "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"
+      api-key: "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"
     
     rag:
       threshold: 0.48 # Ngưỡng tự tin để bot trả lời
@@ -124,7 +124,7 @@ cloudinary:
 # Cấu hình HuggingFace API (Custom - không dùng Spring AI)
 huggingface:
   api:
-    key: "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"
+    key: "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"
     base-url: "https://router.huggingface.co/hf-inference"
     embedding-model: "BAAI/bge-base-en-v1.5"
     embedding-endpoint: "https://router.huggingface.co/hf-inference/models/BAAI/bge-base-en-v1.5/pipeline/feature-extraction"

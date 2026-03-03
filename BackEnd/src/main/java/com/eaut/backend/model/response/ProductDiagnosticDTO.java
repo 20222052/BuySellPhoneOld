@@ -62,4 +62,9 @@ public class ProductDiagnosticDTO {
     private BigDecimal maxPredictedPrice;
     private Boolean isContactStore;
     private java.util.List<String> images;
+
+    // Customer contact info (for admin view)
+    private String customerName;
+    private String customerEmail;
+    private String customerPhone;
 }

@@ -48,6 +48,7 @@ public class SecurityConfig {
                         "/api/blogs/list",
                         "/api/blogs/*",
                         "/api/blogs/*/comments",
+                        "/admin/reports/**",
                         "/webhook/sepay"
         };
 

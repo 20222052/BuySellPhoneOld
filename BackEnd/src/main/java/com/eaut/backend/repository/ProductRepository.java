@@ -40,4 +40,12 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("categoryId") UUID categoryId,
             @Param("status") ProductStatus status,
             Pageable pageable);
+
+    // Dashboard Report Queries
+    
+    @Query("SELECT COUNT(p) FROM Product p")
+    long countTotalProducts();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = :status")
+    long countProductsByStatus(@Param("status") ProductStatus status);
 }

@@ -117,16 +117,20 @@ export default function Profile() {
     // Address Modal State
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
+    const [isEditingAddress, setIsEditingAddress] = useState(false);
+    const [currentEditAddressId, setCurrentEditAddressId] = useState(null);
     const [provinces, setProvinces] = useState([]);
-    const [districts, setDistricts] = useState([]);
     const [wards, setWards] = useState([]);
     const [addressForm, setAddressForm] = useState({
         fullName: "",
         phone: "",
         addressLine: "",
         cityCode: "",
+        cityName: "",
         districtCode: "",
+        districtName: "",
         wardCode: "",
+        wardName: "",
         isDefault: false
     });
 
@@ -142,9 +146,16 @@ export default function Profile() {
     // Fetch data based on active tab
     useEffect(() => {
         if (!user) return; // Ensure user is loaded before fetching user-specific data
-        if (activeTab === "orders") fetchOrders();
-        if (activeTab === "trade-in") fetchTradeIns();
-        if (activeTab === "address") fetchAddresses();
+
+        if (activeTab === "overview") {
+            fetchOrders();
+            fetchTradeIns();
+            fetchAddresses();
+        } else {
+            if (activeTab === "orders") fetchOrders();
+            if (activeTab === "trade-in") fetchTradeIns();
+            if (activeTab === "address") fetchAddresses();
+        }
     }, [activeTab, user]);
 
 
@@ -213,33 +224,29 @@ export default function Profile() {
     const fetchProvinces = async () => {
         try {
             const res = await LocationService.getProvinces();
-            setProvinces(res.data || []);
+            setProvinces(res.provinces || []);
         } catch (err) {
             console.error(err);
         }
     };
 
     const handleProvinceChange = async (code) => {
-        setAddressForm(f => ({ ...f, cityCode: code, districtCode: "", wardCode: "" }));
-        setDistricts([]);
-        setWards([]);
-        if (code) {
-            try {
-                const res = await LocationService.getDistrictsByProvince(code);
-                setDistricts(res.data || []);
-            } catch (err) {
-                console.error(err);
-            }
-        }
-    };
+        const selectedProvince = provinces.find(p => String(p.code) === String(code));
 
-    const handleDistrictChange = async (code) => {
-        setAddressForm(f => ({ ...f, districtCode: code, wardCode: "" }));
+        setAddressForm(f => ({
+            ...f,
+            cityCode: code,
+            cityName: selectedProvince ? selectedProvince.name : "",
+            districtCode: "",
+            districtName: "",
+            wardCode: "",
+            wardName: ""
+        }));
         setWards([]);
         if (code) {
             try {
-                const res = await LocationService.getWardsByDistrict(code);
-                setWards(res.data || []);
+                const res = await LocationService.getCommunesByProvince(code);
+                setWards(res.communes || []);
             } catch (err) {
                 console.error(err);
             }
@@ -248,6 +255,17 @@ export default function Profile() {
 
     const handleAddressFormChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === "wardCode") {
+            const selectedWard = wards.find(w => String(w.code) === String(value));
+            setAddressForm(f => ({
+                ...f,
+                wardCode: value,
+                wardName: selectedWard ? selectedWard.name : ""
+            }));
+            return;
+        }
+
         setAddressForm(f => ({ ...f, [name]: type === "checkbox" ? checked : value }));
     };
 
@@ -255,27 +273,68 @@ export default function Profile() {
         e.preventDefault();
         try {
             setSaveLoading(true);
-            await AddressService.createAddress({
-                ...addressForm,
-                userId: user.id
-            });
-            toast.success("Thêm địa chỉ thành công!");
+            const payload = { ...addressForm, userId: user.id };
+
+            if (isEditingAddress && currentEditAddressId) {
+                await AddressService.updateAddress(currentEditAddressId, payload);
+                toast.success("Cập nhật địa chỉ thành công!");
+            } else {
+                await AddressService.createAddress(payload);
+                toast.success("Thêm địa chỉ thành công!");
+            }
+
             setShowAddressModal(false);
             setAddressForm({
-                fullName: "",
-                phone: "",
-                addressLine: "",
-                cityCode: "",
-                districtCode: "",
-                wardCode: "",
-                isDefault: false
+                fullName: "", phone: "", addressLine: "",
+                cityCode: "", cityName: "", districtCode: "", districtName: "", wardCode: "", wardName: "", isDefault: false
             });
+            setIsEditingAddress(false);
+            setCurrentEditAddressId(null);
             fetchAddresses();
         } catch (err) {
-            toast.error(err.message || "Không thể thêm địa chỉ");
+            toast.error(err.message || "Không thể lưu địa chỉ");
         } finally {
             setSaveLoading(false);
         }
+    };
+
+    const handleEditAddress = async (addr) => {
+        setAddressForm({
+            fullName: addr.fullName || "",
+            phone: addr.phone || "",
+            addressLine: addr.addressLine || "",
+            cityCode: addr.cityCode || "",
+            districtCode: addr.districtCode || "",
+            wardCode: addr.wardCode || "",
+            isDefault: addr.isDefault || false
+        });
+        setIsEditingAddress(true);
+        setCurrentEditAddressId(addr.id);
+
+        if (addr.cityCode) {
+            try {
+                const res = await LocationService.getCommunesByProvince(addr.cityCode);
+                setWards(res.communes || []);
+            } catch (err) {
+                console.error(err);
+                setWards([]);
+            }
+        } else {
+            setWards([]);
+        }
+
+        setShowAddressModal(true);
+    };
+
+    const handleOpenAddAddress = () => {
+        setAddressForm({
+            fullName: "", phone: "", addressLine: "",
+            cityCode: "", cityName: "", districtCode: "", districtName: "", wardCode: "", wardName: "", isDefault: false
+        });
+        setWards([]);
+        setIsEditingAddress(false);
+        setCurrentEditAddressId(null);
+        setShowAddressModal(true);
     };
 
     // Detail Handlers
@@ -724,6 +783,129 @@ export default function Profile() {
                                 <div>
                                     {/* Detail Panels */}
                                     <Row className="g-3">
+                                        {/* Địa chỉ mặc định */}
+                                        <Col md={12}>
+                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+                                                <div style={{
+                                                    background: "linear-gradient(90deg, #3a3a3a, #131814)",
+                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
+                                                }}>
+                                                    <i className="bi bi-geo-alt-fill text-white" style={{ fontSize: 16 }}></i>
+                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Địa chỉ mặc định</span>
+                                                </div>
+                                                <div style={{ padding: "18px 20px" }}>
+                                                    {addresses.find(a => a.default) ? (() => {
+                                                        const addr = addresses.find(a => a.default);
+                                                        return (
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <div style={{
+                                                                    width: 44, height: 44, borderRadius: "50%",
+                                                                    background: "linear-gradient(135deg,#3a3a3a,#131814)",
+                                                                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                                }}>
+                                                                    <i className="bi bi-house-fill text-white" style={{ fontSize: 18 }}></i>
+                                                                </div>
+                                                                <div style={{ flex: 1 }}>
+                                                                    <div style={{ fontWeight: 700, fontSize: 15 }}>
+                                                                        {addr.fullName}
+                                                                        <span style={{ fontWeight: 400, color: "#888", fontSize: 13, marginLeft: 8 }}>— {addr.phone}</span>
+                                                                    </div>
+                                                                    <div style={{ color: "#777", fontSize: 13, marginTop: 2 }}>
+                                                                        <i className="bi bi-map me-1" style={{ color: "#d70018" }}></i>
+                                                                        {addr.fullAddress || [addr.addressLine, addr.wardName, addr.districtName, addr.cityName].filter(Boolean).join(', ')}
+                                                                    </div>
+                                                                </div>
+                                                                <Badge bg="danger" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20, flexShrink: 0 }}>
+                                                                    <i className="bi bi-check-circle me-1"></i>Mặc định
+                                                                </Badge>
+                                                            </div>
+                                                        );
+                                                    })() : (
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div style={{
+                                                                width: 44, height: 44, borderRadius: "50%", background: "#f1f1f1",
+                                                                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                                                            }}>
+                                                                <i className="bi bi-geo text-muted" style={{ fontSize: 20 }}></i>
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ fontWeight: 600, color: "#555" }}>Chưa có địa chỉ mặc định</div>
+                                                                <div style={{ fontSize: 13, color: "#aaa" }}>
+                                                                    Vào <span
+                                                                        style={{ color: "#d70018", cursor: "pointer", textDecoration: "underline" }}
+                                                                        onClick={() => setActiveTab("address")}
+                                                                    >Sổ địa chỉ</span> để thêm địa chỉ
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Col>
+                                        {/* Thu cũ gần nhất */}
+                                        <Col md={6}>
+                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", height: "100%" }}>
+                                                <div style={{
+                                                    background: "linear-gradient(90deg, #e65c00, #c44b00)",
+                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
+                                                }}>
+                                                    <i className="bi bi-phone-fill text-white" style={{ fontSize: 16 }}></i>
+                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Thu cũ gần nhất</span>
+                                                </div>
+                                                <div style={{ padding: "20px 20px 16px" }}>
+                                                    {tradeIns.length > 0 ? (() => {
+                                                        const latestTradeIn = getLatestItem(tradeIns);
+                                                        return (
+                                                            <>
+                                                                <div className="d-flex align-items-start justify-content-between mb-2">
+                                                                    <div>
+                                                                        <div style={{ fontWeight: 700, fontSize: 15, color: "#e65c00" }}>
+                                                                            Thiết bị #{latestTradeIn?.productItemId ? latestTradeIn.productItemId.substring(0, 8) : 'N/A'}
+                                                                        </div>
+                                                                        <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>
+                                                                            <i className="bi bi-calendar3 me-1"></i>
+                                                                            {new Date(latestTradeIn?.testDate).toLocaleDateString("vi-VN")}
+                                                                        </div>
+                                                                    </div>
+                                                                    <Badge bg="warning" text="dark" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20 }}>
+                                                                        {latestTradeIn?.overallAssessment}
+                                                                    </Badge>
+                                                                </div>
+                                                                <div style={{
+                                                                    background: "linear-gradient(135deg, #fff8f0, #ffe8d0)",
+                                                                    borderRadius: 10, padding: "10px 14px",
+                                                                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                                                                    marginBottom: 14
+                                                                }}>
+                                                                    <span style={{ fontSize: 13, color: "#666" }}>Khấu hao</span>
+                                                                    <span style={{ fontWeight: 700, fontSize: 16, color: "#e65c00" }}>
+                                                                        -{latestTradeIn?.totalDepreciation}%
+                                                                    </span>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleViewTradeIn(latestTradeIn?.id)}
+                                                                    style={{
+                                                                        width: "100%", border: "none", background: "transparent",
+                                                                        color: "#e65c00", fontWeight: 600, fontSize: 13, cursor: "pointer",
+                                                                        padding: "8px", borderRadius: 8, transition: "background 0.2s"
+                                                                    }}
+                                                                    onMouseEnter={e => e.currentTarget.style.background = "#fff5ec"}
+                                                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                                                >
+                                                                    Xem chi tiết <i className="bi bi-arrow-right ms-1"></i>
+                                                                </button>
+                                                            </>
+                                                        );
+                                                    })() : (
+                                                        <div className="text-center py-3">
+                                                            <i className="bi bi-phone text-muted" style={{ fontSize: 36, opacity: 0.4 }}></i>
+                                                            <div style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>Chưa có giao dịch thu cũ nào</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Col>
+
                                         {/* Đơn hàng gần nhất */}
                                         <Col md={6}>
                                             <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", height: "100%" }}>
@@ -795,126 +977,6 @@ export default function Profile() {
                                             </div>
                                         </Col>
 
-                                        {/* Thu cũ gần nhất */}
-                                        <Col md={6}>
-                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", height: "100%" }}>
-                                                <div style={{
-                                                    background: "linear-gradient(90deg, #e65c00, #c44b00)",
-                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
-                                                }}>
-                                                    <i className="bi bi-phone-fill text-white" style={{ fontSize: 16 }}></i>
-                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Thu cũ gần nhất</span>
-                                                </div>
-                                                <div style={{ padding: "20px 20px 16px" }}>
-                                                    {tradeIns.length > 0 ? (
-                                                        <>
-                                                            <div className="d-flex align-items-start justify-content-between mb-2">
-                                                                <div>
-                                                                    <div style={{ fontWeight: 700, fontSize: 15, color: "#e65c00" }}>
-                                                                        Thiết bị #{tradeIns[0]?.productItemId ? tradeIns[0].productItemId.substring(0, 8) : 'N/A'}
-                                                                    </div>
-                                                                    <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>
-                                                                        <i className="bi bi-calendar3 me-1"></i>
-                                                                        {new Date(tradeIns[0]?.testDate).toLocaleDateString("vi-VN")}
-                                                                    </div>
-                                                                </div>
-                                                                <Badge bg="warning" text="dark" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20 }}>
-                                                                    {tradeIns[0]?.overallAssessment}
-                                                                </Badge>
-                                                            </div>
-                                                            <div style={{
-                                                                background: "linear-gradient(135deg, #fff8f0, #ffe8d0)",
-                                                                borderRadius: 10, padding: "10px 14px",
-                                                                display: "flex", alignItems: "center", justifyContent: "space-between",
-                                                                marginBottom: 14
-                                                            }}>
-                                                                <span style={{ fontSize: 13, color: "#666" }}>Khấu hao</span>
-                                                                <span style={{ fontWeight: 700, fontSize: 16, color: "#e65c00" }}>
-                                                                    -{tradeIns[0]?.totalDepreciation}%
-                                                                </span>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => handleViewTradeIn(tradeIns[0]?.id)}
-                                                                style={{
-                                                                    width: "100%", border: "none", background: "transparent",
-                                                                    color: "#e65c00", fontWeight: 600, fontSize: 13, cursor: "pointer",
-                                                                    padding: "8px", borderRadius: 8, transition: "background 0.2s"
-                                                                }}
-                                                                onMouseEnter={e => e.currentTarget.style.background = "#fff5ec"}
-                                                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                                            >
-                                                                Xem chi tiết <i className="bi bi-arrow-right ms-1"></i>
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <div className="text-center py-3">
-                                                            <i className="bi bi-phone text-muted" style={{ fontSize: 36, opacity: 0.4 }}></i>
-                                                            <div style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>Chưa có giao dịch thu cũ nào</div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Col>
-
-                                        {/* Địa chỉ mặc định */}
-                                        <Col md={12}>
-                                            <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-                                                <div style={{
-                                                    background: "linear-gradient(90deg, #3a3a3a, #131814)",
-                                                    padding: "14px 20px", display: "flex", alignItems: "center", gap: 8
-                                                }}>
-                                                    <i className="bi bi-geo-alt-fill text-white" style={{ fontSize: 16 }}></i>
-                                                    <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Địa chỉ mặc định</span>
-                                                </div>
-                                                <div style={{ padding: "18px 20px" }}>
-                                                    {addresses.find(a => a.isDefault) ? (() => {
-                                                        const addr = addresses.find(a => a.isDefault);
-                                                        return (
-                                                            <div className="d-flex align-items-center gap-3">
-                                                                <div style={{
-                                                                    width: 44, height: 44, borderRadius: "50%",
-                                                                    background: "linear-gradient(135deg,#3a3a3a,#131814)",
-                                                                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-                                                                }}>
-                                                                    <i className="bi bi-house-fill text-white" style={{ fontSize: 18 }}></i>
-                                                                </div>
-                                                                <div style={{ flex: 1 }}>
-                                                                    <div style={{ fontWeight: 700, fontSize: 15 }}>
-                                                                        {addr.fullName}
-                                                                        <span style={{ fontWeight: 400, color: "#888", fontSize: 13, marginLeft: 8 }}>— {addr.phone}</span>
-                                                                    </div>
-                                                                    <div style={{ color: "#777", fontSize: 13, marginTop: 2 }}>
-                                                                        <i className="bi bi-map me-1" style={{ color: "#d70018" }}></i>
-                                                                        {addr.fullAddress || `${addr.addressLine}, ${addr.wardName}, ${addr.districtName}, ${addr.cityName}`}
-                                                                    </div>
-                                                                </div>
-                                                                <Badge bg="danger" style={{ fontSize: 11, padding: "5px 10px", borderRadius: 20, flexShrink: 0 }}>
-                                                                    <i className="bi bi-check-circle me-1"></i>Mặc định
-                                                                </Badge>
-                                                            </div>
-                                                        );
-                                                    })() : (
-                                                        <div className="d-flex align-items-center gap-3">
-                                                            <div style={{
-                                                                width: 44, height: 44, borderRadius: "50%", background: "#f1f1f1",
-                                                                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-                                                            }}>
-                                                                <i className="bi bi-geo text-muted" style={{ fontSize: 20 }}></i>
-                                                            </div>
-                                                            <div>
-                                                                <div style={{ fontWeight: 600, color: "#555" }}>Chưa có địa chỉ mặc định</div>
-                                                                <div style={{ fontSize: 13, color: "#aaa" }}>
-                                                                    Vào <span
-                                                                        style={{ color: "#d70018", cursor: "pointer", textDecoration: "underline" }}
-                                                                        onClick={() => setActiveTab("address")}
-                                                                    >Sổ địa chỉ</span> để thêm địa chỉ
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Col>
                                     </Row>
                                 </div>
                             )}
@@ -1094,7 +1156,7 @@ export default function Profile() {
                                                 <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Sổ địa chỉ</span>
                                             </div>
                                             <button
-                                                onClick={() => setShowAddressModal(true)}
+                                                onClick={handleOpenAddAddress}
                                                 style={{
                                                     background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.35)",
                                                     color: "#fff", borderRadius: 20, padding: "5px 16px",
@@ -1113,7 +1175,7 @@ export default function Profile() {
                                                     <i className="bi bi-geo" style={{ fontSize: 48, color: "#3a3a3a", opacity: 0.25 }}></i>
                                                     <div style={{ color: "#aaa", fontSize: 14, marginTop: 12 }}>Bạn chưa lưu địa chỉ nào</div>
                                                     <button
-                                                        onClick={() => setShowAddressModal(true)}
+                                                        onClick={handleOpenAddAddress}
                                                         style={{
                                                             marginTop: 14, background: "linear-gradient(135deg, #3a3a3a, #131814)",
                                                             border: "none", color: "#fff", borderRadius: 8,
@@ -1153,12 +1215,21 @@ export default function Profile() {
                                                                     </div>
                                                                     <div style={{ fontSize: 12, color: "#777", marginTop: 2 }}>
                                                                         <i className="bi bi-map me-1" style={{ color: "#555" }}></i>
-                                                                        {addr.addressLine}, {addr.wardName}, {addr.districtName}, {addr.cityName}
+                                                                        {addr.fullAddress || [addr.addressLine, addr.wardName, addr.districtName, addr.cityName].filter(Boolean).join(', ')}
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="d-flex gap-2" style={{ flexShrink: 0 }}>
-                                                                {!addr.isDefault && (
+                                                            <div className="d-flex gap-2 text-nowrap" style={{ flexShrink: 0 }}>
+                                                                {addr.isDefault ? (
+                                                                    <button
+                                                                        disabled
+                                                                        style={{
+                                                                            background: "transparent", border: "1.5px solid #ccc",
+                                                                            color: "#ccc", borderRadius: 8, padding: "4px 12px",
+                                                                            fontSize: 12, cursor: "not-allowed", fontWeight: 600
+                                                                        }}
+                                                                    >Mặc định</button>
+                                                                ) : (
                                                                     <button
                                                                         onClick={() => handleSetDefaultAddress(addr.id)}
                                                                         style={{
@@ -1166,10 +1237,21 @@ export default function Profile() {
                                                                             color: "#3a3a3a", borderRadius: 8, padding: "4px 12px",
                                                                             fontSize: 12, cursor: "pointer", fontWeight: 600, transition: "all 0.2s"
                                                                         }}
+                                                                        title="Đặt làm mặc định"
                                                                         onMouseEnter={e => { e.currentTarget.style.background = "#3a3a3a"; e.currentTarget.style.color = "#fff"; }}
                                                                         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3a3a3a"; }}
                                                                     >Đặt mặc định</button>
                                                                 )}
+                                                                <button
+                                                                    onClick={() => handleEditAddress(addr)}
+                                                                    style={{
+                                                                        background: "transparent", border: "1.5px solid #0277bd",
+                                                                        color: "#0277bd", borderRadius: 8, padding: "4px 12px",
+                                                                        fontSize: 12, cursor: "pointer", fontWeight: 600, transition: "all 0.2s"
+                                                                    }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.background = "#0277bd"; e.currentTarget.style.color = "#fff"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#0277bd"; }}
+                                                                >Sửa</button>
                                                                 <button
                                                                     onClick={() => handleDeleteAddress(addr.id)}
                                                                     style={{
@@ -1195,9 +1277,10 @@ export default function Profile() {
             </Row >
 
             {/* Add Address Modal */}
-            < Modal show={showAddressModal} onHide={() => setShowAddressModal(false)} size="lg" >
+            < Modal show={showAddressModal} onHide={() => setShowAddressModal(false)
+            } size="lg" >
                 <Modal.Header closeButton>
-                    <Modal.Title>Thêm địa chỉ mới</Modal.Title>
+                    <Modal.Title>{isEditingAddress ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}</Modal.Title>
                 </Modal.Header>
                 <Form onSubmit={handleSaveAddress}>
                     <Modal.Body>
@@ -1222,7 +1305,7 @@ export default function Profile() {
                                     placeholder="Nhập số điện thoại"
                                 />
                             </Col>
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Form.Label>Tỉnh/Thành phố</Form.Label>
                                 <Form.Select
                                     value={addressForm.cityCode}
@@ -1231,36 +1314,22 @@ export default function Profile() {
                                 >
                                     <option value="">Chọn tỉnh/thành</option>
                                     {provinces.map(p => (
-                                        <option key={p.idProvince} value={p.idProvince}>{p.name}</option>
+                                        <option key={p.code} value={p.code}>{p.name}</option>
                                     ))}
                                 </Form.Select>
                             </Col>
-                            <Col md={4}>
-                                <Form.Label>Quận/Huyện</Form.Label>
-                                <Form.Select
-                                    value={addressForm.districtCode}
-                                    onChange={(e) => handleDistrictChange(e.target.value)}
-                                    required
-                                    disabled={!addressForm.cityCode}
-                                >
-                                    <option value="">Chọn quận/huyện</option>
-                                    {districts.map(d => (
-                                        <option key={d.idDistrict} value={d.idDistrict}>{d.name}</option>
-                                    ))}
-                                </Form.Select>
-                            </Col>
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Form.Label>Phường/Xã</Form.Label>
                                 <Form.Select
                                     name="wardCode"
                                     value={addressForm.wardCode}
                                     onChange={handleAddressFormChange}
                                     required
-                                    disabled={!addressForm.districtCode}
+                                    disabled={!addressForm.cityCode}
                                 >
                                     <option value="">Chọn phường/xã</option>
                                     {wards.map(w => (
-                                        <option key={w.idCommune} value={w.idCommune}>{w.name}</option>
+                                        <option key={w.code} value={w.code}>{w.name}</option>
                                     ))}
                                 </Form.Select>
                             </Col>
@@ -1637,7 +1706,7 @@ export default function Profile() {
             </Modal >
 
             {/* Bank Info Modal */}
-            <Modal
+            < Modal
                 show={showBankInfoModal}
                 onHide={() => setShowBankInfoModal(false)}
                 centered
@@ -1690,7 +1759,7 @@ export default function Profile() {
                         </Button>
                     </Modal.Footer>
                 </Form>
-            </Modal>
+            </Modal >
         </Container >
     );
 }

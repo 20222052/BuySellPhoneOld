@@ -745,3 +745,75 @@
         justify-content: center;
     }
 }
+
+/* ============================================
+   Status Badge — TradeIn / Categories
+   ============================================ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* pending — chờ xử lý */
+.status-badge.status-pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* tested — đã kiểm tra */
+.status-badge.status-tested {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* cancelled — đã hủy */
+.status-badge.status-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* processing — đang xử lý */
+.status-badge.status-processing {
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* completed — hoàn thành */
+.status-badge.status-completed {
+    background: rgba(6, 95, 70, 0.1);
+    color: #065f46;
+    border: 1px solid rgba(6, 95, 70, 0.3);
+}
+
+
+/* Modal close button */
+.modal-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: var(--admin-text-secondary, #6b7280);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: rgba(248, 250, 252, 0.9);
+    color: var(--admin-danger, #ef4444);
+    border-color: rgba(226, 232, 240, 0.8);
+}

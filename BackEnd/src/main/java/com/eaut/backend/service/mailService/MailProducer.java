@@ -31,4 +31,23 @@ public class MailProducer {
         String message = email + "|" + orderNumber + "|" + customerName + "|" + reason;
         kafkaTemplate.send("order-cancellation-topic", message);
     }
+
+    /**
+     * Gửi email thông báo thay đổi trạng thái TradeIn
+     * 
+     * @param email        Email khách hàng
+     * @param customerName Tên khách hàng
+     * @param diagnosticId ID yêu cầu thẩm định
+     * @param status       Trạng thái mới (processing/completed/cancelled)
+     * @param staffMessage Lời nhắn từ nhân viên (có thể null)
+     */
+    public void sendTradeInStatusMail(String email, String customerName, String diagnosticId,
+            String status, String staffMessage) {
+        // Format: email|customerName|diagnosticId|status|staffMessage
+        String safeMessage = (staffMessage != null && !staffMessage.isBlank())
+                ? staffMessage.replace("|", "/")
+                : "";
+        String message = email + "|" + customerName + "|" + diagnosticId + "|" + status + "|" + safeMessage;
+        kafkaTemplate.send("tradein-status-topic", message);
+    }
 }

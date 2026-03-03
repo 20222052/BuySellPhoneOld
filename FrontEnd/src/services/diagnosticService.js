@@ -67,11 +67,12 @@ const diagnosticService = {
     /**
      * Cập nhật trạng thái yêu cầu trade-in
      * @param {string} id - Diagnostic ID
-     * @param {string} status - pending | tested | cancelled
+     * @param {string} status - tested | processing | completed | cancelled
+     * @param {string} [message] - Lời nhắn tới khách hàng (tuỳ chọn)
      */
-    updateStatus: async (id, status) => {
+    updateStatus: async (id, status, message = '') => {
         try {
-            const response = await apiClient.put(`/diagnostics/admin/${id}/status`, { status });
+            const response = await apiClient.put(`/diagnostics/admin/${id}/status`, { status, message });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

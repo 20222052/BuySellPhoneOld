@@ -9,6 +9,8 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelLoading, setCancelLoading] = useState(false);
+    const [confirmStatus, setConfirmStatus] = useState(null);
+    const [updateLoading, setUpdateLoading] = useState(false);
 
     useEffect(() => {
         if (order) {
@@ -29,12 +31,12 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
             case 'processing':
                 return [
                     { value: 'processing', label: 'Processing' },
-                    { value: 'shipping', label: 'Shipping' },
+                    { value: 'shipped', label: 'Shipped' },
                     { value: 'cancelled', label: 'Cancelled' }
                 ];
-            case 'shipping':
+            case 'shipped':
                 return [
-                    { value: 'shipping', label: 'Shipping' },
+                    { value: 'shipped', label: 'Shipped' },
                     { value: 'completed', label: 'Completed' }
                 ];
             case 'completed':
@@ -45,7 +47,7 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
                 return [
                     { value: 'pending', label: 'Pending' },
                     { value: 'processing', label: 'Processing' },
-                    { value: 'shipping', label: 'Shipping' },
+                    { value: 'shipped', label: 'Shipped' },
                     { value: 'completed', label: 'Completed' },
                     { value: 'cancelled', label: 'Cancelled' }
                 ];
@@ -62,20 +64,32 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
             return;
         }
 
-        if (!window.confirm(`Bạn có chắc chắn muốn chuyển trạng thái đơn hàng sang ${newStatus}?`)) {
-            setStatus(order.status); // Reset if cancelled
-            return;
-        }
+        // Thay vì dùng window.confirm, hiển thị custom modal
+        setConfirmStatus(newStatus);
+    };
 
+    const handleConfirmStatusChange = async () => {
+        if (!confirmStatus) return;
+
+        setUpdateLoading(true);
         try {
-            await OrderService.updateStatus(order.id, newStatus);
+            await OrderService.updateStatus(order.id, confirmStatus);
             toast.success("Cập nhật trạng thái thành công");
             if (onStatusUpdate) onStatusUpdate();
+            setConfirmStatus(null);
             onClose(); // Close modal on success
         } catch (error) {
             toast.error(error.message || "Cập nhật thất bại");
             setStatus(order.status); // Reset on error
+            setConfirmStatus(null);
+        } finally {
+            setUpdateLoading(false);
         }
+    };
+
+    const handleCancelConfirmStatus = () => {
+        setStatus(order.status); // Reset to old status
+        setConfirmStatus(null);
     };
 
     const handleConfirmCancel = async () => {
@@ -351,6 +365,52 @@ export default function OrderDetailModal({ show, onClose, order, onStatusUpdate 
                                     <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...</>
                                 ) : (
                                     <><i className="bi bi-x-circle me-1"></i>Xác nhận hủy</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirm Status Change Modal */}
+            {confirmStatus && (
+                <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={handleCancelConfirmStatus}>
+                    <div className="modal-container" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header bg-primary text-white">
+                            <h5 className="modal-title mb-0">Xác nhận cập nhật</h5>
+                            <button className="modal-close text-white" onClick={handleCancelConfirmStatus}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div className="modal-body p-4 text-center">
+                            <i className="bi bi-question-circle text-primary" style={{ fontSize: '3rem' }}></i>
+                            <p className="mt-3 fs-5">
+                                Bạn có chắc chắn muốn chuyển trạng thái đơn hàng sang{' '}
+                                <strong>
+                                    {getAvailableStatuses(order.status).find(s => s.value === confirmStatus)?.label || confirmStatus}
+                                </strong>
+                                ?
+                            </p>
+                        </div>
+                        <div className="modal-footer bg-light">
+                            <button
+                                type="button"
+                                className="btn btn-secondary px-4"
+                                onClick={handleCancelConfirmStatus}
+                                disabled={updateLoading}
+                            >
+                                Đóng
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-primary px-4"
+                                onClick={handleConfirmStatusChange}
+                                disabled={updateLoading}
+                            >
+                                {updateLoading ? (
+                                    <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...</>
+                                ) : (
+                                    <><i className="bi bi-check-circle me-1"></i>Xác nhận</>
                                 )}
                             </button>
                         </div>

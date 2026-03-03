@@ -36,7 +36,6 @@ export default function CheckOut() {
 
     // Location dropdowns
     const [provinces, setProvinces] = useState([]);
-    const [districts, setDistricts] = useState([]);
     const [wards, setWards] = useState([]);
 
     // New address form
@@ -114,7 +113,11 @@ export default function CheckOut() {
             setAddresses(res.data || []);
             // Auto-select default address
             const defaultAddr = res.data?.find(a => a.isDefault);
-            if (defaultAddr) setSelectedAddressId(defaultAddr.id);
+            if (defaultAddr) {
+                setSelectedAddressId(defaultAddr.id);
+            } else if (res.data?.length > 0) {
+                setSelectedAddressId(res.data[0].id);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -125,33 +128,29 @@ export default function CheckOut() {
     const fetchProvinces = async () => {
         try {
             const res = await LocationService.getProvinces();
-            setProvinces(res.data || []);
+            setProvinces(res.provinces || []);
         } catch (err) {
             console.error(err);
         }
     };
 
     const handleProvinceChange = async (code) => {
-        setAddressForm(f => ({ ...f, cityCode: code, districtCode: "", wardCode: "" }));
-        setDistricts([]);
-        setWards([]);
-        if (code) {
-            try {
-                const res = await LocationService.getDistrictsByProvince(code);
-                setDistricts(res.data || []);
-            } catch (err) {
-                console.error(err);
-            }
-        }
-    };
+        const selectedProvince = provinces.find(p => String(p.code) === String(code));
 
-    const handleDistrictChange = async (code) => {
-        setAddressForm(f => ({ ...f, districtCode: code, wardCode: "" }));
+        setAddressForm(f => ({
+            ...f,
+            cityCode: code,
+            cityName: selectedProvince ? selectedProvince.name : "",
+            districtCode: "",
+            districtName: "",
+            wardCode: "",
+            wardName: ""
+        }));
         setWards([]);
         if (code) {
             try {
-                const res = await LocationService.getWardsByDistrict(code);
-                setWards(res.data || []);
+                const res = await LocationService.getCommunesByProvince(code);
+                setWards(res.communes || []);
             } catch (err) {
                 console.error(err);
             }
@@ -160,6 +159,17 @@ export default function CheckOut() {
 
     const handleAddressFormChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === "wardCode") {
+            const selectedWard = wards.find(w => String(w.code) === String(value));
+            setAddressForm(f => ({
+                ...f,
+                wardCode: value,
+                wardName: selectedWard ? selectedWard.name : ""
+            }));
+            return;
+        }
+
         setAddressForm(f => ({ ...f, [name]: type === "checkbox" ? checked : value }));
     };
 
@@ -620,7 +630,7 @@ export default function CheckOut() {
                                     placeholder="Nhập số điện thoại"
                                 />
                             </Col>
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Form.Label>Tỉnh/Thành phố</Form.Label>
                                 <Form.Select
                                     value={addressForm.cityCode}
@@ -629,36 +639,22 @@ export default function CheckOut() {
                                 >
                                     <option value="">Chọn tỉnh/thành</option>
                                     {provinces.map(p => (
-                                        <option key={p.idProvince} value={p.idProvince}>{p.name}</option>
+                                        <option key={p.code} value={p.code}>{p.name}</option>
                                     ))}
                                 </Form.Select>
                             </Col>
-                            <Col md={4}>
-                                <Form.Label>Quận/Huyện</Form.Label>
-                                <Form.Select
-                                    value={addressForm.districtCode}
-                                    onChange={(e) => handleDistrictChange(e.target.value)}
-                                    required
-                                    disabled={!addressForm.cityCode}
-                                >
-                                    <option value="">Chọn quận/huyện</option>
-                                    {districts.map(d => (
-                                        <option key={d.idDistrict} value={d.idDistrict}>{d.name}</option>
-                                    ))}
-                                </Form.Select>
-                            </Col>
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Form.Label>Phường/Xã</Form.Label>
                                 <Form.Select
                                     name="wardCode"
                                     value={addressForm.wardCode}
                                     onChange={handleAddressFormChange}
                                     required
-                                    disabled={!addressForm.districtCode}
+                                    disabled={!addressForm.cityCode}
                                 >
                                     <option value="">Chọn phường/xã</option>
                                     {wards.map(w => (
-                                        <option key={w.idCommune} value={w.idCommune}>{w.name}</option>
+                                        <option key={w.code} value={w.code}>{w.name}</option>
                                     ))}
                                 </Form.Select>
                             </Col>
