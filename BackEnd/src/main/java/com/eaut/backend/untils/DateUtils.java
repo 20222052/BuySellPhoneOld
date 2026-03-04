@@ -26,19 +26,21 @@ public class DateUtils {
     public static final String PATTERN_YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH:mm:ss";
     public static final String PATTERN_ISO_LOCAL_DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss";
 
-    public static final String PATTERN_YYYYMMDD_HHMM   = "yyyyMMddHHmm";
+    public static final String PATTERN_YYYYMMDD_HHMM = "yyyyMMddHHmm";
     public static final String PATTERN_YYYYMMDD_HHMMSS = "yyyyMMddHHmmss";
     public static final String PATTERN_HH_MM_DD_MM_YYYY = "HH:mm dd/MM/yyyy";
 
     public static final String PATTERN_DD_MM_YYYY = "dd/MM/yyyy";
-    public static final String PATTERN_YYYYMMDD   = "yyyyMMdd";
-
+    public static final String PATTERN_YYYYMMDD = "yyyyMMdd";
 
     // Formatters
-    private static final DateTimeFormatter DDMMYYYY_HHMMSS_FORMATTER = DateTimeFormatter.ofPattern(PATTERN_DDMMYYYY_HHMMSS);
+    private static final DateTimeFormatter DDMMYYYY_HHMMSS_FORMATTER = DateTimeFormatter
+            .ofPattern(PATTERN_DDMMYYYY_HHMMSS);
     private static final DateTimeFormatter YYYY_MM_DD_FORMATTER = DateTimeFormatter.ofPattern(PATTERN_YYYY_MM_DD);
-    private static final DateTimeFormatter YYYY_MM_DD_HH_MM_SS_FORMATTER = DateTimeFormatter.ofPattern(PATTERN_YYYY_MM_DD_HH_MM_SS);
-    private static final DateTimeFormatter ISO_LOCAL_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(PATTERN_ISO_LOCAL_DATE_TIME);
+    private static final DateTimeFormatter YYYY_MM_DD_HH_MM_SS_FORMATTER = DateTimeFormatter
+            .ofPattern(PATTERN_YYYY_MM_DD_HH_MM_SS);
+    private static final DateTimeFormatter ISO_LOCAL_DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern(PATTERN_ISO_LOCAL_DATE_TIME);
 
     /**
      * Get current date as string in ddMMyyyyHHmmss format
@@ -55,7 +57,7 @@ public class DateUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalDateTime.now().format(formatter);
         } catch (Exception e) {
-            log.error("Invalid date pattern: {}", pattern, e);
+            log.error("M\u1eabu ng\u00e0y kh\u00f4ng h\u1ee3p l\u1ec7: {}", pattern, e);
             throw new IllegalArgumentException("Invalid date pattern: " + pattern);
         }
     }
@@ -78,7 +80,8 @@ public class DateUtils {
      * Convert Date to string in ddMMyyyyHHmmss format
      */
     public static String parseDateToString(Date date) {
-        if (date == null) return null;
+        if (date == null)
+            return null;
         return date.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime()
@@ -89,12 +92,13 @@ public class DateUtils {
      * Convert Date to string with custom format
      */
     public static String parseDateToStringFormat(Date date, String format) {
-        if (date == null) return null;
+        if (date == null)
+            return null;
         try {
             DateFormat df = new SimpleDateFormat(format);
             return df.format(date);
         } catch (Exception e) {
-            log.error("Error formatting date with pattern: {}", format, e);
+            log.error("L\u1ed7i \u0111\u1ecbnh d\u1ea1ng ng\u00e0y v\u1edbi m\u1eabu: {}", format, e);
             throw new IllegalArgumentException("Invalid date format: " + format);
         }
     }
@@ -103,12 +107,13 @@ public class DateUtils {
      * Convert LocalDateTime to string with custom format
      */
     public static String formatLocalDateTime(LocalDateTime dateTime, String pattern) {
-        if (dateTime == null) return null;
+        if (dateTime == null)
+            return null;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return dateTime.format(formatter);
         } catch (Exception e) {
-            log.error("Error formatting LocalDateTime with pattern: {}", pattern, e);
+            log.error("L\u1ed7i \u0111\u1ecbnh d\u1ea1ng LocalDateTime v\u1edbi m\u1eabu: {}", pattern, e);
             throw new IllegalArgumentException("Invalid date pattern: " + pattern);
         }
     }
@@ -117,12 +122,14 @@ public class DateUtils {
      * Parse string to Date with custom format
      */
     public static Date parseStringToDateFormat(String date, String format) throws ParseException {
-        if (date == null || date.trim().isEmpty()) return null;
+        if (date == null || date.trim().isEmpty())
+            return null;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat(format);
             return sdf.parse(date);
         } catch (ParseException e) {
-            log.error("Error parsing date string: {} with format: {}", date, format, e);
+            log.error("L\u1ed7i ph\u00e2n t\u00edch chu\u1ed7i ng\u00e0y: {} v\u1edbi \u0111\u1ecbnh d\u1ea1ng: {}",
+                    date, format, e);
             throw e;
         }
     }
@@ -131,7 +138,8 @@ public class DateUtils {
      * Parse string to LocalDateTime with custom format
      */
     public static LocalDateTime parseStringToLocalDateTime(String date, String pattern) {
-        if (date == null || date.trim().isEmpty()) return null;
+        if (date == null || date.trim().isEmpty())
+            return null;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalDateTime.parse(date, formatter);
@@ -145,7 +153,8 @@ public class DateUtils {
      * Parse string to LocalDate with custom format
      */
     public static LocalDate parseStringToLocalDate(String date, String pattern) {
-        if (date == null || date.trim().isEmpty()) return null;
+        if (date == null || date.trim().isEmpty())
+            return null;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalDate.parse(date, formatter);
@@ -159,7 +168,8 @@ public class DateUtils {
      * Convert Date to LocalDateTime
      */
     public static LocalDateTime dateToLocalDateTime(Date date) {
-        if (date == null) return null;
+        if (date == null)
+            return null;
         return date.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
@@ -169,7 +179,8 @@ public class DateUtils {
      * Convert LocalDateTime to Date
      */
     public static Date localDateTimeToDate(LocalDateTime dateTime) {
-        if (dateTime == null) return null;
+        if (dateTime == null)
+            return null;
         return Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
@@ -177,7 +188,8 @@ public class DateUtils {
      * Check if string is valid date with given pattern
      */
     public static boolean isValidDate(String date, String pattern) {
-        if (date == null || date.trim().isEmpty()) return false;
+        if (date == null || date.trim().isEmpty())
+            return false;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             LocalDateTime.parse(date, formatter);
@@ -268,7 +280,8 @@ public class DateUtils {
      * Parse chuỗi CDS "yyyyMMddHHmm" / "yyyyMMddHHmmss" về LocalDateTime
      */
     public static LocalDateTime parseCDSDateTime(String s) {
-        if (s == null || s.isBlank()) return null;
+        if (s == null || s.isBlank())
+            return null;
         String v = s.trim();
 
         // nếu có giây (14 ký tự) mà chỉ cần đến phút, cắt bớt để ổn định
@@ -284,12 +297,15 @@ public class DateUtils {
         try {
             return parseStringToLocalDateTime(s, PATTERN_YYYYMMDD_HHMMSS);
         } catch (Exception ex) {
-            log.warn("parseCDSDateTime failed for '{}': {}", s, ex.getMessage());
+            log.warn("parseCDSDateTime th\u1ea5t b\u1ea1i cho '{}': {}", s, ex.getMessage());
             return null;
         }
     }
 
-    /** Parse theo srcPattern rồi format ra dstPattern. Lỗi -> trả null (an toàn cho pipeline map). */
+    /**
+     * Parse theo srcPattern rồi format ra dstPattern. Lỗi -> trả null (an toàn cho
+     * pipeline map).
+     */
     public static String formatFromTo(String input, String srcPattern, String dstPattern) {
         try {
             LocalDateTime dt = parseStringToLocalDateTime(input, srcPattern);
@@ -311,9 +327,9 @@ public class DateUtils {
         }
     }
 
-
     public static LocalDate parseCDSDate(String s) {
-        if (s == null || s.isBlank()) return null;
+        if (s == null || s.isBlank())
+            return null;
         String v = s.trim();
         if (v.matches("\\d{8}")) {
             return parseStringToLocalDate(v, PATTERN_YYYYMMDD);
@@ -322,14 +338,17 @@ public class DateUtils {
         try {
             return parseStringToLocalDate(v, PATTERN_DD_MM_YYYY);
         } catch (Exception ignore) {
-            log.warn("parseCDSDate failed for '{}'", s);
+            log.warn("parseCDSDate th\u1ea5t b\u1ea1i cho '{}'", s);
             return null;
         }
     }
 
-    /** Chuyển chuỗi ngày/giờ CDS ("yyyyMMddHHmm" hoặc "...ss") sang "dd/MM/yyyy". */
+    /**
+     * Chuyển chuỗi ngày/giờ CDS ("yyyyMMddHHmm" hoặc "...ss") sang "dd/MM/yyyy".
+     */
     public static String formatCDSTo_ddMMyyyy(String input) {
-        if (input == null || input.isBlank()) return null;
+        if (input == null || input.isBlank())
+            return null;
 
         // 1) Thử parse dạng có time trước
         LocalDateTime dt = parseCDSDateTime(input); // đã xử lý 12/14 ký tự
@@ -347,20 +366,21 @@ public class DateUtils {
         try {
             LocalDate d2 = parseStringToLocalDate(input, PATTERN_DD_MM_YYYY);
             return d2.format(DateTimeFormatter.ofPattern(PATTERN_DD_MM_YYYY));
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
 
         log.debug("formatCDSTo_ddMMyyyy: cannot format '{}'", input);
         return null;
     }
 
-//    public static String formatCDSTo_ddMMyyyy(String input) {
-//        try {
-//            var dt = parseCDSDateTime(input);
-//            return dt == null ? null
-//                    : dt.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-//        } catch (Exception e) {
-//            log.debug("formatCDSTo_ddMMyyyy fail '{}': {}", input, e.getMessage());
-//            return null;
-//        }
-//    }
-} 
+    // public static String formatCDSTo_ddMMyyyy(String input) {
+    // try {
+    // var dt = parseCDSDateTime(input);
+    // return dt == null ? null
+    // : dt.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    // } catch (Exception e) {
+    // log.debug("formatCDSTo_ddMMyyyy fail '{}': {}", input, e.getMessage());
+    // return null;
+    // }
+    // }
+}

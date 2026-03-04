@@ -157,7 +157,7 @@ public class MailConsumer {
                 + "...</strong> đang được nhân viên xem xét và sẽ liên hệ với bạn sớm.</p>"
                 + msgBlock
                 + "<p style='color:#555;line-height:1.7'>Vui lòng giữ liên lạc và chuẩn bị thiết bị để nhân viên có thể hỗ trợ tốt nhất.</p>"
-                + "<div style='text-align:center;margin:24px 0'><a href='http://localhost:5173/user/profile' style='display:inline-block;background:#2196F3;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
+                + "<div style='text-align:center;margin:24px 0'><a href='https://buysellphoneold.id.vn/user/profile' style='display:inline-block;background:#2196F3;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
                 + "</div><div style='background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888'>© "
                 + time.substring(6) + " BuySellPhone — Email tự động, vui lòng không trả lời.</div>"
                 + "</div></body></html>";
@@ -182,7 +182,7 @@ public class MailConsumer {
                 + diagnosticId.substring(0, Math.min(8, diagnosticId.length()))
                 + "...</strong> đã được <strong style='color:#43a047'>hoàn tất</strong>. Cảm ơn bạn đã tin tưởng BuySellPhone!</p>"
                 + msgBlock
-                + "<div style='text-align:center;margin:24px 0'><a href='http://localhost:5173/user/profile' style='display:inline-block;background:#43a047;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
+                + "<div style='text-align:center;margin:24px 0'><a href='https://buysellphoneold.id.vn/user/profile' style='display:inline-block;background:#43a047;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
                 + "</div><div style='background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888'>© "
                 + time.substring(6) + " BuySellPhone — Email tự động, vui lòng không trả lời.</div>"
                 + "</div></body></html>";
@@ -208,7 +208,7 @@ public class MailConsumer {
                 + "...</strong> đã bị <strong style='color:#e53935'>hủy</strong>.</p>"
                 + msgBlock
                 + "<p style='color:#555;line-height:1.7'>Nếu bạn có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ của chúng tôi.</p>"
-                + "<div style='text-align:center;margin:24px 0'><a href='http://localhost:5173/user/profile' style='display:inline-block;background:#e53935;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
+                + "<div style='text-align:center;margin:24px 0'><a href='https://buysellphoneold.id.vn/user/profile' style='display:inline-block;background:#e53935;color:white;text-decoration:none;padding:12px 28px;border-radius:24px;font-weight:600;font-size:15px'>Xem Lịch Sử Thu Cũ</a></div>"
                 + "</div><div style='background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888'>© "
                 + time.substring(6) + " BuySellPhone — Email tự động, vui lòng không trả lời.</div>"
                 + "</div></body></html>";
@@ -287,7 +287,7 @@ public class MailConsumer {
                 "            <p>Cảm ơn bạn đã đồng hành cùng BuySellPhoneOld!</p>\n" +
                 "            \n" +
                 "            <div style=\"text-align: center;\">\n" +
-                "                <a href=\"http://localhost:5173/\" class=\"button\">Truy Cập Trang Chủ</a>\n" +
+                "                <a href=\"https://buysellphoneold.id.vn/\" class=\"button\">Truy Cập Trang Chủ</a>\n" +
                 "            </div>\n" +
                 "        </div>\n" +
                 "        <div class=\"footer\">\n" +
@@ -682,7 +682,7 @@ public class MailConsumer {
 
                             <!-- Track Order Button -->
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="http://localhost:5173/user/profile#profile-orders"
+                                <a href="https://buysellphoneold.id.vn/user/profile#profile-orders"
                                    style="display: inline-block; background: linear-gradient(135deg, #4facfe 0%,
                                        #00f2fe 100%); color: white; text-decoration: none; padding: 15px 30px;
                                        border-radius: 25px; font-weight: 600; font-size: 16px; box-shadow: 0 4px

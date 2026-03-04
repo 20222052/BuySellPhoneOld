@@ -63,7 +63,7 @@ public class ProductDiagnosticService {
      */
     public DiagnosticResponse callAIDiagnostic(MultipartFile imageFile) {
         try {
-            log.info("Calling AI diagnostic service at: {}", aiApiUrl);
+            log.info("Giọi yêu cầu đến dịch vụ chẩn đoán AI tại: {}", aiApiUrl);
 
             // Prepare request
             HttpHeaders headers = new HttpHeaders();
@@ -93,7 +93,7 @@ public class ProductDiagnosticService {
             // Clean up temp file
             tempFile.delete();
 
-            log.info("AI diagnostic completed successfully");
+            log.info("Chẩn đoán AI hoàn thành thành công");
             return response.getBody();
 
         } catch (Exception e) {
@@ -107,7 +107,7 @@ public class ProductDiagnosticService {
      */
     public DiagnosticResponse callAIDiagnosticWithBase64(String imageBase64) {
         try {
-            log.info("Calling AI diagnostic service with base64 image");
+            log.info("Gọi dịch vụ chẩn đoán AI với hình ảnh base64");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -125,7 +125,7 @@ public class ProductDiagnosticService {
                     requestEntity,
                     DiagnosticResponse.class);
 
-            log.info("AI diagnostic completed successfully");
+            log.info("Chẩn đoán AI hoàn thành thành công");
             return response.getBody();
 
         } catch (Exception e) {
@@ -165,7 +165,7 @@ public class ProductDiagnosticService {
         }
 
         if (images.isEmpty()) {
-            throw new RuntimeException("No images provided for diagnostic");
+            throw new RuntimeException("Không có hình ảnh được cung cấp để chẩn đoán");
         }
         aiPayload.put("images", images);
 
@@ -212,7 +212,8 @@ public class ProductDiagnosticService {
         // 3. Call AI Service
         DiagnosticResponse aiResponse;
         try {
-            log.info("Calling AI diagnostic service with {} images", images.size());
+            log.info("G\u1ecdi d\u1ecbch v\u1ee5 ch\u1ea9n \u0111o\u00e1n AI v\u1edbi {} h\u00ecnh \u1ea3nh",
+                    images.size());
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + aiApiToken);
@@ -230,7 +231,7 @@ public class ProductDiagnosticService {
 
         if (aiResponse == null || !aiResponse.isSuccess()) {
             throw new RuntimeException(
-                    "AI diagnostic failed: " + (aiResponse != null ? aiResponse.getError() : "Unknown error"));
+                    "Chẩn đoán AI thất bại: " + (aiResponse != null ? aiResponse.getError() : "Lỗi không xác định"));
         }
 
         // 4. Create internal ProductDiagnostic entity

@@ -750,7 +750,7 @@
    Status Badge — TradeIn / Categories
    ============================================ */
 .status-badge {
-    display: inline-flex;
+    /* display: inline-flex; */
     align-items: center;
     gap: 4px;
     padding: 4px 10px;

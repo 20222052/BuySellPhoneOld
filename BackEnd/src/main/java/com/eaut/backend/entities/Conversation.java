@@ -42,7 +42,7 @@ public class Conversation extends AuditBase {
     @Column(name = "last_message_at")
     private OffsetDateTime lastMessageAt;
 
-    @Column(name = "chat_quality", columnDefinition = "VARCHAR(10) DEFAULT NULL")
+    @Column(name = "chat_quality")
     private String chatQuality; // Enum: GOOD, BAD (đánh giá chất lượng chat)
 
 

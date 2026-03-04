@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AuthDetails {
-    public static User getAuthenticatedUser( UserRepository userRepository) {
+    public static User getAuthenticatedUser(UserRepository userRepository) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
-            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "User not authenticated");
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND, "Người dùng chưa đăng nhập");
         }
 
         String email = authentication.getName();
