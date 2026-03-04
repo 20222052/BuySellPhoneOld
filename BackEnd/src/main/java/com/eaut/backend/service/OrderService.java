@@ -18,4 +18,6 @@ public interface OrderService {
     OrderDetailResponse getOrderDetails(UUID orderId);
 
     OrderResponse updateOrderStatus(UUID orderId, OrderStatusUpdateRequest request);
+
+    OrderResponse cancelOrder(UUID orderId, com.eaut.backend.model.request.CancelOrderRequest request);
 }

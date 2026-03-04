@@ -13,10 +13,11 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class InvalidateTokenServiceImpl implements InvalidateTokenService {
     private final InvalidateTokenRepository repository;
+
     @Override
     public int deleteExpiredTokens() {
         int record = repository.deleteExpiredTokens(new Date());
-        log.info("Delete token record:{}", record);
+        log.info("X\u00f3a b\u1ea3n ghi token:{}", record);
         return record;
     }
 }

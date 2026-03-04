@@ -29,7 +29,7 @@ public class AddressController {
         log.info("Creating address for user: {}", request.getUserId());
         AddressResponse response = addressService.createAddress(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ApiResponse<>(HttpStatus.CREATED.value(), "Address created successfully", true, response));
+                new ApiResponse<>(HttpStatus.CREATED.value(), "Địa chỉ được tạo thành công", true, response));
     }
 
     /**
@@ -39,7 +39,7 @@ public class AddressController {
     public ResponseEntity<ApiResponse<AddressResponse>> getAddressById(@PathVariable UUID addressId) {
         AddressResponse response = addressService.getAddressById(addressId);
         return ResponseEntity.ok(
-                new ApiResponse<>(HttpStatus.OK.value(), "Address retrieved successfully", true, response));
+                new ApiResponse<>(HttpStatus.OK.value(), "Thành công", true, response));
     }
 
     /**

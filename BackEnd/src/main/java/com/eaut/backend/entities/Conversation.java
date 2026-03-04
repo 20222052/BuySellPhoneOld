@@ -42,6 +42,10 @@ public class Conversation extends AuditBase {
     @Column(name = "last_message_at")
     private OffsetDateTime lastMessageAt;
 
+    @Column(name = "chat_quality")
+    private String chatQuality; // Enum: GOOD, BAD (đánh giá chất lượng chat)
+
+
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
     @Builder.Default
     private List<ChatMessage> messages = new ArrayList<>();

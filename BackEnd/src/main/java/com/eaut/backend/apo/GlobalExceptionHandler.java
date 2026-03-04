@@ -20,7 +20,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,18 +27,102 @@ import java.util.Map;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
-    protected final HttpServletRequest httpServletRequest;
+    /**
+     * Xử lý lỗi khi gọi sai phương thức HTTP (405 Method Not Allowed)
+     */
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<BadRequestResponse> handleMethodNotSupported(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        log.warn("Method not allowed: {}", ex.getMessage());
+        BadRequestResponse response = new BadRequestResponse(
+                ErrorCode.INVALID_PARAMETER,
+                "Phương thức HTTP không được hỗ trợ cho URL này.",
+                httpServletRequest);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    }
 
+    /**
+     * Xử lý lỗi khi gửi lên media type không hỗ trợ (415 Unsupported Media Type)
+     */
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<BadRequestResponse> handleMediaTypeNotSupported(
+            org.springframework.web.HttpMediaTypeNotSupportedException ex) {
+        log.warn("Media type not supported: {}", ex.getMessage());
+        BadRequestResponse response = new BadRequestResponse(
+                ErrorCode.INVALID_PARAMETER,
+                "Định dạng dữ liệu gửi lên không được hỗ trợ.",
+                httpServletRequest);
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(response);
+    }
+
+    /**
+     * Xử lý lỗi khi client yêu cầu media type không được hỗ trợ (406 Not
+     * Acceptable)
+     */
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<BadRequestResponse> handleMediaTypeNotAcceptable(
+            org.springframework.web.HttpMediaTypeNotAcceptableException ex) {
+        log.warn("Media type not acceptable: {}", ex.getMessage());
+        BadRequestResponse response = new BadRequestResponse(
+                ErrorCode.INVALID_PARAMETER,
+                "Định dạng dữ liệu phản hồi không phù hợp với yêu cầu của client.",
+                httpServletRequest);
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(response);
+    }
+
+    /**
+     * Xử lý lỗi binding dữ liệu (400 Bad Request)
+     */
+    @ExceptionHandler(org.springframework.validation.BindException.class)
+    public ResponseEntity<BadRequestResponse> handleBindException(org.springframework.validation.BindException ex) {
+        log.warn("BindException: {}", ex.getMessage());
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .orElse("Lỗi dữ liệu gửi lên không hợp lệ");
+        BadRequestResponse response = new BadRequestResponse(
+                ErrorCode.INVALID_PARAMETER,
+                message,
+                httpServletRequest);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Xử lý lỗi kiểu dữ liệu không khớp (400 Bad Request)
+     */
+    @ExceptionHandler(org.springframework.beans.TypeMismatchException.class)
+    public ResponseEntity<BadRequestResponse> handleTypeMismatch(org.springframework.beans.TypeMismatchException ex) {
+        log.warn("TypeMismatchException: {}", ex.getMessage());
+        BadRequestResponse response = new BadRequestResponse(
+                ErrorCode.INVALID_PARAMETER,
+                "Kiểu dữ liệu truyền vào không hợp lệ.",
+                httpServletRequest);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Xử lý lỗi Servlet chung (500 Internal Server Error)
+     */
+    @ExceptionHandler(jakarta.servlet.ServletException.class)
+    public ResponseEntity<BadRequestResponse> handleServletException(jakarta.servlet.ServletException ex) {
+        log.error("ServletException: {}", ex.getMessage(), ex);
+        BadRequestResponse response = new BadRequestResponse(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "Đã xảy ra lỗi hệ thống khi xử lý request.",
+                httpServletRequest);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    protected final HttpServletRequest httpServletRequest;
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<BadRequestResponse> handleNoResourceFoundException(NoResourceFoundException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
 
         BadRequestResponse response = new BadRequestResponse(
-            ErrorCode.NOT_FOUND,
-            "The requested resource was not found: " + httpServletRequest.getRequestURI(),
-            httpServletRequest
-        );
+                ErrorCode.NOT_FOUND,
+                "Không tồn tại URL này: " + httpServletRequest.getRequestURI(),
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
@@ -50,32 +133,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<BadRequestResponse> handleAccessDeniedException(AccessDeniedException ex) {
         log.warn("Access denied: {}", ex.getMessage());
-        
+
         BadRequestResponse response = new BadRequestResponse(
-            ErrorCode.FORBIDDEN, 
-            "Access denied. You don't have permission to access this resource.", 
-            httpServletRequest
-        );
-        
+                ErrorCode.FORBIDDEN,
+                "Không có quyền truy cập vào tài nguyên này. Vui lòng kiểm tra lại quyền của bạn.",
+                httpServletRequest);
+
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     /**
      * Xử lý AuthenticationException (401 Unauthorized)
      */
-    @ExceptionHandler({AuthenticationException.class, InsufficientAuthenticationException.class})
+    @ExceptionHandler({ AuthenticationException.class, InsufficientAuthenticationException.class })
     public ResponseEntity<BadRequestResponse> handleAuthenticationException(Exception ex) {
         log.warn("Authentication failed: {}", ex.getMessage());
-        
+
         BadRequestResponse response = new BadRequestResponse(
-            ErrorCode.UNAUTHORIZED, 
-            "Authentication required. Please provide valid credentials.", 
-            httpServletRequest
-        );
-        
+                ErrorCode.UNAUTHORIZED,
+                "Không thể xác thực yêu cầu. Vui lòng cung cấp token hợp lệ hoặc đăng nhập lại.",
+                httpServletRequest);
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
-
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<BadRequestResponse> handleHttpMessageNotReadable(
@@ -83,7 +163,7 @@ public class GlobalExceptionHandler {
 
         log.warn("Invalid request body: {}", ex.getMessage());
 
-        String message = "Request body Invalid";
+        String message = "Dữ liệu gửi lên không hợp lệ";
 
         Throwable root = ex.getMostSpecificCause();
         if (root != null && root.getMessage() != null) {
@@ -93,23 +173,21 @@ public class GlobalExceptionHandler {
         BadRequestResponse response = new BadRequestResponse(
                 ErrorCode.INVALID_PARAMETER,
                 message,
-                httpServletRequest
-        );
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
 
     /**
      * Xử lý ApplicationException (Business Logic Errors)
      */
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<BadRequestResponse> handleApplicationException(ApplicationException ex) {
-        log.error("HandleApplicationException {} with message {}, title {}, data {}", 
+        log.error("HandleApplicationException {} with message {}, title {}, data {}",
                 ex.getCode(), ex.getMessage(), ex.getTitle(), ex.getData());
-        
+
         BadRequestResponse response = new BadRequestResponse(ex, httpServletRequest);
-        
+
         // Lấy HTTP status từ ErrorCode nếu có
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST; // default
         try {
@@ -123,11 +201,11 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             log.warn("Could not determine HTTP status for error code: {}", ex.getCode());
         }
-        
+
         return ResponseEntity.status(httpStatus).body(response);
     }
 
-//  xử lý MethodArgumentNotValidException
+    // xử lý MethodArgumentNotValidException
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<BadRequestResponse> handleValidation(
             MethodArgumentNotValidException ex) {
@@ -137,18 +215,17 @@ public class GlobalExceptionHandler {
                 .stream()
                 .findFirst()
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
-                .orElse("Validation error");
+                .orElse("Lỗi xác thực dữ liệu");
 
         BadRequestResponse response = new BadRequestResponse(
                 ErrorCode.INVALID_PARAMETER,
                 message,
-                httpServletRequest
-        );
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-//  xử lý MissingServletRequestParameterException
+    // xử lý MissingServletRequestParameterException
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<BadRequestResponse> handleMissingRequestParam(
             MissingServletRequestParameterException ex) {
@@ -156,15 +233,13 @@ public class GlobalExceptionHandler {
         log.warn("Missing request parameter: {}", ex.getParameterName());
 
         String message = String.format(
-                "missing required parameters: '%s'",
-                ex.getParameterName()
-        );
+                "Thiếu tham số bắt buộc: '%s'",
+                ex.getParameterName());
 
         BadRequestResponse response = new BadRequestResponse(
                 ErrorCode.INVALID_PARAMETER,
                 message,
-                httpServletRequest
-        );
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -177,13 +252,11 @@ public class GlobalExceptionHandler {
 
         BadRequestResponse response = new BadRequestResponse(
                 ErrorCode.INVALID_PARAMETER,
-                "The request is not in the correct format: multipart/form-data",
-                httpServletRequest
-        );
+                "Yêu cầu không đúng định dạng: multipart/form-data",
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
 
     /**
      * Xử lý IllegalArgumentException
@@ -191,13 +264,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<BadRequestResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         log.warn("Invalid argument: {}", ex.getMessage());
-        
+
         BadRequestResponse response = new BadRequestResponse(
-            ErrorCode.INVALID_PARAMETER,
-            ex.getMessage(),
-            httpServletRequest
-        );
-        
+                ErrorCode.INVALID_PARAMETER,
+                ex.getMessage(),
+                httpServletRequest);
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -207,13 +279,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<BadRequestResponse> handleNullPointerException(NullPointerException ex) {
         log.error("Null pointer exception: {}", ex.getMessage(), ex);
-        
+
         BadRequestResponse response = new BadRequestResponse(
-            ErrorCode.INTERNAL_SERVER_ERROR,
-            "A system error occurred. Please contact support if this persists.",
-            httpServletRequest
-        );
-        
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "Đã xảy ra lỗi hệ thống. Vui lòng liên hệ bộ phận hỗ trợ nếu lỗi tiếp tục xuất hiện.",
+                httpServletRequest);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
@@ -225,13 +296,12 @@ public class GlobalExceptionHandler {
 
         BadRequestResponse response = new BadRequestResponse(
                 ErrorCode.INVALID_PARAMETER,
-                "Data integrity violation: " + ex.getMostSpecificCause().getMessage() + ". Please ensure that your data does not violate any constraints.",
-                httpServletRequest
-        );
+                "Dữ liệu vi phạm ràng buộc: " + ex.getMostSpecificCause().getMessage()
+                        + ". Vui lòng kiểm tra dữ liệu không vi phạm các ràng buộc hệ thống.",
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
 
     /**
      * Xử lý với các lỗi thông thường (500 Internal Server Error)
@@ -247,10 +317,9 @@ public class GlobalExceptionHandler {
 
         BadRequestResponse response = new BadRequestResponse(
                 ErrorCode.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred. Please try again later.",
+                "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.",
                 errorDetails,
-                httpServletRequest
-        );
+                httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
@@ -261,17 +330,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<BadRequestResponse> handleRuntimeException(RuntimeException ex) {
         log.error("Runtime exception: {}", ex.getMessage(), ex);
-        
+
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("exceptionType", ex.getClass().getSimpleName());
-        
+
         BadRequestResponse response = new BadRequestResponse(
-            ErrorCode.INTERNAL_SERVER_ERROR,
-            "A runtime error occurred. Please try again later.",
-            errorDetails,
-            httpServletRequest
-        );
-        
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "Đã xảy ra lỗi hệ thống khi thực thi. Vui lòng thử lại sau.",
+                errorDetails,
+                httpServletRequest);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

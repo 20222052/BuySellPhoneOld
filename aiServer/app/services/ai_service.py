@@ -20,7 +20,7 @@ class AIService:
             return
         
         print("=" * 70)
-        print("INITIALIZING AI SERVICE")
+        print("ĐANG KHỞI TẠO DỊCH VỤ AI")
         print("=" * 70)
         
         self.device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -85,7 +85,7 @@ public class SecurityConfig {
                                                         errorResponse.setTitle("Authentication Error");
                                                         errorResponse.setErrorCode(ErrorCode.UNAUTHORIZED.getCode());
                                                         errorResponse.setMessage(
-                                                                        "Authentication required. Please provide valid credentials.");
+                                                                        "Không thể xác thực yêu cầu. Vui lòng cung cấp token hợp lệ.");
                                                         errorResponse.setData(null);
                                                         errorResponse.setUri(request.getRequestURI());
                                                         errorResponse.setTime(LocalDateTime.parse(LocalDateTime.now()
@@ -113,7 +113,7 @@ public class SecurityConfig {
                                                         errorResponse.setTitle("Authorization Error");
                                                         errorResponse.setErrorCode(ErrorCode.FORBIDDEN.getCode());
                                                         errorResponse.setMessage(
-                                                                        "Access denied. You don't have permission to access this resource.");
+                                                                        "Không có quyền truy cập. Bạn không có quyền truy cập tài nguyên này.");
                                                         errorResponse.setData(null);
                                                         errorResponse.setUri(request.getRequestURI());
                                                         errorResponse.setTime(LocalDateTime.parse(LocalDateTime.now()

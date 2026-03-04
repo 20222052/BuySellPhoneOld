@@ -58,7 +58,7 @@ const ChatHistory = () => {
                                     <th className="ps-4">Session ID</th>
                                     <th>Khách hàng</th>
                                     <th>Thời gian</th>
-                                    <th>Trạng thái</th>
+                                    {/* <th>Trạng thái</th> */}
                                     <th>Tin nhắn cuối</th>
                                     <th className="text-end pe-4">Hành động</th>
                                 </tr>
@@ -78,11 +78,11 @@ const ChatHistory = () => {
                                                 {conv.user ? conv.user.email : <span className="badge bg-secondary">Khách vãng lai</span>}
                                             </td>
                                             <td>{formatDate(conv.lastMessageAt || conv.createdAt)}</td>
-                                            <td>
+                                            {/* <td>
                                                 <span className={`badge ${conv.status === 'CLOSED' ? 'bg-secondary' : 'bg-success'}`}>
                                                     {conv.status}
                                                 </span>
-                                            </td>
+                                            </td> */}
                                             <td className="text-truncate" style={{ maxWidth: '200px' }}>
                                                 {conv.messages?.length > 0
                                                     ? [...conv.messages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).at(-1)?.content

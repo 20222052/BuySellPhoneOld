@@ -17,6 +17,8 @@ public class OrderResponse {
     private UUID id;
     private String code;
     private UUID userId;
+    private String customerEmail;
+    private String customerPhone;
     private String customerName; // From Address snapshot or User
     private OrderStatus status; // pending, shipping, etc.
     private PaymentMethod paymentMethod;

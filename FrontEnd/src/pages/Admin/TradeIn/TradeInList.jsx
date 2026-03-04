@@ -44,9 +44,9 @@ export default function TradeInList() {
         fetchDiagnostics();
     }, [fetchDiagnostics]);
 
-    const handleStatusChange = async (id, newStatus) => {
+    const handleStatusChange = async (id, newStatus, message = '') => {
         try {
-            await diagnosticService.updateStatus(id, newStatus);
+            await diagnosticService.updateStatus(id, newStatus, message);
             toast.success('Cập nhật trạng thái thành công');
             fetchDiagnostics();
         } catch (error) {
@@ -54,6 +54,7 @@ export default function TradeInList() {
             toast.error('Cập nhật trạng thái thất bại');
         }
     };
+
 
     const handleViewDetail = (diagnostic) => {
         setSelectedDiagnostic(diagnostic);
@@ -74,10 +75,24 @@ export default function TradeInList() {
         const labels = {
             pending: 'Chờ xử lý',
             tested: 'Đã kiểm tra',
+            processing: 'Đang xử lý',
+            completed: 'Hoàn thành',
             cancelled: 'Đã hủy'
         };
         return labels[status] || status;
     };
+
+    const getStatusIcon = (status) => {
+        const icons = {
+            pending: 'bi-hourglass-split',
+            tested: 'bi-check-circle-fill',
+            processing: 'bi-telephone-fill',
+            completed: 'bi-bag-check-fill',
+            cancelled: 'bi-x-circle-fill'
+        };
+        return icons[status] || 'bi-question-circle';
+    };
+
 
     const columns = [
         {
@@ -131,6 +146,7 @@ export default function TradeInList() {
             label: 'Trạng thái',
             render: (value) => (
                 <span className={`status-badge status-${value?.toLowerCase()}`}>
+                    <i className={`bi ${getStatusIcon(value)} me-1`}></i>
                     {getStatusLabel(value)}
                 </span>
             )
@@ -143,28 +159,10 @@ export default function TradeInList() {
                     <button
                         className="btn-action btn-view"
                         onClick={() => handleViewDetail(row)}
-                        title="Xem chi tiết"
+                        title="Xem chi tiết (có thể cập nhật trạng thái tại đây)"
                     >
                         <i className="bi bi-eye"></i>
                     </button>
-                    {row.status === 'pending' && (
-                        <>
-                            <button
-                                className="btn-action btn-edit"
-                                onClick={() => handleStatusChange(row.id, 'tested')}
-                                title="Đánh dấu đã kiểm tra"
-                            >
-                                <i className="bi bi-check-lg"></i>
-                            </button>
-                            <button
-                                className="btn-action btn-delete"
-                                onClick={() => handleStatusChange(row.id, 'cancelled')}
-                                title="Hủy yêu cầu"
-                            >
-                                <i className="bi bi-x-lg"></i>
-                            </button>
-                        </>
-                    )}
                 </div>
             )
         }
@@ -202,8 +200,9 @@ export default function TradeInList() {
                             }}
                         >
                             <option value="">Tất cả trạng thái</option>
-                            <option value="pending">Chờ xử lý</option>
                             <option value="tested">Đã kiểm tra</option>
+                            <option value="processing">Đang xử lý</option>
+                            <option value="completed">Hoàn thành</option>
                             <option value="cancelled">Đã hủy</option>
                         </select>
                     </div>
@@ -273,13 +272,14 @@ export default function TradeInList() {
                         setShowDetailModal(false);
                         setSelectedDiagnostic(null);
                     }}
-                    onStatusChange={(newStatus) => {
-                        handleStatusChange(selectedDiagnostic.id, newStatus);
+                    onStatusChange={async (newStatus, message) => {
+                        await handleStatusChange(selectedDiagnostic.id, newStatus, message);
                         setShowDetailModal(false);
                         setSelectedDiagnostic(null);
                     }}
                 />
             )}
+
         </div>
     );
 }

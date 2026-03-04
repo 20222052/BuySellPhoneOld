@@ -87,7 +87,7 @@ export default function TradeInResult() {
                             <h5 className="mb-0 text-start">Thông tin thiết bị</h5>
                         </Card.Header>
                         <Card.Body>
-                            <br /><p className="text-start"><strong>Sản phẩm:</strong> {selectedModel?.name || product?.name || "Unknown Device"}</p>
+                            <p className="text-start"><strong>Sản phẩm:</strong> {selectedModel?.name || product?.name || "Unknown Device"}</p>
                             <p className="text-start"><strong>Ngày kiểm tra:</strong> {new Date().toLocaleDateString('vi-VN')}</p>
                             <hr />
                             <div className="text-center">
@@ -98,8 +98,28 @@ export default function TradeInResult() {
                             <div className="text-center">
                                 <h6 className="text-start">Tổng Khấu Hao</h6>
                                 <h1 className="text-danger fw-bold">-{result.totalDepreciation}%</h1>
-                                <p className="small text-start">Giá trị còn lại ước tính: <strong>{(100 - result.totalDepreciation).toFixed(2)}%</strong> so với máy mới.</p>
+                                <p className="small text-start">Giá trị còn lại tính trên chức năng: <strong>{(100 - result.totalDepreciation).toFixed(2)}%</strong>.</p>
                             </div>
+                            <hr />
+                            {result.isContactStore || result.totalDepreciation >= 75 ? (
+                                <div className="alert alert-danger mt-3 text-start">
+                                    <strong>Lỗi thiết bị quá hạn mức khấu hao.</strong><br />
+                                    Vui lòng <strong>Liên hệ cửa hàng</strong> để được tư vấn giá thu cụ thể.
+                                </div>
+                            ) : (
+                                <div className="text-center mt-3 p-3 bg-light rounded border border-success">
+                                    <h6 className="text-success mb-2">Khoảng giá dự kiến thu lại</h6>
+                                    {result.minPredictedPrice && result.maxPredictedPrice ? (
+                                        <h4 className="text-success fw-bold m-0">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(result.minPredictedPrice)}
+                                            {' - '}
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(result.maxPredictedPrice)}
+                                        </h4>
+                                    ) : (
+                                        <h5 className="text-muted m-0">Đang cập nhật...</h5>
+                                    )}
+                                </div>
+                            )}
                         </Card.Body>
                     </Card>
                 </Col>

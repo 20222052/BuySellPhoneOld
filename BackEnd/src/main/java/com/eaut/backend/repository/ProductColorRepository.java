@@ -57,4 +57,12 @@ public interface ProductColorRepository extends JpaRepository<ProductColor, UUID
     @Modifying
     @Query("UPDATE ProductColor pc SET pc.qtyAvailable = pc.qtyAvailable - :quantity WHERE pc.id = :id AND pc.qtyAvailable >= :quantity")
     int decrementStock(@Param("id") UUID id, @Param("quantity") int quantity);
+
+    /**
+     * Increment stock quantity atomically
+     * Returns number of rows affected
+     */
+    @Modifying
+    @Query("UPDATE ProductColor pc SET pc.qtyAvailable = pc.qtyAvailable + :quantity WHERE pc.id = :id")
+    int incrementStock(@Param("id") UUID id, @Param("quantity") int quantity);
 }

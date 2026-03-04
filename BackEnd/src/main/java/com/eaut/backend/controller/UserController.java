@@ -68,6 +68,29 @@ public class UserController {
                 return apiResponse;
         }
 
+        @PutMapping("/my-profile/bank-info")
+        public ApiResponse<UserResponse> updateBankInfo(
+                        @RequestBody com.eaut.backend.model.request.UserBankUpdateRequest request) {
+                log.info("UserController: updateBankInfo");
+                UserResponse updatedUser = userService.updateBankInfo(request);
+
+                ApiResponse<UserResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                updatedUser);
+                return apiResponse;
+        }
+
+        @DeleteMapping("/my-profile/bank-info")
+        public ApiResponse<UserResponse> deleteBankInfo() {
+                log.info("UserController: deleteBankInfo");
+                UserResponse updatedUser = userService.deleteBankInfo();
+
+                ApiResponse<UserResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                updatedUser);
+                return apiResponse;
+        }
+
         @PreAuthorize("hasRole('admin')")
         @GetMapping
         public ResponseEntity<ApiResponse<PagingResponse<UserResponse>>> getAllUsers(

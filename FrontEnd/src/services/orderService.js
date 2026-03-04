@@ -46,6 +46,15 @@ const OrderService = {
         } catch (error) {
             throw error.response?.data || { message: "Không thể cập nhật trạng thái đơn hàng" };
         }
+    },
+
+    cancelOrder: async (id, reason) => {
+        try {
+            const response = await api.put(`/orders/${id}/cancel`, { reason });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể hủy đơn hàng" };
+        }
     }
 };
 

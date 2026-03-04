@@ -23,56 +23,57 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 @RequestMapping("/carts")
 public class CartController {
 
-    private final CartService cartService;
+        private final CartService cartService;
 
-    @PostMapping("/add")
-    public ResponseEntity<ApiResponse<CartResponse>> addToCart(@RequestBody CartRequest request) {
-        CartResponse response = cartService.addToCart(request);
-        ApiResponse<CartResponse> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "Item added to cart successfully",
-                true,
-                response);
-        return ResponseEntity.ok(apiResponse);
-    }
+        @PostMapping("/add")
+        public ResponseEntity<ApiResponse<CartResponse>> addToCart(@RequestBody CartRequest request) {
+                CartResponse response = cartService.addToCart(request);
+                ApiResponse<CartResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Item added to cart successfully",
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<java.util.List<CartResponse>>> getCartByUserId(
-            @PathVariable java.util.UUID userId) {
-        java.util.List<CartResponse> response = cartService.getCartByUserId(userId);
-        ApiResponse<java.util.List<CartResponse>> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "Cart retrieved successfully",
-                true,
-                response);
-        return ResponseEntity.ok(apiResponse);
-    }
+        @GetMapping("/user/{userId}")
+        public ResponseEntity<ApiResponse<java.util.List<CartResponse>>> getCartByUserId(
+                        @PathVariable java.util.UUID userId) {
+                java.util.List<CartResponse> response = cartService.getCartByUserId(userId);
+                ApiResponse<java.util.List<CartResponse>> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Cart retrieved successfully",
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
-            @PathVariable java.util.UUID id,
-            @RequestBody com.eaut.backend.model.request.CartUpdateRequest request) {
-        CartResponse response = cartService.updateCartItem(id, request);
+        @PutMapping("/{id}")
+        public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
+                        @PathVariable java.util.UUID id,
+                        @RequestBody com.eaut.backend.model.request.CartUpdateRequest request) {
+                CartResponse response = cartService.updateCartItem(id, request);
 
-        String message = (response == null) ? "Cart item removed successfully" : "Cart item updated successfully";
+                String message = (response == null) ? "Xóa sản phẩm khỏi giỏ hàng thành công"
+                                : "Cập nhật sản phẩm trong giỏ hàng thành công";
 
-        ApiResponse<CartResponse> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                message,
-                true,
-                response);
-        return ResponseEntity.ok(apiResponse);
-    }
+                ApiResponse<CartResponse> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                message,
+                                true,
+                                response);
+                return ResponseEntity.ok(apiResponse);
+        }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteCartItem(
-            @PathVariable java.util.UUID id) {
-        cartService.deleteCartItem(id);
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "Cart item deleted successfully",
-                true,
-                null);
-        return ResponseEntity.ok(apiResponse);
-    }
+        @DeleteMapping("/{id}")
+        public ResponseEntity<ApiResponse<Void>> deleteCartItem(
+                        @PathVariable java.util.UUID id) {
+                cartService.deleteCartItem(id);
+                ApiResponse<Void> apiResponse = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Xóa sản phẩm khỏi giỏ hàng thành công",
+                                true,
+                                null);
+                return ResponseEntity.ok(apiResponse);
+        }
 }

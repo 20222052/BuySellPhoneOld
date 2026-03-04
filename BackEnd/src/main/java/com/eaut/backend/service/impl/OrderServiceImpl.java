@@ -12,6 +12,7 @@ import com.eaut.backend.model.response.OrderItemResponse;
 import com.eaut.backend.model.response.OrderResponse;
 import com.eaut.backend.model.response.PagingResponse;
 import com.eaut.backend.repository.OrderRepository;
+import com.eaut.backend.repository.ProductColorRepository;
 import com.eaut.backend.repository.ProductMediaRepository;
 import com.eaut.backend.service.OrderService;
 import jakarta.persistence.criteria.Predicate;
@@ -39,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final ProductColorRepository productColorRepository;
     private final ProductMediaRepository productMediaRepository;
+    private final com.eaut.backend.service.mailService.MailProducer mailProducer;
 
     @Override
     public PagingResponse<OrderResponse> getAllOrders(String search, OrderStatus status, PaymentMethod paymentMethod,
@@ -111,6 +114,8 @@ public class OrderServiceImpl implements OrderService {
         response.setId(order.getId());
         response.setCode(order.getCode());
         response.setUserId(order.getUser() != null ? order.getUser().getId() : null);
+        response.setCustomerEmail(order.getUser() != null ? order.getUser().getEmail() : null);
+        response.setCustomerPhone(order.getUser() != null ? order.getUser().getPhone() : null);
         response.setCustomerName(order.getSnapshotShippingFullName());
         response.setStatus(order.getStatus());
         response.setPaymentMethod(order.getPaymentMethod());
@@ -134,6 +139,70 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(request.getStatus());
         orderRepository.save(order);
+
+        return mapToOrderResponse(order);
+    }
+
+    @Override
+    public OrderResponse cancelOrder(UUID orderId, com.eaut.backend.model.request.CancelOrderRequest request) {
+        var authenticatedUser = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.ORDER_NOT_FOUND));
+
+        // Ensure user can only cancel their own order or admin
+        if (!order.getUser().getEmail().equals(authenticatedUser.getName()) &&
+                authenticatedUser.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_admin"))) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST, "You don't have permission to cancel this order");
+        }
+
+        // Only pending orders can be cancelled by user
+        if (order.getStatus() != OrderStatus.pending) {
+            throw new ApplicationException(ErrorCode.INVALID_REQUEST,
+                    "Chỉ có thể hủy đơn hàng ở trạng thái chờ xác nhận.");
+        }
+
+        // Check refund info if payment was bank transfer
+        if (order.getPaymentMethod() == PaymentMethod.bank) {
+            com.eaut.backend.entities.User user = order.getUser();
+            if (!org.springframework.util.StringUtils.hasText(user.getBankAccount()) ||
+                    !org.springframework.util.StringUtils.hasText(user.getBankName()) ||
+                    !org.springframework.util.StringUtils.hasText(user.getAccountName())) {
+                throw new ApplicationException(ErrorCode.INVALID_REQUEST,
+                        "Không thể hủy đơn hàng do khách hàng chưa cung cấp thông tin hoàn tiền. Vui lòng liên hệ khách hàng điền thông tin trước khi hủy.");
+            }
+        }
+
+        order.setStatus(OrderStatus.cancelled);
+        orderRepository.save(order);
+
+        // Khôi phục lại số lượng sản phẩm (qtyAvailable) cho từng biến thể màu sắc
+        if (order.getItems() != null) {
+            for (OrderItem item : order.getItems()) {
+                com.eaut.backend.entities.ProductItem pItem = item.getProductItem();
+                if (pItem != null && pItem.getModels() != null) {
+                    for (com.eaut.backend.entities.ProductModel model : pItem.getModels()) {
+                        if (model.getName().equals(item.getSnapshotProductModel()) && model.getColors() != null) {
+                            for (com.eaut.backend.entities.ProductColor color : model.getColors()) {
+                                if (color.getName().equals(item.getSnapshotProductColor())) {
+                                    productColorRepository.incrementStock(color.getId(), item.getQty());
+                                    log.info("Restored qty {} for color {} (ID: {})", item.getQty(), color.getName(),
+                                            color.getId());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Publish Kafka event for Order Cancellation Email
+        mailProducer.sendOrderCancellationMail(
+                order.getUser().getEmail(),
+                order.getCode(),
+                order.getUser().getFullName() != null ? order.getUser().getFullName() : order.getUser().getEmail(),
+                request != null ? request.getReason() : "");
 
         return mapToOrderResponse(order);
     }
@@ -163,7 +232,8 @@ public class OrderServiceImpl implements OrderService {
         }
         return OrderItemResponse.builder()
                 .id(item.getId())
-                .productName(item.getProductItem().getProduct().getName() + "-" + item.getSnapshotProductName())
+                .productName(item.getProductItem().getProduct().getName())
+                .productItemName(item.getSnapshotProductName())
                 .modelName(item.getSnapshotProductModel())
                 .colorName(item.getSnapshotProductColor())
                 .imageUrl(imageUrl)

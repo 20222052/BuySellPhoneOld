@@ -56,4 +56,15 @@ public class ProductDiagnosticDTO {
 
     // Analysis details (from AI)
     private String aiAnalysisDetails;
+
+    // Price prediction fields
+    private BigDecimal minPredictedPrice;
+    private BigDecimal maxPredictedPrice;
+    private Boolean isContactStore;
+    private java.util.List<String> images;
+
+    // Customer contact info (for admin view)
+    private String customerName;
+    private String customerEmail;
+    private String customerPhone;
 }

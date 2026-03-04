@@ -6,42 +6,28 @@ import api from "./apiClient";
 const LocationService = {
     /**
      * Lấy danh sách 64 tỉnh/thành
-     * @returns {Promise} - List<Province>
+     * @returns {Promise}
      */
     getProvinces: async () => {
         try {
-            const response = await api.get("/locations/provinces");
-            return response.data;
+            const response = await fetch("https://production.cas.so/address-kit/2025-07-01/provinces");
+            return await response.json();
         } catch (error) {
-            throw error.response?.data || { message: "Không thể tải danh sách tỉnh/thành" };
+            throw { message: "Không thể tải danh sách tỉnh/thành" };
         }
     },
 
     /**
-     * Lấy danh sách quận/huyện theo mã tỉnh
+     * Lấy danh sách xã/phường theo mã tỉnh (bỏ qua quận/huyện)
      * @param {string} provinceCode - Mã tỉnh
-     * @returns {Promise} - List<District>
+     * @returns {Promise}
      */
-    getDistrictsByProvince: async (provinceCode) => {
+    getCommunesByProvince: async (provinceCode) => {
         try {
-            const response = await api.get(`/locations/provinces/${provinceCode}/districts`);
-            return response.data;
+            const response = await fetch(`https://production.cas.so/address-kit/2025-07-01/provinces/${provinceCode}/communes`);
+            return await response.json();
         } catch (error) {
-            throw error.response?.data || { message: "Không thể tải danh sách quận/huyện" };
-        }
-    },
-
-    /**
-     * Lấy danh sách xã/phường theo mã quận/huyện
-     * @param {string} districtCode - Mã quận/huyện
-     * @returns {Promise} - List<Commune>
-     */
-    getWardsByDistrict: async (districtCode) => {
-        try {
-            const response = await api.get(`/locations/districts/${districtCode}/wards`);
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { message: "Không thể tải danh sách xã/phường" };
+            throw { message: "Không thể tải danh sách xã/phường" };
         }
     }
 };

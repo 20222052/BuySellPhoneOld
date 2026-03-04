@@ -19,4 +19,18 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
 
     @org.springframework.data.jpa.repository.Query("SELECT c FROM Conversation c LEFT JOIN FETCH c.messages ORDER BY c.lastMessageAt DESC")
     List<Conversation> findAllWithMessages();
+
+    // Dashboard Report Queries
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(c) FROM Conversation c WHERE c.createdAt BETWEEN :start AND :end")
+    long countConversationsByDateRange(@org.springframework.data.repository.query.Param("start") OffsetDateTime start, @org.springframework.data.repository.query.Param("end") OffsetDateTime end);
+
+    @org.springframework.data.jpa.repository.Query("SELECT new map(FUNCTION('DATE', c.createdAt) as date, COUNT(c) as conversations) " +
+           "FROM Conversation c " +
+           "WHERE c.createdAt BETWEEN :start AND :end " +
+           "GROUP BY FUNCTION('DATE', c.createdAt) ORDER BY FUNCTION('DATE', c.createdAt)")
+    List<java.util.Map<String, Object>> getDailyConversationStats(@org.springframework.data.repository.query.Param("start") OffsetDateTime start, @org.springframework.data.repository.query.Param("end") OffsetDateTime end);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM Conversation c WHERE c.createdAt BETWEEN :start AND :end ORDER BY c.createdAt DESC")
+    List<Conversation> findRecentConversationsByDateRange(@org.springframework.data.repository.query.Param("start") OffsetDateTime start, @org.springframework.data.repository.query.Param("end") OffsetDateTime end, org.springframework.data.domain.Pageable pageable);
 }

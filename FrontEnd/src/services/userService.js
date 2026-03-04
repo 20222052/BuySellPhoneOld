@@ -164,6 +164,20 @@ const UserService = {
         } catch (error) {
             throw error.response?.data || { message: "Không thể đổi mật khẩu" };
         }
+    },
+
+    /**
+     * Cập nhật thông tin ngân hàng của user hiện tại
+     * @param {Object} bankInfo - { bankName, accountName, bankAccount }
+     * @returns {Promise}
+     */
+    updateBankInfo: async (bankInfo) => {
+        try {
+            const response = await api.put(`/users/my-profile/bank-info`, bankInfo);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể cập nhật thông tin ngân hàng" };
+        }
     }
 };
 

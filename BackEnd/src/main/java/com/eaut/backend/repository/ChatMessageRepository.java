@@ -23,4 +23,15 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     List<ChatMessage> findRecentMessages(
             @org.springframework.data.repository.query.Param("conversationId") UUID conversationId,
             org.springframework.data.domain.Pageable pageable);
+
+    // Dashboard Report Queries
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.createdAt BETWEEN :start AND :end")
+    long countMessagesByDateRange(@org.springframework.data.repository.query.Param("start") java.time.OffsetDateTime start, @org.springframework.data.repository.query.Param("end") java.time.OffsetDateTime end);
+
+    @org.springframework.data.jpa.repository.Query("SELECT new map(FUNCTION('DATE', m.createdAt) as date, COUNT(m) as messages) " +
+           "FROM ChatMessage m " +
+           "WHERE m.createdAt BETWEEN :start AND :end " +
+           "GROUP BY FUNCTION('DATE', m.createdAt) ORDER BY FUNCTION('DATE', m.createdAt)")
+    List<java.util.Map<String, Object>> getDailyMessageStats(@org.springframework.data.repository.query.Param("start") java.time.OffsetDateTime start, @org.springframework.data.repository.query.Param("end") java.time.OffsetDateTime end);
 }

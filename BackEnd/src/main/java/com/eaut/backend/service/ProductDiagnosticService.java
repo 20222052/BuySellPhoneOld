@@ -13,6 +13,7 @@ import com.eaut.backend.model.response.UserResponse;
 import com.eaut.backend.repository.ProductDiagnosticRepository;
 import com.eaut.backend.repository.ProductItemRepository;
 import com.eaut.backend.repository.UserRepository;
+import com.eaut.backend.service.mailService.MailProducer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,6 +49,8 @@ public class ProductDiagnosticService {
     private final UserService userService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final CloudinaryService cloudinaryService;
+    private final MailProducer mailProducer;
 
     @Value("${ai.diagnostic.api.url:http://localhost:5000}")
     private String aiApiUrl;
@@ -59,7 +63,7 @@ public class ProductDiagnosticService {
      */
     public DiagnosticResponse callAIDiagnostic(MultipartFile imageFile) {
         try {
-            log.info("Calling AI diagnostic service at: {}", aiApiUrl);
+            log.info("Giọi yêu cầu đến dịch vụ chẩn đoán AI tại: {}", aiApiUrl);
 
             // Prepare request
             HttpHeaders headers = new HttpHeaders();
@@ -89,7 +93,7 @@ public class ProductDiagnosticService {
             // Clean up temp file
             tempFile.delete();
 
-            log.info("AI diagnostic completed successfully");
+            log.info("Chẩn đoán AI hoàn thành thành công");
             return response.getBody();
 
         } catch (Exception e) {
@@ -103,7 +107,7 @@ public class ProductDiagnosticService {
      */
     public DiagnosticResponse callAIDiagnosticWithBase64(String imageBase64) {
         try {
-            log.info("Calling AI diagnostic service with base64 image");
+            log.info("Gọi dịch vụ chẩn đoán AI với hình ảnh base64");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -121,7 +125,7 @@ public class ProductDiagnosticService {
                     requestEntity,
                     DiagnosticResponse.class);
 
-            log.info("AI diagnostic completed successfully");
+            log.info("Chẩn đoán AI hoàn thành thành công");
             return response.getBody();
 
         } catch (Exception e) {
@@ -161,9 +165,37 @@ public class ProductDiagnosticService {
         }
 
         if (images.isEmpty()) {
-            throw new RuntimeException("No images provided for diagnostic");
+            throw new RuntimeException("Không có hình ảnh được cung cấp để chẩn đoán");
         }
         aiPayload.put("images", images);
+
+        // Upload images to Cloudinary
+        List<String> cloudinaryUrls = new ArrayList<>();
+        if (files != null && !files.isEmpty()) {
+            List<CompletableFuture<com.eaut.backend.model.response.CloudinaryResponse>> futures = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    try {
+                        futures.add(cloudinaryService.uploadImages(file));
+                    } catch (Exception e) {
+                        log.error("Failed to initiate upload for file: " + file.getOriginalFilename(), e);
+                    }
+                }
+            }
+            if (!futures.isEmpty()) {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                for (CompletableFuture<com.eaut.backend.model.response.CloudinaryResponse> future : futures) {
+                    try {
+                        com.eaut.backend.model.response.CloudinaryResponse clRes = future.get();
+                        if (clRes != null && clRes.getSecureUrl() != null) {
+                            cloudinaryUrls.add(clRes.getSecureUrl());
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to get upload result", e);
+                    }
+                }
+            }
+        }
 
         // Handle functional checks
         Map<String, Object> functionalChecks = new HashMap<>();
@@ -180,7 +212,8 @@ public class ProductDiagnosticService {
         // 3. Call AI Service
         DiagnosticResponse aiResponse;
         try {
-            log.info("Calling AI diagnostic service with {} images", images.size());
+            log.info("G\u1ecdi d\u1ecbch v\u1ee5 ch\u1ea9n \u0111o\u00e1n AI v\u1edbi {} h\u00ecnh \u1ea3nh",
+                    images.size());
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + aiApiToken);
@@ -198,7 +231,7 @@ public class ProductDiagnosticService {
 
         if (aiResponse == null || !aiResponse.isSuccess()) {
             throw new RuntimeException(
-                    "AI diagnostic failed: " + (aiResponse != null ? aiResponse.getError() : "Unknown error"));
+                    "Chẩn đoán AI thất bại: " + (aiResponse != null ? aiResponse.getError() : "Lỗi không xác định"));
         }
 
         // 4. Create internal ProductDiagnostic entity
@@ -229,8 +262,10 @@ public class ProductDiagnosticService {
         diagnostic.setDeadPixels(data.getDeadPixels());
         diagnostic.setDisplayLines(data.getDisplayLines());
 
-        diagnostic.setTotalDepreciation(data.getTotalDepreciation());
+        diagnostic.setTotalDepreciation(calculateTotalDepreciation(diagnostic));
         diagnostic.setOverallAssessment(data.getOverallAssessment());
+        diagnostic.setImages(cloudinaryUrls);
+        updatePredictedPrice(diagnostic);
 
         // Set metadata
         diagnostic.setStatus(DiagnosticStatus.tested);
@@ -284,19 +319,41 @@ public class ProductDiagnosticService {
      * Cập nhật trạng thái diagnostic
      */
     @Transactional
-    public ProductDiagnosticDTO updateDiagnosticStatus(UUID diagnosticId, DiagnosticStatus status) {
+    public ProductDiagnosticDTO updateDiagnosticStatus(UUID diagnosticId, DiagnosticStatus status,
+            String staffMessage) {
         ProductDiagnostic diagnostic = diagnosticRepository.findById(diagnosticId)
                 .orElseThrow(() -> new RuntimeException("Diagnostic not found: " + diagnosticId));
         diagnostic.setStatus(status);
         diagnostic = diagnosticRepository.save(diagnostic);
+
+        // Gửi email thông báo cho khách hàng khi trạng thái thay đổi
+        User customer = diagnostic.getCreatedBy();
+        if (customer != null && customer.getEmail() != null) {
+            Set<DiagnosticStatus> notifyStatuses = Set.of(
+                    DiagnosticStatus.processing, DiagnosticStatus.completed, DiagnosticStatus.cancelled);
+            if (notifyStatuses.contains(status)) {
+                try {
+                    mailProducer.sendTradeInStatusMail(
+                            customer.getEmail(),
+                            customer.getFullName() != null ? customer.getFullName() : "Khách hàng",
+                            diagnostic.getId().toString(),
+                            status.getValue(),
+                            staffMessage);
+                } catch (Exception e) {
+                    log.warn("Failed to send trade-in status email: {}", e.getMessage());
+                }
+            }
+        }
+
         return convertToDTO(diagnostic);
     }
 
     /**
      * Lấy tất cả diagnostic của một product item
      */
+    @Transactional(readOnly = true)
     public List<ProductDiagnosticDTO> getDiagnosticsByProductItem(UUID productItemId) {
-        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByProductItemId(productItemId);
+        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByProductItemIdWithJoinFetch(productItemId);
         return diagnostics.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -305,8 +362,9 @@ public class ProductDiagnosticService {
     /**
      * Lấy lịch sử diagnostic của user
      */
+    @Transactional(readOnly = true)
     public List<ProductDiagnosticDTO> getDiagnosticsByUserId(UUID userId) {
-        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByCreatedBy_Id(userId);
+        List<ProductDiagnostic> diagnostics = diagnosticRepository.findByCreatedBy_IdWithJoinFetch(userId);
         return diagnostics.stream()
                 .map(this::convertToDTO)
                 .sorted(Comparator.comparing(ProductDiagnosticDTO::getTestDate).reversed())
@@ -316,16 +374,18 @@ public class ProductDiagnosticService {
     /**
      * Lấy diagnostic mới nhất của một product item
      */
+    @Transactional(readOnly = true)
     public Optional<ProductDiagnosticDTO> getLatestDiagnostic(UUID productItemId) {
-        return diagnosticRepository.findLatestByProductItemId(productItemId)
+        return diagnosticRepository.findLatestByProductItemIdWithJoinFetch(productItemId)
                 .map(this::convertToDTO);
     }
 
     /**
      * Lấy diagnostic theo ID
      */
+    @Transactional(readOnly = true)
     public ProductDiagnosticDTO getDiagnosticById(UUID diagnosticId) {
-        ProductDiagnostic diagnostic = diagnosticRepository.findById(diagnosticId)
+        ProductDiagnostic diagnostic = diagnosticRepository.findByIdWithJoinFetch(diagnosticId)
                 .orElseThrow(() -> new RuntimeException("Diagnostic not found: " + diagnosticId));
         return convertToDTO(diagnostic);
     }
@@ -355,6 +415,10 @@ public class ProductDiagnosticService {
             diagnostic.setDisplayLines(updates.getDisplayLines());
         if (updates.getTotalDepreciation() != null)
             diagnostic.setTotalDepreciation(updates.getTotalDepreciation());
+        else {
+            diagnostic.setTotalDepreciation(calculateTotalDepreciation(diagnostic));
+        }
+
         if (updates.getOverallAssessment() != null)
             diagnostic.setOverallAssessment(updates.getOverallAssessment());
         if (updates.getAdditionalNotes() != null)
@@ -384,6 +448,7 @@ public class ProductDiagnosticService {
         if (updates.getWifiBluetoothIssue() != null)
             diagnostic.setWifiBluetoothIssue(updates.getWifiBluetoothIssue());
 
+        updatePredictedPrice(diagnostic);
         diagnostic = diagnosticRepository.save(diagnostic);
         return convertToDTO(diagnostic);
     }
@@ -400,6 +465,7 @@ public class ProductDiagnosticService {
      * Convert entity to DTO
      */
     private ProductDiagnosticDTO convertToDTO(ProductDiagnostic diagnostic) {
+        User customer = diagnostic.getCreatedBy();
         return ProductDiagnosticDTO.builder()
                 .id(diagnostic.getId())
                 .productItemId(diagnostic.getProductItem().getId())
@@ -427,7 +493,157 @@ public class ProductDiagnosticService {
                 .estimatedRepairCost(diagnostic.getEstimatedRepairCost())
                 .staffId(diagnostic.getStaff() != null ? diagnostic.getStaff().getId() : null)
                 .staffName(diagnostic.getStaff() != null ? diagnostic.getStaff().getFullName() : null)
-                .aiAnalysisDetails(diagnostic.getRepairRecommendations()) // Contains JSON of AI analysis
+                .aiAnalysisDetails(diagnostic.getRepairRecommendations())
+                .minPredictedPrice(diagnostic.getMinPredictedPrice())
+                .maxPredictedPrice(diagnostic.getMaxPredictedPrice())
+                .isContactStore(diagnostic.getIsContactStore())
+                .images(diagnostic.getImages())
+                // Customer contact info
+                .customerName(customer != null ? customer.getFullName() : null)
+                .customerEmail(customer != null ? customer.getEmail() : null)
+                .customerPhone(customer != null ? customer.getPhone() : null)
                 .build();
+    }
+
+    private void updatePredictedPrice(ProductDiagnostic diagnostic) {
+        BigDecimal minPredictedPrice = null;
+        BigDecimal maxPredictedPrice = null;
+        Boolean isContactStore = false;
+
+        BigDecimal totalDepreciation = diagnostic.getTotalDepreciation();
+        if (totalDepreciation != null) {
+            BigDecimal maxDepreciationThreshold = new BigDecimal("75.00");
+            if (totalDepreciation.compareTo(maxDepreciationThreshold) >= 0) {
+                isContactStore = true;
+            } else {
+                BigDecimal sellPrice = diagnostic.getProductItem() != null ? diagnostic.getProductItem().getSellPrice()
+                        : null;
+                if (sellPrice != null) {
+                    BigDecimal deductionRate = totalDepreciation.divide(new BigDecimal("100"), 4,
+                            java.math.RoundingMode.HALF_UP);
+                    BigDecimal deductionAmount = sellPrice.multiply(deductionRate);
+                    BigDecimal estimatedRepairCost = diagnostic.getEstimatedRepairCost() != null
+                            ? diagnostic.getEstimatedRepairCost()
+                            : BigDecimal.ZERO;
+
+                    BigDecimal offerPrice = sellPrice.subtract(deductionAmount).subtract(estimatedRepairCost);
+
+                    if (offerPrice.compareTo(BigDecimal.ZERO) < 0) {
+                        offerPrice = BigDecimal.ZERO;
+                        isContactStore = true;
+                    } else {
+                        minPredictedPrice = offerPrice.multiply(new BigDecimal("0.95"));
+                        maxPredictedPrice = offerPrice.multiply(new BigDecimal("1.05"));
+                    }
+                }
+            }
+        }
+
+        diagnostic.setMinPredictedPrice(minPredictedPrice);
+        diagnostic.setMaxPredictedPrice(maxPredictedPrice);
+        diagnostic.setIsContactStore(isContactStore);
+    }
+
+    /**
+     * Tính toán tổng khấu hao dựa trên công thức cấu hình
+     */
+    private BigDecimal calculateTotalDepreciation(ProductDiagnostic diagnostic) {
+        BigDecimal ageDep = BigDecimal.ZERO;
+
+        // --- 1. AgeDep ---
+        // Giả sử mỗi tháng khấu hao 1%, lấy tạm testDate hoặc now() trừ đi ngày
+        // releaseTime nếu parse được
+        // Ở đây default cho AgeDep = 0% nếu ko có cơ sở tính toán rõ ràng theo tháng
+        try {
+            if (diagnostic.getProductItem() != null && diagnostic.getProductItem().getReleaseTime() != null) {
+                // Thường releaseTime lưu "09/2025"
+                String[] parts = diagnostic.getProductItem().getReleaseTime().split("/");
+                if (parts.length == 2) {
+                    int releaseMonth = Integer.parseInt(parts[0]);
+                    int releaseYear = Integer.parseInt(parts[1]);
+                    LocalDate releaseDate = LocalDate.of(releaseYear, releaseMonth, 1);
+                    LocalDate now = diagnostic.getTestDate() != null ? diagnostic.getTestDate() : LocalDate.now();
+
+                    long monthsBetween = java.time.temporal.ChronoUnit.MONTHS.between(releaseDate, now);
+                    if (monthsBetween > 0) {
+                        ageDep = new BigDecimal(monthsBetween).multiply(new BigDecimal("0.01")); // 1% per month
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not calculate AgeDep", e);
+        }
+
+        // --- 2. BatteryDep ---
+        BigDecimal batteryDep = BigDecimal.ZERO;
+        if (diagnostic.getBatteryHealth() != null) {
+            double bh = diagnostic.getBatteryHealth().doubleValue();
+            if (bh >= 90)
+                batteryDep = BigDecimal.ZERO;
+            else if (bh >= 80)
+                batteryDep = new BigDecimal("0.03");
+            else if (bh >= 70)
+                batteryDep = new BigDecimal("0.07");
+            else if (bh >= 60)
+                batteryDep = new BigDecimal("0.12");
+            else
+                batteryDep = new BigDecimal("0.18");
+        }
+
+        // --- 3. HardwareDep ---
+        BigDecimal hardwareDep = BigDecimal.ZERO;
+        if (Boolean.TRUE.equals(diagnostic.getRearCameraDamage()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.05"));
+        if (Boolean.TRUE.equals(diagnostic.getFrontCameraDamage()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.03"));
+        if (Boolean.TRUE.equals(diagnostic.getMicrophoneDamage()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.02"));
+        if (Boolean.TRUE.equals(diagnostic.getChargingPortDamage()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.04"));
+        if (Boolean.TRUE.equals(diagnostic.getSpeakerDamage()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.02"));
+        if (Boolean.TRUE.equals(diagnostic.getButtonDamage()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.02"));
+        if (Boolean.TRUE.equals(diagnostic.getWifiBluetoothIssue()))
+            hardwareDep = hardwareDep.add(new BigDecimal("0.04"));
+
+        // --- 4. ScreenDep ---
+        BigDecimal screenDep = BigDecimal.ZERO;
+        if (diagnostic.getScreenCracks() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getScreenCracks().divide(new BigDecimal("100")).multiply(new BigDecimal("0.25")));
+        if (diagnostic.getDisplayFailure() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getDisplayFailure().divide(new BigDecimal("100")).multiply(new BigDecimal("0.20")));
+        if (diagnostic.getDeadPixels() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getDeadPixels().divide(new BigDecimal("100")).multiply(new BigDecimal("0.10")));
+        if (diagnostic.getDisplayLines() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getDisplayLines().divide(new BigDecimal("100")).multiply(new BigDecimal("0.15")));
+        if (diagnostic.getScratches() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getScratches().divide(new BigDecimal("100")).multiply(new BigDecimal("0.10")));
+        if (diagnostic.getEdgeDings() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getEdgeDings().divide(new BigDecimal("100")).multiply(new BigDecimal("0.10")));
+        if (diagnostic.getDents() != null)
+            screenDep = screenDep
+                    .add(diagnostic.getDents().divide(new BigDecimal("100")).multiply(new BigDecimal("0.10")));
+
+        // --- Total ---
+        // D_total = (AgeDep * 0.40) + (BatteryDep * 0.15) + (HardwareDep * 0.15) +
+        // (ScreenDep * 0.30)
+        BigDecimal total = ageDep.multiply(new BigDecimal("0.40"))
+                .add(batteryDep.multiply(new BigDecimal("0.15")))
+                .add(hardwareDep.multiply(new BigDecimal("0.15")))
+                .add(screenDep.multiply(new BigDecimal("0.30")));
+
+        // Cap at 0.85
+        if (total.compareTo(new BigDecimal("0.85")) > 0) {
+            total = new BigDecimal("0.85");
+        }
+
+        return total.multiply(new BigDecimal("100")); // Luu theo kieu 0-100 vao db
     }
 }

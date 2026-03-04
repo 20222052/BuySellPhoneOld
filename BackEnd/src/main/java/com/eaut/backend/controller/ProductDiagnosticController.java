@@ -219,7 +219,8 @@ public class ProductDiagnosticController {
                 return ResponseEntity.badRequest().body("Invalid status: " + statusStr);
             }
 
-            ProductDiagnosticDTO result = diagnosticService.updateDiagnosticStatus(diagnosticId, status);
+            String staffMessage = request.getOrDefault("message", "");
+            ProductDiagnosticDTO result = diagnosticService.updateDiagnosticStatus(diagnosticId, status, staffMessage);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("Failed to update diagnostic status", e);

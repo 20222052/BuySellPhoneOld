@@ -51,6 +51,20 @@ const CheckoutService = {
     },
 
     /**
+     * Hủy đơn hàng theo ID
+     * @param {UUID} orderId - ID đơn hàng
+     * @returns {Promise} - OrderResponse
+     */
+    cancelOrder: async (orderId) => {
+        try {
+            const response = await api.put(`/orders/${orderId}/cancel`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Không thể hủy đơn hàng" };
+        }
+    },
+
+    /**
      * Format giá tiền VND
      */
     formatPrice: (price) => {

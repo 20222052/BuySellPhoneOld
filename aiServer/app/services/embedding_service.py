@@ -19,7 +19,7 @@ class EmbeddingService:
             return
 
         print("=" * 70)
-        print("INITIALIZING EMBEDDING SERVICE")
+        print("ĐANG KHỞI TẠO DỊCH VỤ EMBEDDING")
         print("=" * 70)
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"

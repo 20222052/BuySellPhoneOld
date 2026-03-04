@@ -403,14 +403,14 @@ export default function CategoryList() {
                                             <span className="detail-label">ID:</span>
                                             <span className="detail-value">#{selectedCategory.id}</span>
                                         </div>
-                                        <div className="detail-row">
+                                        {/* <div className="detail-row">
                                             <span className="detail-label">Số sản phẩm:</span>
                                             <span className="detail-value">
                                                 <TableBadge variant="primary">
                                                     {selectedCategory.productCount || 0} sản phẩm
                                                 </TableBadge>
                                             </span>
-                                        </div>
+                                        </div> */}
                                         {selectedCategory.createdAt && (
                                             <div className="detail-row">
                                                 <span className="detail-label">Ngày tạo:</span>
